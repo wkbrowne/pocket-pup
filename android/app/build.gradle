@@ -1,0 +1,31 @@
+plugins { id 'com.android.application' }
+
+// The game is the single web page one folder up. Each build copies it in, so the app never drifts from index.html.
+def gameAssets = layout.buildDirectory.dir('gameAssets')
+
+android {
+    namespace 'com.pocketpup.game'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.pocketpup.game'
+        minSdk 22          // Fire OS 5 and later
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    sourceSets { main { assets.srcDirs = [gameAssets] } }
+}
+
+tasks.register('copyGame', Copy) {
+    from('../../index.html')
+    into(gameAssets)
+    filteringCharset = 'UTF-8'
+    // index.html is written without a doctype (the web host adds one), so add it here
+    def first = true
+    filter { line -> if (first) { first = false; '<!doctype html>\n' + line } else line }
+}
+preBuild.dependsOn 'copyGame'

@@ -3,6 +3,11 @@ plugins { id 'com.android.application' }
 // The game is the single web page one folder up. Each build copies it in, so the app never drifts from index.html.
 def gameAssets = layout.buildDirectory.dir('gameAssets')
 
+// The release signing key lives outside the repo, in ~/pocketpup-signing. Without it, only debug builds are signed.
+def signingFile = new File(System.getProperty('user.home'), 'pocketpup-signing/keystore.properties')
+def signingProps = new Properties()
+if (signingFile.exists()) signingFile.withInputStream { signingProps.load(it) }
+
 android {
     namespace 'com.pocketpup.game'
     compileSdk 34
@@ -10,22 +15,43 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.1'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    sourceSets { main { assets.srcDirs = [gameAssets] } }
+    sourceSets { main { assets.srcDirs = [gameAssets, 'src/main/assets'] } }   // the game page, plus the bundled fonts
+    signingConfigs {
+        release {
+            if (signingFile.exists()) {
+                storeFile new File(signingFile.parentFile, signingProps['storeFile'])
+                storePassword signingProps['storePassword']
+                keyAlias signingProps['keyAlias']
+                keyPassword signingProps['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (signingFile.exists()) signingConfig signingConfigs.release
+        }
+    }
 }
 
 tasks.register('copyGame', Copy) {
     from('../../index.html')
     into(gameAssets)
     filteringCharset = 'UTF-8'
+    inputs.property('filterVersion', 2)   // bump when the filter below changes, so Gradle re-copies
     // index.html is written without a doctype (the web host adds one), so add it here
+    // and it loads its two fonts from the web; the app uses the copies bundled in assets/fonts, so it needs no internet at all
     def first = true
-    filter { line -> if (first) { first = false; '<!doctype html>\n' + line } else line }
+    filter { line ->
+        if (line.contains('fonts.googleapis.com')) line = "<style>@font-face{font-family:'Lilita One';src:url(fonts/LilitaOne-Regular.ttf)}@font-face{font-family:'Nunito';font-weight:200 1000;src:url(fonts/Nunito.ttf)}</style>"
+        if (first) { first = false; '<!doctype html>\n' + line } else line
+    }
 }
 preBuild.dependsOn 'copyGame'

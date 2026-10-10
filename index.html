@@ -1548,7 +1548,7 @@ function questToggle(){
 function questArrive(){
   const q = QS(), t = TS(), p = q.pos || [HOME_AT[0]+1.5, HOME_AT[1]+.7];
   dog.x = p[0]*t; dog.y = p[1]*t; dog.dir = 1; setState('qidle'); dog.cb = null; qr.path = null; qr.then = null;
-  QN = Object.keys(WHO).map(w => { const n = makeNpc(PALS.find(p => p.id === w), 0); n.who = w; n.state = 'sitidle'; n.dur = 1e9; n.t0 = 0; return n; });
+  QN = Object.keys(WHO).map(w => { const n = makeNpc(PALS.find(p => p.id === w), 0); n.who = w; n.state = 'sitidle'; n.dur = 1e9; n.t0 = 0; const at = CH[npcChapter(w)].npc; n.x = (at[0]+.5)*t; n.y = (at[1]+.7)*t; n.ds = .62; return n; });   // placed at once, so they are right even if a window opens before the first tick
   if (!q.seen){ q.seen = true; save(); storyPlay(openingPanels()); }
 }
 function qPath(sx, sy, goal){

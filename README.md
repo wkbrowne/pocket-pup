@@ -4,7 +4,9 @@ A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentic
 
 - `index.html` is the whole game: one self-contained web page. Open it in any modern browser.
 - `android/` wraps that page as a full-screen Android app for tablets, including Amazon Fire.
-- `PocketPup.apk` is the built app. The same file is attached to the latest release.
+- `PocketPup.apk` is the built, release-signed app. The same file is attached to the latest release.
+- `docs/` is the site: the game at https://wkbrowne.github.io/pocket-pup/ and the privacy policy. `docs/index.html` is a copy of `index.html` with a doctype line added.
+- `store/` holds the Amazon Appstore listing text, icons and screenshots.
 
 ## Put it on a tablet
 
@@ -14,12 +16,14 @@ A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentic
 
 ## Rebuild the app
 
-Needs a JDK, Gradle and the Android SDK (platform 34).
+Needs a JDK, Gradle and the Android SDK (platform 34). The fonts are bundled, so the app makes no network requests.
+
+Release builds are signed with a key kept outside this repo in `~/pocketpup-signing/`. Without that folder, use `gradle assembleDebug`.
 
 ```bash
 cd android
 echo "sdk.dir=/path/to/android/sdk" > local.properties
-gradle assembleDebug
+gradle assembleRelease
 ```
 
 The build copies `../index.html` into the app, so the app always matches the web page.

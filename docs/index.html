@@ -2,7 +2,14 @@
 <title>Population Pup</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>@font-face{font-family:'Lilita One';src:url(fonts/LilitaOne-Regular.ttf)}@font-face{font-family:'Nunito';font-weight:200 1000;src:url(fonts/Nunito.ttf)}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2B2350">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pop Pup">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 /* Layout: one full-screen backyard canvas; sticker-style HUD floats on it. Nameplate and needs up top, action tray at the bottom. */
 :root{
@@ -19,7 +26,7 @@ body{margin:0;background:var(--ink);color:var(--ink);font-family:var(--body);fon
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .card{background:var(--paper);border:3px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink)}
-.top{position:absolute;top:12px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
+.top{position:absolute;top:calc(12px + env(safe-area-inset-top, 0px));left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
 .top>*{pointer-events:auto}
 .plate{padding:8px 12px 10px;min-width:0;max-width:260px}
 .name{font-family:var(--display);font-size:24px;line-height:1.05;overflow-wrap:anywhere}
@@ -34,7 +41,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 .mini button{background:none;border:2px solid var(--ink);border-radius:999px;padding:1px 9px;font-size:11px;font-weight:800}
 .needs{padding:9px 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;width:min(290px,58vw);flex:none}
 .need{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;min-width:0}
-.tray{position:absolute;left:16px;right:16px;bottom:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;pointer-events:none}
+.tray{position:absolute;left:16px;right:16px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));display:flex;flex-wrap:wrap;justify-content:center;gap:6px;pointer-events:none}
 .tray button{pointer-events:auto;flex:0 1 76px;min-width:0;padding:7px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--display);font-size:14px;letter-spacing:.02em;transition:transform .06s,box-shadow .06s}
 .tray button:active,.sheet button:active,.go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
 .tray svg{width:26px;height:26px;stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -110,6 +117,7 @@ select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#
 .pinrow{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:15px;flex-wrap:wrap}
 .pinrow input{font:inherit;font-weight:800;font-size:22px;letter-spacing:.3em;text-align:center;width:150px;border:2px solid var(--ink);border-radius:12px;padding:6px;background:#fff;color:var(--ink)}
 .answers.typed textarea{grid-column:1/-1;font:inherit;font-weight:700;font-size:18px;line-height:1.35;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fff;color:var(--ink);resize:none;width:100%;box-sizing:border-box}
+.modal textarea{-webkit-user-select:text;user-select:text}
 .answers .part.note{font-weight:700;font-size:14px;text-align:center}
 .answers .part.note.warn{color:var(--berry)}
 .listen{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:10px 12px}
@@ -284,7 +292,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <p id="gr-p" style="font-size:15px"></p>
         <div class="grades" id="grades"></div>
         <label class="pinrow"><span id="gr-l"></span><input id="gr-pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></label>
-        <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:14px;letter-spacing:0"></label>
+        <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:16px;letter-spacing:0"></label>
         <p id="gr-keyp" style="font-size:12px;margin:0;text-align:center"></p>
         <div class="fb" id="gr-fb"></div>
         <div class="row"><button class="link" id="gr-cancel" type="button">Cancel</button><button class="go small" id="gr-ok" type="button">Lock the grade</button></div>
@@ -3419,3 +3427,5 @@ const hot = window.claude && window.claude.hot;
 if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
 })();
 </script>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>

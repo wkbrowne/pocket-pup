@@ -1,5 +1,5 @@
 // Keeps a copy of the game on the device so it opens with no internet. The page itself is fetched fresh when there is a connection, so updates arrive.
-const CACHE = 'pup-cd3787cbc5', FILES = ["index.html", "pupgrader.js", "fonts/LilitaOne-Regular.ttf", "fonts/Nunito.ttf", "icon-180.png", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
+const CACHE = 'pup-72c6e7ffc1', FILES = ["index.html", "pupgrader.js", "fonts/LilitaOne-Regular.ttf", "fonts/Nunito.ttf", "icon-180.png", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'].concat(FILES))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

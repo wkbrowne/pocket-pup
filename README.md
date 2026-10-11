@@ -32,4 +32,4 @@ The build copies `../index.html` into the app, so the app always matches the web
 
 ## Writing grader
 
-Sentences a child types are marked on the device by a small sentence-meaning model, [potion-base-4M](https://huggingface.co/minishlab/potion-base-4M) by Minish Lab (Model2Vec, MIT licence), stored in `pupgrader.js` as 8-bit numbers. A grown-up can optionally add an Anthropic API key behind the grown-up code; typed sentences are then marked by Claude instead.
+Sentences a child types are marked on the device by a small sentence-meaning model, [potion-base-4M](https://huggingface.co/minishlab/potion-base-4M) by Minish Lab (Model2Vec, MIT license), stored in `pupgrader.js` as 8-bit numbers. A grown-up can optionally add an Anthropic API key behind the grown-up code; typed sentences are then marked by Claude instead.

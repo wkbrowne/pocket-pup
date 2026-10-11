@@ -169,6 +169,10 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 #splash{background:rgba(43,35,80,.55)}
 .splash h1{font-family:var(--display);font-weight:400;font-size:44px;line-height:1;margin:0;text-align:center}
 .splash .sub{text-align:center;margin:0}
+.item.cur{background:#fff3c4}
+.item button.del{background:#fff;box-shadow:none;font-size:12px;padding:4px 8px}
+#games .item div{font-size:13px} #games .item b{font-size:17px}
+#newgame input{flex:1;min-width:0;font:inherit;font-weight:800;font-size:16px;border:2px solid var(--ink);border-radius:12px;padding:8px 10px;background:#fff;color:var(--ink)}
 .splash .pitch{text-align:center;font-size:15px;text-wrap:balance}
 .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
 .mode{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px;text-align:center;background:#fff}
@@ -222,9 +226,10 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
   <div class="modal" id="splash" hidden>
     <div class="card wide splash">
       <h1>Population Pup</h1>
-      <p class="sub" id="sp-sub">Pick a game to begin</p>
-      <p class="pitch">Raise your pup at home. Then set out into Woofwood Valley, solve math puzzles to gather blocks, and rebuild every house the Great Gust blew down.</p>
-      <button class="go" id="play" type="button">Play</button>
+      <p class="sub" id="sp-sub">Choose your game</p>
+      <div class="list" id="games"></div>
+      <form class="row" id="newgame"><input id="gname" maxlength="16" autocomplete="off" placeholder="Name for a new game" aria-label="Name for a new game"><button class="go small" type="submit">New game</button></form>
+      <div class="fb" id="sp-fb"></div>
     </div>
   </div>
 
@@ -388,9 +393,19 @@ let S = fresh();
 const LOCK = 'pocketpup.lock'; let GL = {};
 try { GL = JSON.parse(localStorage.getItem(LOCK)) || {}; } catch(e){}
 const saveLock = () => { try { localStorage.setItem(LOCK, JSON.stringify(GL)); } catch(e){} };
+// named games: each has its own save and its own locked grade; the title screen lists them
+const GAMES = 'pocketpup.games', gkey = id => 'pocketpup.g.' + id; let G = {cur:null, list:[]};
+try { G = Object.assign(G, JSON.parse(localStorage.getItem(GAMES))); } catch(e){}
+const saveGames = () => { try { localStorage.setItem(GAMES, JSON.stringify(G)); } catch(e){} };
+const newId = () => 'g' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36);
+const lockGrade = () => (GL.grades || {})[G.cur] || null;
+const setLockGrade = v => { if (!G.cur) return; (GL.grades = GL.grades || {})[G.cur] = v; saveLock(); };
+try { if (!G.list.length){ const raw = localStorage.getItem(KEY); if (raw){      // the single save from before named games becomes the first one
+  const o = JSON.parse(raw), id = newId(); localStorage.setItem(gkey(id), raw); G.list.push({id, name:o.adopted && o.name ? o.name + "'s game" : 'My game'}); G.cur = id; saveGames();
+  if (GL.grade){ (GL.grades = GL.grades || {})[id] = GL.grade; delete GL.grade; saveLock(); } } } } catch(e){}
 
 function load(extra){
-  try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
+  try { const raw = G.cur && localStorage.getItem(gkey(G.cur)); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
   if (extra && extra.S) S = Object.assign(fresh(), extra.S);
   const oldEla = S.math && !S.math.ela2;
   S.math = Object.assign(fresh().math, S.math); S.mode = 'both'; S.trophies = S.trophies || []; S.breed = S.breed || 'lab'; S.sex = S.sex || 'girl';
@@ -398,12 +413,12 @@ function load(extra){
     const mp = [0,1,3,4,5,6,8,9,10,11], sk = S.math.sk, E = /^E[3-6]/;
     for (const g of ['E3','E4','E5','E6']){ const old = mp.map((v,i) => sk[g+':'+i]); for (let i = 0; i < 12; i++) delete sk[g+':'+i]; old.forEach((v,i) => { if (v) sk[g+':'+mp[i]] = v; }); }
     S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; if (S.math.slate && E.test(S.math.slate.g || '')) S.math.slate = null; S.math.ela2 = 1; }
-  if (GL.grade) S.math.grade = GL.grade; else if (S.math.grade){ GL.grade = S.math.grade; saveLock(); }
+  if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
   // time away: needs drift down gently, never to zero
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
   if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
 }
-function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } if (!G.cur) return; try { localStorage.setItem(gkey(G.cur), JSON.stringify(S)); } catch(e){} }
 
 const level = () => Math.floor((1 + Math.sqrt(1 + 4*S.xp/25))/2);
 const lvlBase = L => 25*L*(L-1);
@@ -1621,7 +1636,7 @@ function choices(p){
 let prob = null, mathLock = false, session = 0, showSkills = false;
 function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function openMath(){ if (!S.adopted) return; session = 0; rescue = 0; oneShot = null; lessonAfter = null; showSkills = false; $('shop').hidden = true; $('tricks').hidden = true; $('math').hidden = false; renderMath(); }
-function setGrade(id){ S.math.grade = id; GL.grade = id; saveLock(); S.math.lastI = -1; S.math.streak = 0; showSkills = false; save(); renderMath(); }
+function setGrade(id){ S.math.grade = id; setLockGrade(id); S.math.lastI = -1; S.math.streak = 0; showSkills = false; save(); renderMath(); }
 function renderMath(){
   const g = curGrade(), cur = S.math.grade && mathGrade(S.math.grade), gb = $('grade');
   gb.hidden = !cur; if (cur) gb.textContent = cur.name + ' (locked)';
@@ -2905,8 +2920,44 @@ function finalePanels(){
 }
 
 /* ---------- title screen ---------- */
-function showSplash(){ $('tricks').hidden = true; $('sp-sub').textContent = S.adopted ? 'Welcome back, ' + S.name + '!' : 'A pup, a valley and a lot of building'; $('play').textContent = S.adopted ? 'Continue' : 'Play'; $('splash').hidden = false; ui(); }
-$('play').onclick = () => { $('splash').hidden = true; pop(); if (!S.adopted) openAdopt('first'); else if (S.at === 'quest' && scene !== 'quest') arrive('quest'); ui(); };   // Continue picks up where you stopped: at home or in the valley
+function showSplash(){ $('tricks').hidden = true; $('sp-fb').textContent = ''; renderGames(); $('splash').hidden = false; ui(); }
+function renderGames(){
+  const box = $('games'); box.textContent = ''; box.hidden = !G.list.length; $('sp-sub').textContent = G.list.length ? 'Choose your game' : 'Type a name to start your first game';
+  for (const g of G.list){
+    let o = null; try { o = g.id === G.cur ? S : JSON.parse(localStorage.getItem(gkey(g.id))); } catch(e){}
+    const row = el('div', 'item' + (g.id === G.cur ? ' cur' : '')), info = el('div'), gd = GRADES.find(x => x.id === (GL.grades || {})[g.id]);
+    info.appendChild(el('b', '', g.name)); info.appendChild(document.createTextNode(o && o.adopted ? o.name + ' the pup · ' + (gd ? gd.name : 'no grade yet') + ' · ' + Math.floor(o.bones || 0) + ' bones' : 'Not started yet'));
+    const del = el('button', 'del', 'Delete'), go = el('button', '', g.id === G.cur && S.adopted ? 'Continue' : 'Play'); del.type = go.type = 'button'; go.id = 'game-' + g.id;
+    del.onclick = () => { if (del.textContent === 'Delete'){ del.textContent = 'Really delete?'; return; } deleteGame(g.id); };
+    go.onclick = () => playGame(g.id);
+    row.appendChild(info); row.appendChild(del); row.appendChild(go); box.appendChild(row);
+  }
+}
+// everything that depends on which game is loaded is set up again from its save
+function reinit(){
+  scene = 'yard'; trans = null; npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; prob = null; oneShot = null; rescue = 0;
+  cine = null; $('game').classList.remove('cine'); dq = []; dthen = null; $('dlg').hidden = true; for (const m of document.querySelectorAll('.modal')) if (m.id !== 'splash') m.hidden = true;      // a story or window left open belongs to the game being left
+  const q0 = QS(); setLand(q0.land === 'home' || landDef(q0.land) ? q0.land : 'home');
+  const Y = yard(); dog.x = W*.5; dog.y = (Y.y0+Y.y1)/2; refreshYard(); idle(1); renderTricks(); newJob(); rankCheck(); levelCheck(); ui();
+}
+function switchGame(id){ if (G.cur === id) return; save(); G.cur = id; saveGames(); S = fresh(); load(); reinit(); }
+function playGame(id){
+  switchGame(id); $('splash').hidden = true; pop();
+  if (!S.adopted) openAdopt('first'); else if (S.at === 'quest' && scene !== 'quest') arrive('quest'); ui();   // Continue picks up where you stopped: at home or in the valley
+}
+function deleteGame(id){
+  try { localStorage.removeItem(gkey(id)); } catch(e){}
+  G.list = G.list.filter(g => g.id !== id); if (GL.grades) delete GL.grades[id]; saveLock();
+  if (G.cur === id){ G.cur = null; saveGames(); S = fresh(); reinit(); } else saveGames();
+  renderGames();
+}
+$('newgame').addEventListener('submit', e => {
+  e.preventDefault(); const nm = $('gname').value.trim().slice(0,16);
+  if (!nm){ $('sp-fb').textContent = 'Type a name for the new game first.'; $('gname').focus(); return; }
+  if (G.list.some(g => g.name.toLowerCase() === nm.toLowerCase())){ $('sp-fb').textContent = 'There is already a game with that name.'; return; }
+  if (G.list.length >= 8){ $('sp-fb').textContent = 'There is room for 8 games. Delete one first.'; return; }
+  const id = newId(); save(); G.list.push({id, name:nm}); $('gname').value = ''; $('gname').blur(); playGame(id);
+});
 // Pause stops the clock and saves on the spot. The game also saves by itself every few seconds and whenever it is closed or put in the background.
 function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true; save(); $('pause-h').textContent = 'Game paused'; $('pause-p').textContent = S.name + "'s game is saved. It is safe to close it now, and you will pick up right here next time."; $('pausem').hidden = false; ui(); }
 $('pause').onclick = pauseGame;
@@ -3165,7 +3216,7 @@ $('adoptform').addEventListener('submit', e => {
 $('cancel').onclick = () => { $('adopt').hidden = true; };
 $('reset').onclick = () => {
   if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all dogs, bones and gear'; return; }
-  const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = GL.grade || null; scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
+  const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = lockGrade(); scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
 };
 
 /* ---------- main loop ---------- */

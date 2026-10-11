@@ -15,8 +15,8 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 6
-        versionName '1.5'
+        versionCode 7
+        versionName '1.6'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -54,4 +54,9 @@ tasks.register('copyGame', Copy) {
         if (first) { first = false; '<!doctype html>\n' + line } else line
     }
 }
-preBuild.dependsOn 'copyGame'
+// the writing grader's model sits beside the game page
+tasks.register('copyGrader', Copy) {
+    from('../../pupgrader.js')
+    into(gameAssets)
+}
+preBuild.dependsOn 'copyGame', 'copyGrader'

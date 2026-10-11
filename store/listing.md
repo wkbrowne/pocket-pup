@@ -3,7 +3,7 @@
 Copy these into the Amazon Developer Console. Files to upload are in this folder.
 
 ## App file
-`PocketPup.apk` from the latest GitHub release (release-signed, version 1.2, no permissions).
+`PocketPup.apk` from the latest GitHub release (release-signed, version 1.6; one permission, internet, used only by the optional writing coach).
 
 ## Title
 Population Pup: Math and Reading Quest
@@ -22,7 +22,7 @@ Math powers everything. Each thing you gather is one question from the grade you
 - 73 skills across Kindergarten to Grade 6, each tagged with its Common Core standard (also the California standards).
 - Questions adapt: new skills open as earlier ones go well, weak skills come back more often, and missed ones return for another try.
 - Every skill has a short lesson with a worked example, one tap away from any question.
-- English for Grades 3 to 6 modelled on the Smarter Balanced / CAASPP test: full reading passages with several questions each, two-part evidence questions, choose-two questions, listening questions read aloud, essays built part by part, revising a draft, editing and research, all tagged with Common Core ELA standards.
+- English for Grades 3 to 6 modelled on the Smarter Balanced / CAASPP test: full reading passages with several questions each, two-part evidence questions, choose-two questions, listening questions read aloud, essays built part by part, now and then a typed answer (fixing a sentence, spelling a word, or writing one sentence of her own, marked on the device), revising a draft, editing and research, all tagged with Common Core ELA standards.
 - A missed question opens a worked explanation, and play continues once a fresh question on the same skill is answered correctly.
 - A slate of eight questions that can be skipped and returned to.
 - A progress view for parents showing mastery of every skill.
@@ -40,7 +40,7 @@ More to do:
 Made for families:
 
 - No ads, no in-app purchases, no accounts.
-- Collects no data and needs no internet connection.
+- Collects no data and needs no internet connection. Typed sentences are marked on the device. A grown-up may optionally add their own Anthropic API key so that typed sentences are marked by Claude over the internet; this is off by default.
 - Saves on the device. Rest stops and a Pause button make it easy to stop at any time.
 
 ## Product feature bullets
@@ -65,7 +65,7 @@ Kids, then Education (or Games > Educational if Kids is not offered)
 https://wkbrowne.github.io/pocket-pup/privacy.html
 
 ## Answers for the content and privacy questions
-- Collects or transmits personal information: No
+- Collects or transmits personal information: No by default. NOTE before submitting: with the optional writing coach turned on by a grown-up, a child's typed sentence is sent to Anthropic. Answer Amazon's data questions with that in mind, or build the store version without the coach.
 - Advertising: None
 - In-app purchases: None
 - Account creation or sign-in: None

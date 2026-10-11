@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- no permissions: the game is fully offline and collects nothing -->
+    <!-- used only by the optional writing coach, which a grown-up turns on by adding their own key; otherwise the game stays offline -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- lets the app find the tablet's text-to-speech voice for listening questions -->
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>

@@ -104,6 +104,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 .q.long{font-size:22px;line-height:1.25;text-wrap:balance}
 select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 8px;max-width:50%}
 .grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.grades button.on{background:var(--sun)}
+#grade{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 10px;white-space:nowrap}
+#grade[disabled]{opacity:.5}
+.pinrow{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:15px;flex-wrap:wrap}
+.pinrow input{font:inherit;font-weight:800;font-size:22px;letter-spacing:.3em;text-align:center;width:150px;border:2px solid var(--ink);border-radius:12px;padding:6px;background:#fff;color:var(--ink)}
+.listen{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:10px 12px}
+.listen .sub{text-align:left;flex:1}
 .grades button{background:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink);padding:9px 6px;font-weight:800;font-size:14px}
 .stack{display:flex;flex-direction:column;gap:10px;min-height:0}
 .skill{text-align:center;opacity:.8}
@@ -263,15 +270,20 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 
   <div class="modal" id="math" hidden>
     <div class="card wide">
-      <div class="row"><h2 id="math-h">Math for bones</h2><span style="display:flex;gap:6px;min-width:0"><select id="subject" aria-label="Subject"><option value="math">Math</option><option value="ela">English</option><option value="mix">Both</option></select><select id="grade" aria-label="Grade level"></select></span></div>
-      <div class="stack" id="mpick">
-        <p>Choose a grade to start. You can change it at the top any time. Questions follow the Common Core standards for that grade and adapt to what has and hasn't been learned.</p>
+      <div class="row"><h2 id="math-h">Math for bones</h2><span style="display:flex;gap:6px;min-width:0"><select id="subject" aria-label="Subject"><option value="math">Math</option><option value="ela">English</option><option value="mix">Both</option></select><button id="grade" type="button" aria-label="Grade level. Locked: grown-ups can change it."></button></span></div>
+      <div class="stack" id="mgrown" hidden>
+        <h2>Grown-ups only</h2>
+        <p id="gr-p" style="font-size:15px"></p>
         <div class="grades" id="grades"></div>
+        <label class="pinrow"><span id="gr-l"></span><input id="gr-pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></label>
+        <div class="fb" id="gr-fb"></div>
+        <div class="row"><button class="link" id="gr-cancel" type="button">Cancel</button><button class="go small" id="gr-ok" type="button">Lock the grade</button></div>
       </div>
       <div class="slate" id="slate" hidden></div>
       <div class="stack" id="mplay">
         <div class="row" style="justify-content:center"><span class="sub skill" id="mskill"></span><button class="link" id="mhow" type="button">How to</button></div>
         <p class="lesson-ex" id="mpass" hidden></p>
+        <div class="listen" id="mlisten" hidden><button class="go small" id="lplay" type="button">Listen</button><span class="sub" id="lmsg"></span></div>
         <div class="q" id="q"></div>
         <div class="answers" id="answers"></div>
         <div class="fb" id="fb"></div>
@@ -370,13 +382,23 @@ const TRICKS = [
 const STAGES = ['Puppy','Young dog','Grown dog'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, ela2:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
+// the grade and the grown-up code live apart from the save, so erasing the game does not unlock the grade
+const LOCK = 'pocketpup.lock'; let GL = {};
+try { GL = JSON.parse(localStorage.getItem(LOCK)) || {}; } catch(e){}
+const saveLock = () => { try { localStorage.setItem(LOCK, JSON.stringify(GL)); } catch(e){} };
 
 function load(extra){
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
   if (extra && extra.S) S = Object.assign(fresh(), extra.S);
+  const oldEla = S.math && !S.math.ela2;
   S.math = Object.assign(fresh().math, S.math); S.mode = 'both'; S.trophies = S.trophies || []; S.breed = S.breed || 'lab'; S.sex = S.sex || 'girl';
+  if (oldEla){      // listening and essay skills joined the English lists for grades 3 and up: move saved mastery to the new places
+    const mp = [0,1,3,4,5,6,8,9,10,11], sk = S.math.sk, E = /^E[3-6]/;
+    for (const g of ['E3','E4','E5','E6']){ const old = mp.map((v,i) => sk[g+':'+i]); for (let i = 0; i < 12; i++) delete sk[g+':'+i]; old.forEach((v,i) => { if (v) sk[g+':'+mp[i]] = v; }); }
+    S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; if (S.math.slate && E.test(S.math.slate.g || '')) S.math.slate = null; S.math.ela2 = 1; }
+  if (GL.grade) S.math.grade = GL.grade; else if (S.math.grade){ GL.grade = S.math.grade; saveLock(); }
   // time away: needs drift down gently, never to zero
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
   if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
@@ -1384,6 +1406,167 @@ const RSRC = [
   ["A student is using a book about bridges to write a report on the Golden Gate Bridge.", "Which part of the book would best help the student find the page that tells when the bridge was built?", "the index", ["the title page", "the front cover", "the author's note"]],
   ["A student wants to find out how tall giraffes grow.", "Which search phrase would give the most useful results?", "giraffe height", ["giraffe", "funny tall animals", "zoo tickets"]],
   ["A student is writing an opinion essay claiming that school gardens are useful. She took these notes from an article.", "Which note best supports her claim?", "Students at schools with gardens learned more about healthy food.", ["Gardens need soil.", "Some gardens have fences.", "Carrots are orange."]]];
+// more passages, written fresh for the game
+Object.assign(PASSAGES, {
+  quilt:{t:"The Missing Square", p:["Every winter, Grandma Odile spread the family quilt across the big bed. Each square had been sewn by someone in the family, and each one told a story.", "Amara traced the squares with her finger. There was a blue square cut from her uncle's first school shirt and a yellow one made from her mother's baby blanket. But in one corner there was only plain white cloth.", "\"Why is that one empty?\" Amara asked.", "Grandma smiled. \"It is not empty. It is waiting. A quilt like this is never finished.\"", "That night Amara could not sleep. She thought about the white corner the way she might think about a loose tooth. In the morning she dug through her closet and found the red jacket she had worn the day she learned to ride a bicycle. It was far too small now.", "It took Amara three afternoons to cut a square and sew it on. Her stitches wandered like a path through tall grass, and she pricked her thumb twice. When she finished, the red square was a little crooked.", "\"It is not as neat as the others,\" Amara said.", "Grandma ran her hand over it. \"Neat is not the point,\" she said. \"Now the quilt knows you, too.\""], items:[
+    {k:1, q:"Why is one corner of the quilt plain white?", a:"It is saved for a square that has not been made yet.", w:["The cloth faded in the sun.", "Grandma ran out of thread.", "Someone removed the square that used to be there."], why:"In paragraph 4 Grandma says the corner is not empty but waiting, because the quilt is never finished."},
+    {k:1, q:"Part A: Which word best describes Amara?", a:"determined", w:["careless", "timid", "boastful"], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"It took Amara three afternoons to cut a square and sew it on.\"", w:["\"Amara traced the squares with her finger.\"", "\"It was far too small now.\"", "\"Grandma ran her hand over it.\""]}, why:"Amara keeps working for three afternoons even though the sewing is hard. Sticking with a hard job shows she is determined."},
+    {k:1, q:"Which sentence best states a theme of the passage?", a:"Each person can add something of their own to a family's story.", w:["Old things should be kept in a safe place.", "Sewing takes years of practice to learn.", "Winter is the best season for families."], why:"Amara adds her own square, and Grandma says the quilt now knows her too."},
+    {k:1, multi:1, q:"Choose two details that show sewing the square was hard for Amara.", a:["She pricked her thumb twice.", "It took her three afternoons."], w:["She found the jacket in her closet.", "She could not sleep that night.", "Grandma smiled at her."], why:"Paragraph 6 tells how long the sewing took and that she pricked her thumb."},
+    {k:2, q:"Read this sentence from paragraph 6: \"Her stitches wandered like a path through tall grass.\" What does the sentence mean?", a:"Her stitches were not in a straight line.", w:["She sewed the square outdoors.", "Her stitches were green.", "She sewed very quickly."], why:"A path through tall grass bends back and forth, so the comparison shows crooked stitches."},
+    {k:2, q:"What does Grandma mean when she says, \"Now the quilt knows you, too\"?", a:"Amara has become part of the family's quilt.", w:["The quilt can now keep Amara warm.", "Amara has finally learned how the quilt was made.", "The quilt is now finished forever."], why:"Every square stands for a family member, and now one stands for Amara."},
+    {k:2, q:"In paragraph 5, the author compares the white corner to a loose tooth. What does this comparison show?", a:"Amara cannot stop thinking about it.", w:["The corner is about to fall off.", "Amara is in pain.", "The quilt is very old."], why:"A loose tooth is something you keep noticing. Amara cannot sleep because she keeps thinking about the corner."},
+    {k:2, q:"Why does the author most likely include paragraph 2?", a:"to show that each square holds a family memory", w:["to explain how to sew a quilt", "to show that Amara is bored", "to describe the weather in winter"], why:"Paragraph 2 gives examples: a square from a school shirt and one from a baby blanket."}]},
+  chess:{t:"Three Moves Ahead", p:["Priya had lost eleven games of chess to her grandfather, and she had counted every one.", "\"You play like a hummingbird,\" Dada told her, setting the pieces back in their rows. \"Fast and bright, here and there. But the board rewards the heron, who stands still and watches.\"", "Priya frowned. Standing still was not something she was known for. Still, the next Saturday she tried something new. Before each move, she sat on her hands and asked herself one question: What will he do after I do this?", "The game slowed to a crawl. Twice Priya reached for a piece and then pulled her hand back. Dada's eyebrows rose, but he said nothing.", "Near the end, Priya saw it. If she moved her knight, Dada would capture it, and that capture would leave his king with nowhere to go. She would have to give up a piece to win the game. Her stomach fluttered. She pushed the knight forward.", "Dada studied the board for a long moment. Then he tipped his king onto its side and laughed until his shoulders shook.", "\"Twelve games,\" he said. \"It only took the hummingbird twelve games to grow long legs.\""], items:[
+    {k:1, q:"What change does Priya make in the way she plays?", a:"She thinks about her grandfather's next move before she makes her own.", w:["She moves her pieces faster than before.", "She asks her grandfather which piece to move.", "She copies each move her grandfather makes."], why:"In paragraph 3 she asks herself, \"What will he do after I do this?\" before every move."},
+    {k:1, q:"Part A: What lesson does Priya learn in the passage?", a:"Slowing down to think ahead can lead to success.", w:["Winning matters more than having fun.", "Older players should let younger players win.", "It is better to quit than to keep losing."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Before each move, she sat on her hands and asked herself one question: What will he do after I do this?\"", w:["\"Priya had lost eleven games of chess to her grandfather, and she had counted every one.\"", "\"Dada's eyebrows rose, but he said nothing.\"", "\"Then he tipped his king onto its side and laughed until his shoulders shook.\""]}, why:"Priya wins only after she starts stopping to think ahead. The sentence about sitting on her hands shows her doing exactly that."},
+    {k:1, q:"How does Dada feel when Priya wins?", a:"proud and delighted", w:["angry and embarrassed", "bored and tired", "worried and confused"], why:"He laughs until his shoulders shake and jokes that the hummingbird has grown long legs."},
+    {k:1, multi:1, q:"Choose two details that show Priya is thinking carefully during the game.", a:["She reaches for a piece and then pulls her hand back.", "She sits on her hands before each move."], w:["She counts every game she has lost.", "She frowns at her grandfather.", "Her stomach flutters."], why:"Sitting on her hands and pulling her hand back both show her stopping to think before she moves."},
+    {k:2, q:"What does Dada mean when he says Priya plays \"like a hummingbird\"?", a:"She moves quickly without planning.", w:["She is small for her age.", "She hums while she plays.", "She likes bright colors."], why:"He explains it himself: \"Fast and bright, here and there.\""},
+    {k:2, q:"What does the phrase \"slowed to a crawl\" mean in paragraph 4?", a:"moved very slowly", w:["moved onto the floor", "stopped completely", "became boring"], why:"Priya now thinks before every move, so the game takes much longer. Crawling is a slow way to move."},
+    {k:2, q:"In the last paragraph, what does Dada mean when he says the hummingbird has grown \"long legs\"?", a:"Priya has learned to be patient, like a heron.", w:["Priya has grown taller.", "Priya can now run faster.", "Priya should play a different game."], why:"In paragraph 2 the long-legged heron stands still and watches. Dada is saying Priya now plays that way."},
+    {k:2, q:"Why does the author begin by telling the reader that Priya had counted every loss?", a:"to show how much winning matters to Priya", w:["to show that Priya is good at math", "to show that Dada keeps score", "to explain the rules of chess"], why:"Someone who counts every loss cares a great deal about finally winning."}]},
+  baker:{t:"Before the Town Wakes", poem:1, p:["At four o'clock the street is ink,\nthe houses shut like sleeping eyes.\nOne window glows. Behind the glass\nthe baker ties her apron on.", "She wakes the dough with floury hands,\nfolds it over, presses, turns.\nThe oven breathes its orange breath\nand warms the corners of the room.", "Outside, the dark begins to thin.\nA paper truck goes rattling by.\nThe loaves grow round and gold as moons\nbehind the oven's little door.", "By six the bell above the door\nis ringing like a morning bird.\nThe town comes in with sleepy thanks\nand carries her night home in bags."], items:[
+    {k:1, q:"What is the poem mostly about?", a:"a baker who works before dawn so the town has bread", w:["a town that cannot sleep at night", "a truck driver delivering newspapers", "a child who visits a bakery after school"], why:"Every stanza follows the baker, from tying her apron at four o'clock to selling the bread at six."},
+    {k:1, q:"What happens in the last stanza?", a:"Customers arrive and buy the bread.", w:["The baker goes to sleep.", "The oven is turned on.", "The street grows dark."], why:"The bell rings and \"the town comes in\" and carries the bread home in bags."},
+    {k:1, q:"Part A: What does the poem suggest about the baker's work?", a:"It matters to the people of the town.", w:["It is quick and easy.", "It is done in the afternoon.", "Nobody ever notices it."], b:{q:"Part B: Which line from the poem best supports your answer in Part A?", a:"\"The town comes in with sleepy thanks\"", w:["\"A paper truck goes rattling by.\"", "\"At four o'clock the street is ink,\"", "\"Outside, the dark begins to thin.\""]}, why:"The townspeople come in and thank her, which shows that her work matters to them."},
+    {k:2, q:"Read this line from the poem: \"At four o'clock the street is ink.\" What does the line mean?", a:"The street is very dark.", w:["The street is wet with rain.", "Someone has spilled ink on the street.", "The street is crowded."], why:"Ink is black. Calling the street ink is a way to say it is completely dark."},
+    {k:2, q:"Read this line from the poem: \"The oven breathes its orange breath.\" What kind of figurative language does the poet use?", a:"personification", w:["simile", "alliteration", "rhyme"], why:"Breathing is something living things do. Giving a human action to an oven is personification."},
+    {k:2, q:"What does the last line, \"and carries her night home in bags,\" mean?", a:"People take home the bread she spent the night making.", w:["People carry the darkness away.", "The baker packs her things to go home.", "The bags are as black as the night."], why:"The bags hold bread, and the bread is what her night of work produced."},
+    {k:2, q:"How does the setting change from the first stanza to the last?", a:"It moves from the dark of night to the start of morning.", w:["It moves from the bakery to the baker's home.", "It moves from summer to winter.", "It moves from a noisy street to a silent one."], why:"The poem starts at four o'clock in the dark, the dark \"begins to thin,\" and by six the town is awake."},
+    {k:2, q:"Which line from the poem contains a simile?", a:"\"the houses shut like sleeping eyes.\"", w:["\"She wakes the dough with floury hands,\"", "\"A paper truck goes rattling by.\"", "\"the baker ties her apron on.\""], why:"A simile compares two things using like or as. The houses are compared to sleeping eyes with the word like."}]},
+  octopus:{t:"The Clever Octopus", p:["An octopus may look like a floppy bag with eight arms, but it is one of the cleverest animals in the sea.", "An octopus has no bones. Its body is so soft that it can squeeze through any gap larger than its beak, the only hard part of its body. An octopus the size of a basketball can slip through a hole no bigger than a coin.", "An octopus is also a master of disguise. Its skin holds thousands of tiny color sacs. By squeezing or stretching these sacs, the octopus can change color in less than a second. It can even make its skin bumpy to match a rock or a piece of coral.", "If hiding fails, the octopus has another trick. It squirts a cloud of dark ink into the water. While the confused hunter stares at the cloud, the octopus jets away.", "Scientists have learned that octopuses can solve problems, too. In aquariums, they have unscrewed jar lids to reach the food inside. Some have even climbed out of their tanks at night. Keepers now put heavy lids on octopus tanks, just in case."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"Octopuses have surprising abilities that help them survive.", w:["Octopuses are dangerous to people.", "Octopuses are the largest animals in the sea.", "Aquariums are the best place to see an octopus."], why:"Each paragraph describes a different ability: squeezing, disguise, ink and problem solving."},
+    {k:1, q:"According to the passage, why can an octopus fit through a tiny hole?", a:"Its body has no bones.", w:["It can shrink its beak.", "It changes color.", "It squirts ink to make the hole wider."], why:"Paragraph 2 says an octopus has no bones and its body is soft."},
+    {k:1, multi:1, q:"Choose two ways an octopus protects itself from hunters.", a:["It changes its skin to match its surroundings.", "It squirts a cloud of ink and swims away."], w:["It unscrews jar lids.", "It grows a hard shell.", "It climbs out of the water."], why:"Paragraph 3 describes the disguise and paragraph 4 describes the ink."},
+    {k:1, q:"Part A: Which conclusion about octopuses is supported by the passage?", a:"They can figure out how to get things they want.", w:["They prefer living in aquariums.", "They are afraid of the dark.", "They cannot survive without scientists."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"In aquariums, they have unscrewed jar lids to reach the food inside.\"", w:["\"An octopus has no bones.\"", "\"It squirts a cloud of dark ink into the water.\"", "\"Its skin holds thousands of tiny color sacs.\""]}, why:"Unscrewing a lid to get food is an example of solving a problem to get something."},
+    {k:2, q:"What does the phrase \"a master of disguise\" mean in paragraph 3?", a:"very good at changing how it looks", w:["very good at swimming fast", "the leader of a group", "wearing a costume"], why:"The rest of the paragraph explains how the octopus changes its color and the feel of its skin."},
+    {k:2, q:"Why does the author end the passage with the sentence about heavy lids?", a:"to show how seriously keepers take the octopus's cleverness", w:["to explain how to build a fish tank", "to show that octopuses are weak", "to prove that octopuses dislike people"], why:"Keepers add heavy lids because octopuses are clever enough to climb out."},
+    {k:2, q:"What is the main purpose of paragraph 4?", a:"to describe what an octopus does when hiding does not work", w:["to explain what octopuses eat", "to compare octopuses with fish", "to tell where octopuses live"], why:"The paragraph begins \"If hiding fails\" and then describes the ink trick."},
+    {k:2, q:"What does the word \"jets\" mean as it is used in paragraph 4?", a:"moves away quickly", w:["flies in an airplane", "sprays water at the hunter", "floats slowly"], why:"The octopus is escaping from a hunter, so it must move away fast."}]},
+  mule:{t:"Mail by Mule", p:["Most mail in the United States travels by truck or airplane. But in one village in Arizona, letters and packages arrive on the backs of mules.", "The village of Supai lies at the bottom of a deep canyon, part of the Grand Canyon. It is the home of the Havasupai people. No road reaches the village. The only ways in are a helicopter or a steep trail eight miles long.", "Several days each week, a line of mules called a mule train sets out from the canyon rim. Each animal carries boxes strapped to its sides. The trip down takes about three hours, and the mules know the trail so well that they hardly need to be guided.", "Because nearly everything the village needs comes down the trail, the mules carry far more than letters. Much of the load is food. Milk, eggs, and frozen foods are packed carefully so that they survive the hot, bumpy trip.", "A truck would be faster, and a drone might someday be faster still. But on a narrow trail of rock and dust, a sure-footed mule is still the best tool for the job. In Supai, the old way remains the one that works."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"A village in a canyon still receives its mail and supplies by mule.", w:["Mules are stronger than horses.", "Mail delivery in the United States is too slow.", "The Grand Canyon is a popular place to hike."], why:"The whole passage explains why and how mules bring mail and food to Supai."},
+    {k:1, q:"Why is mail delivered to Supai by mule?", a:"No road reaches the village.", w:["The village has no post office.", "Trucks cost too much to drive.", "The people there do not like helicopters."], why:"Paragraph 2 says no road reaches the village, only a helicopter or a steep trail."},
+    {k:1, q:"Part A: What can the reader conclude about life in Supai?", a:"Getting everyday supplies takes extra planning and effort.", w:["People there rarely eat fresh food.", "Visitors are not allowed in the village.", "The village will soon have a highway."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Milk, eggs, and frozen foods are packed carefully so that they survive the hot, bumpy trip.\"", w:["\"Most mail in the United States travels by truck or airplane.\"", "\"It is the home of the Havasupai people.\"", "\"A truck would be faster, and a drone might someday be faster still.\""]}, why:"Even ordinary food has to be packed with care and carried for hours, which shows the extra effort."},
+    {k:1, multi:1, q:"Choose two details that explain why mules are well suited to the job.", a:["They are sure-footed on a narrow trail.", "They know the trail so well that they hardly need a guide."], w:["They are faster than trucks.", "They can fly over the canyon.", "They carry only letters."], why:"Paragraph 3 says the mules know the trail, and paragraph 5 calls them sure-footed."},
+    {k:2, q:"What does the word \"sure-footed\" mean in paragraph 5?", a:"not likely to slip or fall", w:["wearing metal shoes", "walking very quickly", "certain of the way home"], why:"The trail is narrow and made of rock and dust, so an animal that does not slip is what is needed."},
+    {k:2, q:"How is paragraph 3 mainly organized?", a:"It describes the mules' trip in the order it happens.", w:["It compares mules with helicopters.", "It gives an opinion about the mail.", "It asks a question and then answers it."], why:"The paragraph follows the mule train from setting out at the rim to the trip down."},
+    {k:2, q:"Why does the author mention trucks and drones in paragraph 5?", a:"to show that newer ways are not always better for every place", w:["to argue that Supai needs a road", "to explain how drones work", "to show that mules are slow and old-fashioned"], why:"The author admits trucks and drones are faster but says a mule is still the best tool on that trail."},
+    {k:2, q:"Which sentence from the passage best states the author's point of view?", a:"\"In Supai, the old way remains the one that works.\"", w:["\"Each animal carries boxes strapped to its sides.\"", "\"Much of the load is food.\"", "\"No road reaches the village.\""], why:"The other sentences are facts. This one gives the author's judgment about the mules."}]},
+  dark:{t:"Let the Night Be Dark", p:["Step outside on a clear night in a big city and count the stars. You may not need all your fingers. The stars have not gone anywhere. They are hidden by the glow of our own lights.", "This glow is called light pollution, and it does more than hide the sky. Many animals depend on darkness. Baby sea turtles hatch on beaches at night and find the ocean by crawling toward the brightest horizon. For millions of years, that was the moonlit water. Today, streetlights and hotel signs can lead hatchlings the wrong way, toward roads instead of waves.", "Birds suffer as well. Many songbirds migrate at night and steer by the stars. Bright buildings confuse them, and they may circle the lights until they are exhausted.", "Light pollution also wastes money. A lamp that shines up into the sky lights nothing that anyone needs to see. Towns pay for that electricity anyway.", "Fortunately, this is one kind of pollution that is simple to fix. Shields can point outdoor lights down at the ground, where people actually walk. Lights can be dimmed or switched off late at night. Some cities that have made these changes report lower bills and darker skies.", "No one is asking towns to sit in the dark. We are asking them to put light only where it is needed. The night sky belongs to everyone, and it is worth protecting."], items:[
+    {k:1, q:"What is the author's main claim?", a:"Towns should reduce light pollution by using outdoor lights more carefully.", w:["Cities should turn off every light at night.", "Sea turtles should be moved to darker beaches.", "People should stop looking at the stars."], why:"The last paragraph asks towns to put light only where it is needed."},
+    {k:1, multi:1, q:"Choose two reasons the author gives to support the claim.", a:["Bright lights harm animals that depend on darkness.", "Light that shines into the sky wastes money."], w:["Dark streets are safer for drivers.", "Stars are disappearing from space.", "Electricity is free at night."], why:"Paragraphs 2 and 3 describe harm to turtles and birds. Paragraph 4 is about wasted money."},
+    {k:1, q:"According to the passage, how do baby sea turtles find the ocean?", a:"They crawl toward the brightest horizon.", w:["They follow their mothers.", "They listen for the waves.", "They wait until morning."], why:"Paragraph 2 says hatchlings crawl toward the brightest horizon."},
+    {k:1, q:"Part A: Which statement best describes the author's view of light pollution?", a:"It is a serious problem, but it can be solved.", w:["It is too large a problem to fix.", "It is not really a problem.", "It affects only animals."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Fortunately, this is one kind of pollution that is simple to fix.\"", w:["\"You may not need all your fingers.\"", "\"Birds suffer as well.\"", "\"For millions of years, that was the moonlit water.\""]}, why:"The author describes real harm and then says the problem is simple to fix."},
+    {k:2, q:"Why does the author begin by asking the reader to count the stars?", a:"to help readers notice the problem for themselves", w:["to teach readers how to count", "to prove that stars are small", "to show that cities are beautiful"], why:"Picturing a city sky with only a few stars lets the reader see the problem before it is named."},
+    {k:2, q:"What is the purpose of the first sentence of paragraph 6?", a:"to answer a worry that readers might have", w:["to introduce a new kind of pollution", "to describe a town with no lights", "to give a fact about electricity"], why:"Some readers may fear dark streets. The author says no one is asking for that."},
+    {k:2, q:"What does the word \"exhausted\" mean as it is used in paragraph 3?", a:"completely worn out", w:["very excited", "lost forever", "safe at last"], why:"Birds that circle and circle the lights use up all their strength."},
+    {k:2, q:"How is paragraph 5 mainly organized?", a:"It presents solutions to a problem.", w:["It tells events in the order they happened.", "It compares two kinds of animals.", "It describes how a lamp is built."], why:"The paragraph lists fixes: shields, dimming, and switching lights off late at night."}]},
+});
+WORG.push(
+  ["A student is writing a report about the moon. Read the draft.\n\nThe moon does not make its own light. ______ That is why the moon seems to glow at night.", "Which sentence best fits in the blank?", "It reflects light from the sun.", ["The moon is far away.", "Astronauts first visited the moon in 1969.", "Some nights are cloudy."]],
+  ["A student is writing an opinion piece. Read the draft.\n\nOur town needs a new crosswalk on Pine Street. Cars drive fast there, and many children cross on their way to school. ______", "Choose the sentence that best concludes the paragraph.", "A crosswalk would make the walk to school safer for everyone.", ["Pine Street has many pine trees.", "Some children take the bus.", "Cars come in many colors."]],
+  ["A student is writing directions for making a paper airplane. Read the draft.\n\n(1) Fold the paper in half the long way. (2) Throw the airplane gently. (3) Open the paper and fold the top corners to the center line. (4) Fold the wings down.", "Which sentence is out of order?", "sentence 2", ["sentence 1", "sentence 3", "sentence 4"]],
+  ["A student is writing a story. Read the draft.\n\nThe cave was dark. [[Jin was scared.]] He took one step forward.", "Which sentence best replaces the underlined sentence to show, not tell, how Jin feels?", "Jin's knees trembled, and the flashlight shook in his hand.", ["Jin was very, very scared.", "Jin felt an emotion.", "Caves can be scary places."]],
+  ["A student is writing a report about hummingbirds. Read the draft.\n\nHummingbirds are tiny, but they eat a great deal. ______, a hummingbird may visit more than a thousand flowers in one day.", "Which words best connect the ideas?", "In fact", ["However", "In conclusion", "On the other hand"]],
+  ["A student is writing a report. Read the draft.\n\nThe Arctic fox is built for the cold. It has thick fur, even on the bottoms of its feet. Its small ears lose little heat.", "Which sentence would best add another supporting detail?", "Its bushy tail wraps around its body like a blanket.", ["Foxes appear in many folk tales.", "The Arctic is at the top of the globe.", "I would like to see a fox someday."]],
+  ["A student is writing an opinion essay claiming that every student should learn to swim.", "Which sentence states an opposing idea that the writer should respond to?", "Some families do not live near a pool.", ["Swimming is good exercise.", "Swimming can save lives.", "Swimming is a skill that lasts a lifetime."]]);
+WPREC.push(
+  ["The old door [[made a noise]] as it swung open.", "creaked", ["talked", "sang", "was"]], ["Rain [[came]] down so hard that the street flooded.", "poured", ["dripped", "sprinkled", "stayed"]],
+  ["Maya was [[sad]] when her best friend moved far away.", "heartbroken", ["bothered", "sleepy", "surprised"]], ["The cheetah [[moved]] across the plain after the antelope.", "sprinted", ["wandered", "strolled", "tiptoed"]],
+  ["The soup was so [[hot]] that it burned my tongue.", "scalding", ["warm", "tasty", "mild"]], ["The kitten's fur was [[nice]] and felt like velvet.", "silky", ["fine", "okay", "rough"]]);
+EGRAM.push(
+  ["She and I have finished our project.", ["Her and me have finished our project.", "She and me has finished our project.", "Her and I has finished our project."]], ["The geese flew south before the first snow.", ["The gooses flew south before the first snow.", "The geese flied south before the first snow.", "The geese flown south before the first snow."]],
+  ["Of the two paths, this one is shorter.", ["Of the two paths, this one is shortest.", "Of the two paths, this one is more shorter.", "Of the two paths, this one is most short."]], ["If it rains tomorrow, we will play inside.", ["If it rains tomorrow, we played inside.", "If it rained tomorrow, we will play inside.", "If it rains tomorrow, we will played inside."]],
+  ["There are three books on the table.", ["There is three books on the table.", "Their are three books on the table.", "They're three books on the table."]], ["Mia sings well, and she plays the drums, too.", ["Mia sings good, and she plays the drums, too.", "Mia sings well, and she plays the drums, to.", "Mia sing well, and she plays the drums, too."]]);
+ECONV.push(
+  ["\"Let's go to the beach,\" said Omar.", ["\"Lets go to the beach,\" said Omar.", "\"Let's go to the beach\", said Omar.", "\"Let's go to the beach, said Omar.\""]], ["Our class visited the Museum of Science on Friday.", ["Our class visited the museum of science on Friday.", "Our Class visited the Museum of Science on friday.", "Our class visited the Museum Of Science on friday."]],
+  ["No, we can't leave until Mrs. Ortiz arrives.", ["No we can't leave until Mrs. Ortiz arrives.", "No, we cant leave until Mrs. Ortiz arrives.", "No, we can't leave until mrs. Ortiz arrives."]], ["The dog's bowl was empty, so I filled it.", ["The dogs bowl was empty, so I filled it.", "The dog's bowl was empty so, I filled it.", "The dogs bowl was empty so I filled it."]]);
+ESPELL.push(["The [[children]] were [[excited]] to see the [[elefant]] at the [[parade]].", "elefant"], ["Please [[rember]] to [[bring]] your [[lunch]] and a [[jacket]].", "rember"], ["We [[usually]] eat [[breakfast]] [[togehter]] on [[Saturday]].", "togehter"], ["The [[mountain]] trail was [[beautiful]] but [[dificult]] to [[climb]].", "dificult"]);
+RSRC.push(
+  ["A student is writing a report about the life of Harriet Tubman.", "Which source would give the most reliable information?", "a biography from the school library", ["a movie poster", "a comic strip about a superhero", "a website where anyone can post without giving a name"]],
+  ["A student is researching how much sleep children need. She finds an article that was written in 1975.", "What is the best reason to look for another source?", "Newer research may have found different information.", ["Old articles are always wrong.", "The article is probably too long.", "Articles about sleep are boring."]],
+  ["A student wrote this sentence in a report: \"Honeybees visit about two million flowers to make one pound of honey.\"", "What should the student do to show where the fact came from?", "name the source where the fact was found", ["write the fact in capital letters", "leave the fact out", "say that everybody knows it"]],
+  ["A student is writing a report about penguins. He took these notes.\n\nNote 1: Emperor penguins huddle together to stay warm.\nNote 2: Penguins cannot fly, but they are fast swimmers.\nNote 3: My uncle has a penguin sticker on his car.", "Which note should be left out of the report?", "Note 3", ["Note 1", "Note 2", "none of them"]],
+  ["A student read two sources about bicycles.\n\nSource 1: Riding a bicycle to school is good exercise.\nSource 2: Bicycles do not pollute the air.", "Which claim do both sources support?", "Bicycles are a good way to travel.", ["Bicycles are expensive.", "Cars are faster than bicycles.", "Exercise is hard."]]);
+// listening: the presentation is read aloud and its words are not shown, as on the test
+const LISTEN = {
+  workday:{t:"A school announcement", x:"Good morning, students. This is Principal Vega with an announcement. This Saturday is our school garden workday. We will meet at the garden gate at nine o'clock in the morning and finish by noon. We need helpers to pull weeds, spread wood chips on the paths, and plant bean seeds in the new beds. Please wear old clothes and closed shoes, and bring a water bottle. Gloves and tools will be provided, so you do not need to bring your own. Children in kindergarten through second grade must come with an adult. If it rains, the workday will move to the following Saturday. Thank you, and I hope to see you there.", items:[
+    {q:"What is the main purpose of the announcement?", a:"to invite students to help at the garden workday", w:["to explain how bean seeds grow", "to tell students the garden is closed", "to thank students for pulling weeds"], why:"The principal says when and where to meet, what work is needed and what to bring. That is an invitation to help."},
+    {q:"What should students bring to the workday?", a:"a water bottle", w:["gloves", "a shovel", "bean seeds"], why:"The principal says to bring a water bottle. Gloves and tools will be provided."},
+    {q:"What will happen if it rains on Saturday?", a:"The workday will be held one week later.", w:["The workday will be cancelled.", "The workday will move indoors.", "The workday will start at noon."], why:"The principal says the workday will move to the following Saturday."},
+    {q:"Which students must come with an adult?", a:"students in kindergarten through second grade", w:["all students", "fifth graders", "students who are new to the school"], why:"The announcement names kindergarten through second grade."},
+    {q:"About how long will the workday last?", a:"three hours", w:["one hour", "nine hours", "all day"], why:"It starts at nine o'clock and ends by noon. From nine to twelve is three hours."}]},
+  leaves:{t:"Why leaves change color", x:"Have you ever wondered why leaves change color in the fall? All summer, leaves are busy making food for the tree. To do this they use sunlight and a green material called chlorophyll. There is so much chlorophyll that it covers up the other colors in the leaf. Yellow and orange are there the whole time. You just cannot see them. In autumn, the days grow shorter and cooler. The tree gets ready to rest for the winter, and it stops making chlorophyll. As the green fades away, the hidden yellow and orange finally show. Soon after, the tree lets go of its leaves, and they drift to the ground.", items:[
+    {q:"What is the main idea of the presentation?", a:"Leaves change color when their green fades and other colors show.", w:["Cold air paints the leaves in autumn.", "Trees die every winter.", "Yellow leaves make more food than green leaves."], why:"The speaker explains that the tree stops making chlorophyll, the green fades, and the hidden colors appear."},
+    {q:"According to the speaker, what is chlorophyll?", a:"a green material that helps leaves make food", w:["a yellow color hidden in the leaf", "a kind of tree", "the part of the leaf that falls first"], why:"The speaker says leaves make food using sunlight and a green material called chlorophyll."},
+    {q:"According to the speaker, when are yellow and orange in a leaf?", a:"the whole time, hidden under the green", w:["only in autumn", "only after the leaf falls", "only in winter"], why:"The speaker says yellow and orange are there the whole time but you cannot see them."},
+    {q:"What causes a tree to stop making chlorophyll?", a:"The days grow shorter and cooler.", w:["Rain washes the green away.", "Animals eat the leaves.", "The tree runs out of water."], why:"In autumn the days grow shorter and cooler, and the tree gets ready to rest."}]},
+  sled:{t:"A sled dog trainer speaks", x:"Hello, everyone. My name is Kiona, and I train sled dogs. People often think the strongest dogs go at the front of the team. That is not true. The dogs at the front are called lead dogs, and they are chosen because they are smart and they listen well. They hear my commands and steer the whole team. The strongest dogs run at the back, closest to the sled. They are called wheel dogs, and they do the heaviest pulling. Before a run, every dog gets a set of four little boots. The boots protect their paws from sharp ice. A sled dog team works only when every dog does its own job. I may be the driver, but the dogs are the real team.", items:[
+    {q:"What is the main idea of the presentation?", a:"Each dog on a sled team has its own job.", w:["Sled dogs are the fastest dogs in the world.", "Only the strongest dogs can pull a sled.", "Sled dogs do not need a driver."], why:"The speaker describes lead dogs and wheel dogs and says the team works only when every dog does its own job."},
+    {q:"Why are lead dogs chosen for the front of the team?", a:"They are smart and listen well.", w:["They are the strongest.", "They are the oldest.", "They have the thickest fur."], why:"The speaker says lead dogs are chosen because they are smart and they listen well."},
+    {q:"Where do the strongest dogs run?", a:"at the back, closest to the sled", w:["at the front of the team", "in the middle of the team", "beside the driver"], why:"The strongest dogs, called wheel dogs, run at the back and do the heaviest pulling."},
+    {q:"Why do the dogs wear boots?", a:"to protect their paws from sharp ice", w:["to help them run faster", "to keep the sled clean", "so the driver can tell them apart"], why:"The speaker says the boots protect their paws from sharp ice."},
+    {q:"What does the speaker mean by saying the dogs are \"the real team\"?", a:"The dogs do the most important work.", w:["The driver is not needed at all.", "The dogs are better than other dogs.", "The speaker does not enjoy driving."], why:"The speaker gives the credit to the dogs, who steer and pull the sled."}]},
+  ranger:{t:"A ranger at the tide pools", x:"Welcome to Pebble Cove. I am Ranger Tomas, and before we walk down to the tide pools, I have three rules. First, walk only on bare rock. The green and brown patches are living seaweed, and they are as slippery as soap. Second, look with your eyes and touch with one wet finger. Sea stars and anemones are delicate, and dry hands can harm them. Third, never turn your back on the ocean. Waves can arrive without warning. Now, here is something amazing. Twice a day the tide goes out, and the animals in these pools are left in the sun for hours. Mussels clamp their shells shut to hold in water. Anemones fold up like wet socks. They are not sick. They are waiting for the sea to come back.", items:[
+    {q:"What is the main purpose of the ranger's talk?", a:"to prepare visitors to explore the tide pools safely", w:["to explain how tides are measured", "to tell visitors the beach is closed", "to teach visitors how to catch sea stars"], why:"The ranger gives three rules before the walk and then tells visitors what they will see."},
+    {q:"Why should visitors walk only on bare rock?", a:"The seaweed is alive and slippery.", w:["The rock is warmer.", "The sand is too deep.", "The seaweed is poisonous."], why:"The ranger says the patches are living seaweed and as slippery as soap."},
+    {q:"Why does the ranger say to touch animals with one wet finger?", a:"Dry hands can harm delicate animals.", w:["The animals might bite.", "Wet fingers are warmer.", "The water is too cold for a whole hand."], why:"The ranger says sea stars and anemones are delicate and dry hands can harm them."},
+    {q:"What do mussels do when the tide goes out?", a:"They clamp their shells shut to hold in water.", w:["They crawl to deeper water.", "They fold up like socks.", "They bury themselves in the sand."], why:"The ranger says mussels clamp their shells shut to hold in water."},
+    {q:"The ranger says anemones \"fold up like wet socks.\" What does he want visitors to understand?", a:"The anemones look limp, but they are healthy.", w:["The anemones are dying.", "The anemones are made of cloth.", "The anemones should be picked up."], why:"Right afterward he says they are not sick. They are waiting for the sea to come back."}]},
+  paper:{t:"How paper is recycled", x:"Today I want to explain what happens to a sheet of paper after you drop it in the recycling bin. First, a truck carries the paper to a recycling center, where machines sort it from cans and bottles. Next, the paper is packed into huge bales and sent to a paper mill. At the mill, the paper is mixed with water in a giant tank that works like a kitchen blender. The paper breaks apart into a soft, gray mush called pulp. Then the pulp is cleaned to remove ink, staples, and tape. Finally, the clean pulp is sprayed onto wide screens, pressed flat by heavy rollers, and dried. The result is a new roll of paper. But paper cannot be recycled forever. Each time, its fibers get shorter and weaker. After five to seven trips, the fibers are too short to hold together.", items:[
+    {q:"What is the main purpose of the presentation?", a:"to explain the steps of recycling paper", w:["to persuade listeners to use less paper", "to describe how trees are cut down", "to compare paper with plastic"], why:"The speaker goes through the steps in order, using words such as first, next, then and finally."},
+    {q:"According to the speaker, what is pulp?", a:"a soft mush made of paper and water", w:["a machine that sorts paper", "a huge bale of paper", "the ink that is removed from paper"], why:"Paper mixed with water breaks apart into a soft, gray mush called pulp."},
+    {q:"What happens right after the pulp is cleaned?", a:"It is sprayed onto screens, pressed, and dried.", w:["It is sorted from cans and bottles.", "It is packed into bales.", "It is mixed with water in a tank."], why:"After cleaning comes the last step: the pulp is sprayed onto wide screens, pressed flat and dried."},
+    {q:"Why can paper not be recycled forever?", a:"Its fibers get shorter and weaker each time.", w:["The ink can never be removed.", "Paper mills run out of water.", "The staples damage the machines."], why:"The speaker says the fibers get shorter and weaker each time until they cannot hold together."},
+    {q:"Why does the speaker compare the tank to a kitchen blender?", a:"to help listeners picture how the paper is broken apart", w:["to show that the tank is small", "to explain how to make a smoothie", "to prove that paper is a kind of food"], why:"Most listeners have seen a blender, so the comparison helps them imagine paper and water being mixed into mush."}]},
+  zones:{t:"Why we have time zones", x:"Imagine calling a cousin in New York from California at seven in the morning. You are eating breakfast, but your cousin is already at school. Why? The answer is time zones. Long ago, every town set its clocks by the sun. When the sun was highest in the sky, it was noon. That meant noon in one town came a few minutes before noon in a town to the west. Nobody minded until railroads arrived. Trains moved so fast that the schedules became a puzzle. A station might have several clocks, each showing a different railroad's time. So in 1883, the railroads divided the country into zones. Every town in a zone would share the same time. Today the mainland United States has four time zones, and each one is an hour apart from the next.", items:[
+    {q:"What is the main idea of the presentation?", a:"Time zones were created to solve a problem caused by fast train travel.", w:["Trains are faster than telephones.", "The sun is highest in the sky at noon.", "New York is far from California."], why:"The speaker explains that every town kept its own time until train schedules became confusing, so the railroads made zones."},
+    {q:"How did towns set their clocks long ago?", a:"by the position of the sun", w:["by the railroad schedule", "by calling other towns", "by the time in New York"], why:"The speaker says every town set its clocks by the sun, with noon when the sun was highest."},
+    {q:"Why did train schedules become \"a puzzle\"?", a:"Each town kept a slightly different time.", w:["The trains were often late.", "Stations had no clocks.", "Nobody could read the schedules."], why:"Noon came at a different moment in each town, so a fast train passed through many different times."},
+    {q:"According to the speaker, who divided the country into time zones in 1883?", a:"the railroads", w:["the president", "school teachers", "clock makers"], why:"The speaker says that in 1883 the railroads divided the country into zones."},
+    {q:"Why does the speaker begin by describing a phone call to a cousin?", a:"to give an everyday example of the topic", w:["to show that phone calls are expensive", "to explain how telephones work", "to tell a story about a family"], why:"The phone call shows a time difference that listeners may have noticed themselves, and it leads into the explanation."}]},
+};
+// essay tasks: the full-write question, built one part at a time from choices instead of typing
+const ESSAYS = [
+  {kind:"opinion essay", task:"Your principal is deciding whether to start a school garden. Write an opinion essay for the school newsletter. Use information from the sources.", src:["(magazine article) Students at schools with gardens tasted more new vegetables at lunch. Teachers used the garden for science and math lessons.", "(interview with a custodian) A garden needs watering during summer break. At one school, families signed up to take turns."], steps:[
+    {l:"Introduction", q:"Which sentence best introduces the essay and states a clear opinion?", a:"Our school should start a garden because it would help students eat better and learn outdoors.", w:["Gardens are places where plants grow.", "I am going to tell you about a garden.", "Do you like carrots? I like carrots a lot."], why:"An introduction to an opinion essay states the opinion and previews the reasons. The other choices never say what the writer wants."},
+    {l:"Evidence", multi:1, q:"Choose two pieces of evidence from the sources that best support the opinion.", a:["Students at schools with gardens tasted more new vegetables at lunch.", "Teachers used the garden for science and math lessons."], w:["My neighbor has a big garden.", "Gardens are fun, and everybody knows it.", "Tomatoes are red."], why:"Evidence must come from the sources and support the opinion. The other choices are personal comments or facts that prove nothing."},
+    {l:"Elaboration", q:"Which sentence best explains why the evidence about vegetables matters?", a:"This shows that a garden can change what students choose to eat.", w:["This shows that vegetables come in many colors.", "Also, the cafeteria is loud.", "That is all I know about vegetables."], why:"Elaboration connects the evidence back to the opinion by explaining what it shows."},
+    {l:"Conclusion", q:"Which sentence best concludes the essay?", a:"A garden would take some work, but healthier lunches and hands-on lessons make it worth the effort.", w:["That is the end of my essay.", "A garden needs watering during summer break.", "In conclusion, I like recess too."], why:"A conclusion restates the opinion in fresh words and sums up the reasons. It does not add a new detail or change the subject."}]},
+  {kind:"opinion essay", task:"Your city is deciding whether to close Oak Street to cars on Sundays so people can walk and ride bicycles there. Write an opinion essay for the city council. Use information from the sources.", src:["(news article) In a nearby city, shops on a car-free street had more customers on Sundays. Families said they felt safer riding bicycles there.", "(letter from a resident) Some drivers worry that closing the street will make their trips longer."], steps:[
+    {l:"Introduction", q:"Which sentence best introduces the essay and states a clear opinion?", a:"The city should close Oak Street to cars on Sundays because it would make the street safer and help local shops.", w:["Oak Street is a street in our city.", "Some people like cars and some people like bicycles.", "This essay is about Sundays."], why:"The introduction must say what the writer thinks should happen and why. The other choices only name the topic."},
+    {l:"Evidence", multi:1, q:"Choose two pieces of evidence from the sources that best support the opinion.", a:["Families said they felt safer riding bicycles on a car-free street.", "Shops on a car-free street had more customers on Sundays."], w:["My bicycle is green and has a bell.", "Cars were invented more than one hundred years ago.", "Everyone hates traffic."], why:"Both right choices come from the news article and match the two reasons in the introduction: safety and shops."},
+    {l:"The other side", q:"Which sentence best responds to people who disagree?", a:"Some drivers worry about longer trips, but the street would be closed only one day a week.", w:["People who disagree are wrong.", "Drivers should stay home on Sundays.", "Some drivers worry about longer trips."], why:"A strong opinion essay names the other side's concern and then answers it politely with a reason."},
+    {l:"Conclusion", q:"Which sentence best concludes the essay?", a:"For one day each week, Oak Street could belong to walkers, riders, and the shops that serve them.", w:["Thank you for reading.", "Bicycles have two wheels.", "I hope you liked my essay about streets."], why:"The conclusion returns to the opinion and its two reasons, safety and shops, without repeating the same words."}]},
+  {kind:"informational essay", task:"Write an informational essay explaining how animals survive the winter. Use information from the sources.", src:["(science book) Some animals, such as geese, migrate. They travel to warmer places where food is easier to find.", "(nature website) Other animals, such as ground squirrels, hibernate. Their heartbeat and breathing slow down so they use very little energy. Animals such as foxes grow thicker fur and stay active."], steps:[
+    {l:"Introduction", q:"Which sentence best introduces the essay and states its main idea?", a:"Animals survive the cold months in three main ways: migrating, hibernating, and adapting.", w:["Winter is my favorite season.", "Animals are interesting.", "Have you ever seen a goose? I have."], why:"An informational introduction states the main idea and shows how the essay will be organized. It does not give the writer's feelings."},
+    {l:"Evidence", multi:1, q:"Choose two facts from the sources that best develop the main idea.", a:["Geese travel to warmer places where food is easier to find.", "A hibernating animal's heartbeat and breathing slow down to save energy."], w:["I think geese are noisy.", "Foxes are the best animals.", "Snow is cold and white."], why:"Informational writing is built from facts in the sources. Opinions such as \"noisy\" or \"the best\" do not belong."},
+    {l:"Transition", q:"Which sentence best connects the paragraph about migrating to the paragraph about hibernating?", a:"Not every animal leaves, however; some stay and sleep through the cold.", w:["Next I will talk about something else.", "Geese fly in the shape of a V.", "Finally, winter ends."], why:"A good transition links the idea just finished (leaving) to the idea coming next (staying and sleeping)."},
+    {l:"Conclusion", q:"Which sentence best concludes the essay?", a:"Whether they leave, sleep, or grow a thicker coat, animals have dependable ways to make it to spring.", w:["That is how plants grow.", "Winter is too cold for me.", "The end."], why:"The conclusion sums up all three ways from the introduction in new words."}]},
+  {kind:"informational essay", task:"Write an informational essay explaining how a puppy becomes a guide dog. Use information from the sources.", src:["(newspaper article) Guide dog puppies live with volunteer families for about a year. The families take them to stores, buses, and busy sidewalks.", "(training school website) Later, the dogs train with a professional. They learn to stop at curbs and steps and to lead a person around obstacles. Finally, each dog is matched with a partner."], steps:[
+    {l:"Introduction", q:"Which sentence best introduces the essay and states its main idea?", a:"A guide dog learns its job in stages, beginning in a family's home and ending at its new partner's side.", w:["Dogs are friendly animals.", "I want a puppy.", "Guide dogs wear a harness."], why:"The introduction tells the reader the main idea, that training happens in stages, and hints at the order the essay will follow."},
+    {l:"Evidence", multi:1, q:"Choose two facts from the sources that best develop the main idea.", a:["Volunteer families take the puppies to stores, buses, and busy sidewalks.", "With a professional trainer, the dogs learn to stop at curbs and steps."], w:["Puppies are cute.", "My dog can shake hands.", "Dogs should not eat chocolate."], why:"These two facts come from the sources and describe two stages of training. The other choices are off the topic."},
+    {l:"Elaboration", q:"Which sentence best explains why puppies are taken to busy places?", a:"These trips teach the puppies to stay calm in crowds, which a working guide dog must do.", w:["These trips are fun for the families.", "Stores sell dog food.", "Buses are large vehicles."], why:"Elaboration explains what a fact means for the main idea: the trips are part of the dog's training."},
+    {l:"Conclusion", q:"Which sentence best concludes the essay?", a:"After many months and many teachers, the puppy has become a partner someone can trust.", w:["Guide dogs are dogs.", "In conclusion, there are many kinds of pets.", "That is all."], why:"The conclusion wraps up the stages and tells what they add up to."}]},
+  {kind:"narrative", task:"Write a story about a character who finds something unexpected on the way to school.", steps:[
+    {l:"Beginning", q:"Which sentence best begins the story by introducing the character, the setting, and a problem?", a:"Dev was halfway down Juniper Street, late as usual, when he heard a small cry coming from the storm drain.", w:["This is a story about a boy.", "One day something happened.", "Dev is nine and he has brown hair and a sister and a bicycle."], why:"A strong beginning puts a character in a place and starts the action. A list of facts about Dev does not start a story."},
+    {l:"Description", q:"Which sentence best adds detail that shows how Dev feels?", a:"His heart thumped as he knelt and peered into the dark.", w:["Dev felt a feeling.", "He was scared and brave and happy and sad.", "The storm drain was a drain."], why:"Good narrative writing shows feelings through actions and the senses, such as a thumping heart, instead of naming them."},
+    {l:"Transition", q:"Which sentence best shows what happens next?", a:"A moment later, two yellow eyes blinked up at him.", w:["Because eyes are yellow.", "For example, he saw eyes.", "In conclusion, there were eyes."], why:"Stories use time words such as \"a moment later\" to move from one event to the next."},
+    {l:"Ending", q:"Which sentence best ends the story?", a:"Dev was later than ever that morning, but he walked into class with a kitten asleep in his hood and a story nobody could top.", w:["Then he woke up, and it was all a dream.", "The end.", "Kittens are baby cats."], why:"A good ending solves the problem and connects back to the beginning, where Dev was already late."}]},
+  {kind:"narrative", task:"Write a story about a character who has to be brave.", steps:[
+    {l:"Beginning", q:"Which sentence best begins the story by introducing the character, the setting, and a problem?", a:"Lucia's toes curled over the edge of the high board, and the pool below looked as small as a postage stamp.", w:["Lucia went swimming.", "I will tell you about a pool.", "Pools have water in them."], why:"The best beginning puts Lucia in a place and shows her problem: the board is frighteningly high."},
+    {l:"Dialogue", q:"Which sentence uses dialogue to show what Lucia is thinking?", a:"\"I can climb back down,\" she whispered, though the ladder was full of waiting kids.", w:["She said something to herself.", "\"Hello,\" said Lucia.", "Lucia thought about things."], why:"Dialogue should reveal something. Her whisper shows she wants to give up, and the crowded ladder shows she cannot."},
+    {l:"Transition", q:"Which sentence best shows what happens next?", a:"Before she could change her mind, she bent her knees and jumped.", w:["In addition, she jumped.", "For instance, a jump.", "She jumped because."], why:"\"Before she could change her mind\" moves the story forward in time and keeps the feeling of the moment."},
+    {l:"Ending", q:"Which sentence best ends the story?", a:"When she surfaced, sputtering and grinning, the board no longer looked so high.", w:["Then she went home.", "Diving boards are often made of fiberglass.", "She was brave, the end."], why:"The ending shows how Lucia has changed: the board that scared her at the beginning no longer does."}]},
+];
+const eListen = ids => () => { const L = LISTEN[pickOf(ids)], it = pickOf(L.items), p = pk(it.q, it.a, it.w); p.listen = L.x; p.lt = L.t; p.why = it.why; return p; };
+const essayText = (E, k) => E.steps.slice(0, k).map(s => [].concat(s.a).join(' ')).join(' ');
+const essayBase = E => '**Writing task: ' + E.kind + '**\n' + E.task + (E.src ? '\n\n' + E.src.map((s,i) => 'Source ' + (i+1) + ' ' + s).join('\n') : '');
+const eEssay = () => { const E = pickOf(ESSAYS); return {q:'Build the ' + E.kind + ' one part at a time.', pass:essayBase(E), sel:[], sol:'A strong response: ' + essayText(E, 9),
+  steps:E.steps.map(s => ({l:s.l, q:s.q, ans:s.multi ? s.a.slice() : s.a, opts:s.w.slice(), multi:!!s.multi, why:s.why}))}; };
+// the test's "brief write": one part of the essay on its own, with the draft so far
+const eBrief = () => { const E = pickOf(ESSAYS), k = pickOf(E.steps.map((s,i) => i).filter(i => !E.steps[i].multi)), s = E.steps[k], p = pk(s.q, s.a, s.w, essayBase(E) + (k ? '\n\n**The draft so far**\n' + essayText(E, k) : '')); p.why = s.why; return p; };
 const passText = P => '**' + P.t + '**\n' + P.p.map((x,i) => (P.poem ? '' : (i+1) + '  ') + x).join(P.poem ? '\n\n' : '\n');
 const eRead2 = (key, ids) => () => { const P = PASSAGES[pickOf(ids)], it = pickOf(P.items.filter(x => x.k === key)), p = it.multi ? {q:it.q, ans:it.a.slice(), opts:it.w.slice(), multi:true, sol:'The answers are: ' + it.a.join(' / ')} : pk(it.q, it.a, it.w);
   p.pass = passText(P); p.why = it.why; if (it.b){ p.partB = {q:it.b.q, ans:it.b.a, opts:it.b.w.slice()}; p.sol = 'Part A: ' + it.a + ' Part B: ' + it.b.a; } return p; };
@@ -1394,14 +1577,15 @@ const eGram = () => { if (Math.random() < .25){ const it = pickOf(ECOMP); return
 const eConv = () => { const it = pickOf(ECONV); return pk('Which sentence uses capital letters and punctuation correctly?', it[0], it[1]); };
 const eSpellCtx = () => { const it = pickOf(ESPELL), words = it[0].match(/\[\[(.+?)\]\]/g).map(x => x.slice(2,-2)); return pk('Which underlined word is spelled incorrectly?', it[1], words.filter(x => x !== it[1]), 'A student is editing a sentence.\n\n' + it[0]); };
 const eRsrc = () => { const it = pickOf(RSRC); return pk(it[1], it[2], it[3], it[0]); };
+const LIS = {3:['workday','leaves','sled'], 4:['leaves','sled','ranger','paper'], 5:['sled','ranger','paper','zones']};
 const sbac = (g, lit, inf, vocab, gram) => [
-  ['RL.' + g + '.1-3', 'Reading stories: key details and theme', eRead2(1, lit)], ['RL.' + g + '.4-6', 'Reading stories: words and craft', eRead2(2, lit)],
+  ['RL.' + g + '.1-3', 'Reading stories: key details and theme', eRead2(1, lit)], ['RL.' + g + '.4-6', 'Reading stories: words and craft', eRead2(2, lit)], ['SL.' + g + '.2', 'Listening: understand a presentation', eListen(LIS[g])],
   ['RI.' + g + '.1-3', 'Reading information: main idea and details', eRead2(1, inf)], ['RI.' + g + '.4-8', 'Reading information: words, structure and reasoning', eRead2(2, inf)],
-  ['L.' + g + '.4-5', 'Vocabulary: word meanings', vocab], ['W.' + g + '.1-3', 'Writing: organize and develop ideas', eOrg], ['L.' + g + '.3', 'Writing: choose precise words', ePrec],
+  ['L.' + g + '.4-5', 'Vocabulary: word meanings', vocab], ['W.' + g + '.1-3', 'Writing: organize and develop ideas', eOrg], ['W.' + g + '.4-5', 'Writing: plan and build an essay', mixOf(eEssay, eEssay, eBrief)], ['L.' + g + '.3', 'Writing: choose precise words', ePrec],
   ['L.' + g + '.1', 'Editing: grammar and usage', gram], ['L.' + g + '.2', 'Editing: capitals, punctuation and spelling', mixOf(eConv, eSpellCtx, eQuote, eSeries)], ['W.' + g + '.8', 'Research: sources and evidence', eRsrc]];
-const E_3 = sbac(3, ['fair','garden'], ['seeds','beaver'], mixOf(eCtx('A'), eAffix(true)), mixOf(eGram, eAgree, ePast));
-const E_4 = sbac(4, ['garden','lantern'], ['beaver','stones'], mixOf(eCtx('B'), eFig, () => Math.random() < .5 ? eSyn('B')() : eAnt()), mixOf(eGram, eGram, eHomo, eAgree));
-const E_5 = sbac(5, ['lantern','tide'], ['stones','recess'], mixOf(eCtx('B'), eFig, () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }), mixOf(eGram, eGram, eHomo, ePast));
+const E_3 = sbac(3, ['fair','garden','quilt'], ['seeds','beaver','octopus'], mixOf(eCtx('A'), eAffix(true)), mixOf(eGram, eAgree, ePast));
+const E_4 = sbac(4, ['garden','lantern','quilt','chess','baker'], ['beaver','stones','octopus','mule'], mixOf(eCtx('B'), eFig, () => Math.random() < .5 ? eSyn('B')() : eAnt()), mixOf(eGram, eGram, eHomo, eAgree));
+const E_5 = sbac(5, ['lantern','tide','chess','baker'], ['stones','recess','mule','dark'], mixOf(eCtx('B'), eFig, () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }), mixOf(eGram, eGram, eHomo, ePast));
 const ELA = {K:E_K, '1':E_K, '2':E_2, '3':E_3, '4':E_4, '5':E_5, '6':E_5};
 
 const mathGrade = id => GRADES.find(g => g.id === id);
@@ -1437,19 +1621,45 @@ function choices(p){
 let prob = null, mathLock = false, session = 0, showSkills = false;
 function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function openMath(){ if (!S.adopted) return; session = 0; rescue = 0; oneShot = null; lessonAfter = null; showSkills = false; $('shop').hidden = true; $('tricks').hidden = true; $('math').hidden = false; renderMath(); }
-function setGrade(id){ S.math.grade = id; S.math.lastI = -1; S.math.streak = 0; showSkills = false; save(); renderMath(); }
+function setGrade(id){ S.math.grade = id; GL.grade = id; saveLock(); S.math.lastI = -1; S.math.streak = 0; showSkills = false; save(); renderMath(); }
 function renderMath(){
-  const g = curGrade(), sel = $('grade'), gb = $('grades');
-  sel.textContent = ''; gb.textContent = '';
-  if (!g){ const o = el('option','', 'Pick a grade'); o.value = ''; sel.appendChild(o); }
-  for (const x of GRADES){ const o = el('option','', x.name); o.value = x.id; o.selected = S.math.grade === x.id; sel.appendChild(o);
-    const b = el('button','', x.name); b.type = 'button'; b.id = 'grade-' + x.id; b.onclick = () => setGrade(x.id); gb.appendChild(b); }
-  setReading(false); $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('subject').value = S.math.subject || 'math';
-  $('mpick').hidden = !!g; $('mplay').hidden = !g || showSkills; $('mlist').hidden = !g || !showSkills; $('mshow').hidden = !g; $('mshow').textContent = showSkills ? 'Back to questions' : 'Show skills';
-  if (!g){ $('mup').hidden = true; return; }
+  const g = curGrade(), cur = S.math.grade && mathGrade(S.math.grade), gb = $('grade');
+  gb.hidden = !cur; if (cur) gb.textContent = cur.name + ' (locked)';
+  stopSpeak(); grown = null; setReading(false); $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('mgrown').hidden = true; $('subject').value = S.math.subject || 'math';
+  $('mplay').hidden = !g || showSkills; $('mlist').hidden = !g || !showSkills; $('mshow').hidden = !g; $('mshow').textContent = showSkills ? 'Back to questions' : 'Show skills';
+  if (!g){ $('mup').hidden = true; openGrown(); return; }
   renderProgress(); if (S.math.fix){ openFix(); return; }
   if (showSkills) renderSkills(); else nextProb();
 }
+// No level cheating: the grade is chosen once with a grown-up code. After that it only moves up by mastering the grade, or with the code.
+let grown = null;
+function openGrown(){
+  grown = {mode: GL.pin ? 'unlock' : 'setup', pick: S.math.grade || null}; stopSpeak(); setReading(false);
+  for (const k of ['mplay','mlist','msum','slate','mlesson','mup','mshow']) $(k).hidden = true;
+  $('mgrown').hidden = false; $('gr-pin').value = ''; $('gr-fb').textContent = ''; renderGrown();
+}
+function renderGrown(){
+  const m = grown.mode, gb = $('grades'); gb.textContent = ''; gb.hidden = m === 'unlock';
+  for (const x of GRADES){ const b = el('button', grown.pick === x.id ? 'on' : '', x.name); b.type = 'button'; b.id = 'grade-' + x.id; b.onclick = () => { grown.pick = x.id; renderGrown(); }; gb.appendChild(b); }
+  $('gr-p').textContent = m === 'unlock' ? 'The grade is locked so the questions stay at the right level. Enter the grown-up code to change it.'
+    : m === 'setup' ? 'Pick the grade your child is in at school, then choose a 4-digit code that only you know. After that the grade is locked. It moves up by itself when every math skill in the grade is mastered. Any other change needs your code.'
+    : 'Unlocked. Pick the grade. Type a new code only if you want to change the code.';
+  $('gr-l').textContent = m === 'unlock' ? 'Grown-up code' : m === 'setup' ? 'Choose a 4-digit code' : 'New code (optional)';
+  $('gr-pin').type = m === 'unlock' ? 'password' : 'tel'; $('gr-ok').textContent = m === 'unlock' ? 'Unlock' : 'Lock the grade'; $('gr-cancel').hidden = !S.math.grade;
+}
+$('gr-ok').onclick = () => {
+  if (!grown) return; const v = $('gr-pin').value.trim(), fb = $('gr-fb'), now = Date.now();
+  if (grown.mode === 'unlock'){
+    if (GL.until > now){ fb.textContent = 'Too many wrong tries. Try again in ' + Math.ceil((GL.until-now)/60000) + ' min.'; return; }
+    if (v !== GL.pin){ GL.bad = (GL.bad || 0) + 1; if (GL.bad >= 3){ GL.bad = 0; GL.until = now + 5*60000; } saveLock(); fb.textContent = GL.until > now ? 'Too many wrong tries. Locked for 5 minutes.' : 'That is not the code.'; $('gr-pin').value = ''; return; }
+    GL.bad = 0; saveLock(); grown.mode = 'change'; $('gr-pin').value = ''; fb.textContent = ''; renderGrown(); return;
+  }
+  if (!grown.pick){ fb.textContent = 'Pick a grade first.'; return; }
+  if (grown.mode === 'setup' ? !/^\d{4}$/.test(v) : v && !/^\d{4}$/.test(v)){ fb.textContent = 'The code must be 4 digits.'; return; }
+  if (v) GL.pin = v; const pick = grown.pick; $('gr-pin').blur();
+  if (pick === S.math.grade){ saveLock(); renderMath(); } else setGrade(pick);
+};
+$('gr-cancel').onclick = () => renderMath();
 function renderProgress(){
   const g = probGrade(), done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = g.ela ? null : GRADES[GRADES.indexOf(g)+1];
   $('mprog').textContent = 'Egg ' + S.egg.w + '/' + EGG_N + ' \u00b7 ' + done + ' of ' + g.skills.length + ' skills mastered'; $('mbar').firstElementChild.style.width = done/g.skills.length*100 + '%';
@@ -1579,11 +1789,15 @@ Object.assign(LESSON, {
   "Writing: choose precise words": ["A precise word says exactly what the writer means. Pick the word that fits the sentence's clues, and avoid vague words such as big, bad, said or went.", "The hungry dog ate its dinner in seconds. \"In seconds\" tells you it was fast, so gobbled is more precise than ate."],
   "Editing: grammar and usage": ["Read each choice slowly, as if aloud. Check that the verb matches its subject, the verb tense stays the same, pronouns are right (Jo and I went), and there is only one negative. A complete sentence needs a subject and a verb and must finish its thought.", "\"Me and Jo went\" is wrong because you would not say \"Me went.\" Say \"Jo and I went.\""],
   "Editing: capitals, punctuation and spelling": ["Check capitals on names, places, days, months and titles such as Dr. Check commas in lists, after Yes or No at the start, and between a city and a state. In speech, the comma or question mark goes inside the closing quotation mark.", "We visited Portland, Oregon, in June.  Mom asked, \"Did you feed the cat?\""],
+  "Listening: understand a presentation": ["You will hear a short talk, and its words are not on the screen. Before you listen, read the question so you know what to listen for. As you listen, notice the topic, the two or three most important points, and why the speaker is talking. You may listen again as many times as you like.", "A principal says: meet at nine, bring a water bottle, gloves will be provided. If the question asks what to bring, the answer is a water bottle, not gloves."],
+  "Writing: plan and build an essay": ["Every essay on the test has the same bones. An introduction states your opinion or main idea. The middle gives evidence from the sources and explains what it shows. A conclusion sums up in fresh words. A story has a beginning that sets up a character and a problem, a middle with details and dialogue, and an ending that solves the problem.", "Opinion: \"Our school should start a garden because...\"  Evidence: a fact from a source.  Elaboration: \"This shows that...\"  Conclusion: say the opinion again in new words."],
   "Research: sources and evidence": ["A good source is about your exact topic and comes from someone who knows the subject, such as an encyclopedia, a museum or a science group. Facts can be checked; opinions cannot. Evidence must support the point you are making.", "For a report on what sea turtles eat, an aquarium's website is more trustworthy than a page selling turtle toys."],
 });
 let lessonOf = null, lessonBack = null, lessonAfter = null;
 function lessonTry(){
-  const p = lessonOf[2](false), btn = $('ml-show'); let shown = false; $('ml-try').textContent = 'Try one: ' + p.q; btn.textContent = 'Show the answer';
+  let p; for (let k = 0; k < 30; k++){ p = lessonOf[2](false); if (!p.steps) break; }
+  const btn = $('ml-show'); let shown = false; btn.parentElement.hidden = !!(p.pass || p.listen || p.steps);      // a question that needs its passage or its audio is not shown on its own
+  $('ml-try').textContent = 'Try one: ' + p.q; btn.textContent = 'Show the answer';
   btn.onclick = () => { if (shown){ lessonTry(); return; } shown = true; $('ml-try').textContent = p.sol.indexOf('The answer is') === 0 ? p.q + '  →  ' + fmt(p.ans) : p.sol; btn.textContent = 'Another one'; };
 }
 function openLesson(sk, back){
@@ -1618,10 +1832,44 @@ function celebrate(btn, big){
   }
   beep(1320, .18, 'triangle', .05, 0, .2);
 }
+// read-aloud for listening questions: the tablet app speaks through Android, a browser through its own voices
+let spkId = 0, spkT = 0, speaking = false, ttsBad = false, spkKeep = [];
+const synth = () => window.speechSynthesis;
+const canSpeak = () => { try { return !ttsBad && (window.PupSpeech ? !!window.PupSpeech.ok() : !!(synth() && window.SpeechSynthesisUtterance && synth().getVoices().length)); } catch(e){ return false; } };
+try { if (synth()) synth().getVoices(); } catch(e){}
+function duck(on){ if (MU.out) MU.out.gain.value = on ? .1 : .55; }      // the music steps back while a presentation plays
+function stopSpeak(){ spkId++; clearTimeout(spkT); if (!speaking) return; speaking = false; duck(false); try { if (window.PupSpeech) window.PupSpeech.stop(); else synth().cancel(); } catch(e){} }
+function speakText(text, done){
+  stopSpeak(); const id = ++spkId, fin = ok => { if (id !== spkId) return; spkId++; clearTimeout(spkT); speaking = false; duck(false); done(ok); };
+  speaking = true; duck(true);
+  try {
+    if (window.PupSpeech){ window.pupSpeechDone = ok => fin(ok !== false); window.PupSpeech.speak(text); }
+    else { spkKeep = (text.match(/[^.!?]+[.!?]+["”]?/g) || [text]).map((t, i, a) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'en-US'; u.rate = .9; if (i === a.length-1) u.onend = () => fin(true); u.onerror = () => fin(false); return u; });
+      spkKeep.forEach(u => synth().speak(u)); }
+  } catch(e){ fin(false); return; }
+  spkT = setTimeout(() => fin(true), text.split(' ').length*700 + 6000);
+}
+function renderListen(done){
+  const on = !!prob.listen && !done && canSpeak(); $('mlisten').hidden = !on; if (!on) return;
+  $('lplay').textContent = speaking ? 'Stop' : prob.heard ? 'Listen again' : 'Listen';
+  $('lmsg').textContent = speaking ? 'Playing: ' + prob.lt : prob.heard ? 'You may listen again as often as you like.' : 'Listen to "' + prob.lt + '". The answer choices appear when it ends.';
+  $('answers').hidden = !prob.heard;
+}
+$('lplay').onclick = () => {
+  if (!prob || !prob.listen) return; if (speaking){ stopSpeak(); renderListen(false); return; }
+  const p = prob; speakText(p.lt + '. ' + p.listen, ok => {
+    if (!ok){ ttsBad = true; if (prob === p && !$('mplay').hidden) showProb(); return; }
+    p.heard = true; if (S.math.slate) for (const x of S.math.slate.items) if (x.lt === p.lt) x.heard = true;
+    if (prob === p && !$('mplay').hidden) renderListen(!!p.st); });
+  renderListen(false);
+};
+// the essay grows in the passage box as each part is chosen
+function essayPass(p, done){ const parts = p.steps.map((s,i) => done ? [].concat(s.ans).join(' ') : i < p.sel.length ? [].concat(p.sel[i]).join(' ') : '').filter(Boolean);
+  return p.pass + '\n\n**' + (done ? 'A strong response' : 'Your draft so far') + '**\n' + (parts.length ? parts.join(' ') : '(Your sentences will appear here as you choose them.)'); }
 // a slate of questions: answer in any order, skip one and come back to it later
 const SLATE_N = 8, single = () => !!oneShot || rescue > 0;      // gathering, stew and rescues ask one question at a time instead
 function makeProb(gid){
-  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.gid = g.id; p.list = choices(p); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
+  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.gid = g.id; p.list = p.steps ? [] : choices(p); if (p.steps) for (const x of p.steps) x.list = shuffle([].concat(x.ans, x.opts)); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
   if (!gid && S.math.subject === 'mix') S.math.mixNext = curSub() === 'math' ? 'ela' : 'math';      // with Both chosen, single questions take turns
   return p;
 }
@@ -1656,6 +1904,19 @@ function fillAnswers(box, p, done, onPick, idp){
 // the test's other two formats: "choose two" (every choice must be right) and two-part questions (Part B asks for the evidence behind Part A)
 function fillSpecial(box, p, done){
   box.textContent = ''; box.className = 'answers text'; const mk = (v, cls, id) => { const b = el('button', 'wide ' + cls, String(v)); b.type = 'button'; b.id = id; box.appendChild(b); return b; };
+  if (p.steps){      // an essay, built part by part: nothing is marked until the last part is chosen, as with a real full write
+    const n = p.steps.length;
+    if (done){ p.steps.forEach((s,i) => { box.appendChild(el('div', 'part', s.l)); const right = [].concat(s.ans), mine = [].concat((p.pick || [])[i] || []);
+        right.forEach((v,j) => { mk(v, 'ok', 'ans-' + i + '-' + j).disabled = true; }); mine.filter(v => !right.includes(v)).forEach((v,j) => { mk(v, 'no', 'ansx-' + i + '-' + j).disabled = true; }); }); return; }
+    const sel = p.sel, k = sel.length, s = p.steps[k];
+    const next = (v, b) => { sel.push(v); if (sel.length < n){ save(); showProb(); return; }
+      p.pick = sel.slice(); const miss = p.steps.filter((x,i) => x.multi ? !x.ans.every(a => sel[i].includes(a)) : sel[i] !== x.ans); p.why = miss.map(x => x.l + ': ' + x.why).join('\n'); settle(!miss.length, b); };
+    box.appendChild(el('div', 'part', 'Part ' + (k+1) + ' of ' + n + ': ' + s.l));
+    if (!s.multi){ s.list.forEach((v,j) => { const b = mk(v, '', 'ans-' + j); b.onclick = () => next(v, b); }); return; }
+    const two = [], btns = [], need = s.ans.length; let cb = null;
+    s.list.forEach((v,j) => { const b = mk(v, '', 'ans-' + j); btns.push(b); b.onclick = () => { const q = two.indexOf(v); if (q >= 0) two.splice(q,1); else { if (two.length >= need) btns[s.list.indexOf(two.shift())].classList.remove('on'); two.push(v); } b.classList.toggle('on', two.includes(v)); cb.disabled = two.length !== need; }; });
+    cb = el('button', 'wide check', 'Use these ' + need + ' in my essay'); cb.type = 'button'; cb.id = 'ans-check'; cb.disabled = true; cb.onclick = () => next(two.slice(), cb); box.appendChild(cb); return;
+  }
   if (p.multi){
     const sel = done ? (p.pick || []) : [], need = p.ans.length, btns = [];
     const check = () => { const c = el('button', 'wide check', 'Check my ' + need + ' answers'); c.type = 'button'; c.id = 'ans-check'; c.disabled = true; c.onclick = () => { p.pick = sel.slice(); settle(sel.every(v => p.ans.includes(v)), c); }; box.appendChild(c); return c; };
@@ -1671,13 +1932,15 @@ function fillSpecial(box, p, done){
 }
 function setReading(on){ $('math').firstElementChild.classList.toggle('reading', on); }
 function showProb(){
-  const g = probGrade(), s = g.skills[prob.i], done = !!prob.st;
-  mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true;
-  setPass($('mpass'), prob.pass); setReading(!!prob.pass && prob.pass.length > 300);
-  $('q').textContent = prob.q; $('q').className = prob.q.length > 16 || prob.pass ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
-  $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + prob.sol) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
-  if (prob.multi || prob.partB) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
-  $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
+  const g = probGrade(), s = g.skills[prob.i], done = !!prob.st, st = prob.steps, cur = st && !done ? st[Math.min(prob.sel.length, st.length-1)] : null, lis = prob.listen;
+  stopSpeak(); mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('mgrown').hidden = true; $('answers').hidden = false;
+  // a presentation's words stay hidden while it can be heard; they appear once the question is settled, or on a device with no voice
+  const text = st ? essayPass(prob, done) : lis ? (done ? '**' + prob.lt + '**\n' + lis : canSpeak() ? '' : '**' + prob.lt + '**\n(This device cannot read aloud, so read the presentation instead.)\n' + lis) : prob.pass;
+  setPass($('mpass'), text); setReading(!!text && text.length > 300); if (st) $('mpass').scrollTop = 1e6;
+  const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
+  $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + (st ? 'The strong response is shown.' : prob.sol)) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
+  if (prob.multi || prob.partB || st) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
+  renderListen(done); $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
 }
 function slateDone(){
   const sl = slate(), right = sl.items.filter(p => p.st === 1).length, n = sl.items.length, bonus = right === n ? 10 : right >= n-2 ? 4 : 0, box = $('msum-l');
@@ -1691,12 +1954,12 @@ $('mnew').onclick = () => { S.math.slate = null; nextProb(); };
 function answer(v, b){ if (mathLock || !prob) return; prob.pick = v; settle(v === prob.ans, b); }
 function settle(ok, b){
   if (mathLock || !prob) return; mathLock = true;
-  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB;
+  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB || prob.steps;
   prob.st = ok ? 1 : 2;
   st.n++; st.last = m.n; m.n++;
-  if (special){ const r0 = b.getBoundingClientRect(); fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); }
+  if (special){ const r0 = b.getBoundingClientRect(); fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
   if (ok){
-    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (special ? 1 : 0);
+    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (prob.steps ? 3 : special ? 1 : 0);
     S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
     $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
     if (rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
@@ -1715,7 +1978,7 @@ function settle(ok, b){
   else if (rescue > 0) fixResume = () => { rescue--; if (rescue > 0) nextProb(); else comeHome(); };
   else fixResume = null;
   renderProgress(); renderStrip(); ui(); save();
-  setTimeout(openFix, special ? 2600 : 1300);
+  setTimeout(openFix, prob.steps ? 5000 : special ? 2600 : 1300);
 }
 let fixMissed = null, fixResume = null, fixProb = null, fixLock = false;
 const cap1 = t => t[0].toUpperCase() + t.slice(1), PLACE = ['ones','tens','hundreds','thousands','ten thousands','hundred thousands'];
@@ -1763,11 +2026,11 @@ function fixLocks(on){ $('mdone').hidden = on; $('mshow').hidden = on || !curGra
 function openFix(){
   const f = S.math.fix, g = f && allGrade(f.gid); if (!g || !g.skills[f.i]){ S.math.fix = null; fixLocks(false); nextProb(); return; }
   const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], m0 = fixMissed, steps = m0 ? (explain(m0) || (m0.why ? ['Why: ' + m0.why] : null)) : null;
-  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mfix').hidden = false; fixLocks(true); setReading(false);
+  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mgrown').hidden = true; $('mfix').hidden = false; fixLocks(true); setReading(false); stopSpeak();
   $('fx-h').textContent = "Granny Dot: let's work it out"; $('fx-fb').textContent = '';
-  $('fx-steps').hidden = !m0; if (m0) setPass($('fx-steps'), (m0.pass && m0.pass.length < 260 ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (m0.why || !explain(m0) ? m0.sol + '\n' : '') + (steps ? steps.join('\n') : ''));
+  $('fx-steps').hidden = !m0; if (m0) setPass($('fx-steps'), (m0.listen ? '**What you heard: ' + m0.lt + '**\n' + m0.listen + '\n\n' : m0.pass && m0.pass.length < 260 ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (m0.why || !explain(m0) ? m0.sol + '\n' : '') + (steps ? steps.join('\n') : ''));
   $('fx-tip').textContent = 'How it works: ' + L[0] + (!steps && L[1] ? '\n\nExample: ' + L[1] : '');
-  let p; for (let k = 0; k < 30; k++){ p = sk[2](false); if (!p.multi && !p.partB && (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || ''))) break; }   // the retry is always a plain one-answer question
+  let p; for (let k = 0; k < 30; k++){ p = sk[2](false); if (p.listen) p.pass = '**' + p.lt + '** (read it this time)\n' + p.listen; if (!p.multi && !p.partB && !p.steps && (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || ''))) break; }   // the retry is always a plain one-answer question
   p.list = choices(p); fixProb = p; fixLock = false;
   setPass($('fx-pass'), p.pass); $('fx-q').textContent = 'Now you try: ' + p.q;
   fillAnswers($('fx-answers'), p, false, checkAnswer, 'fx-');
@@ -1785,7 +2048,7 @@ function checkAnswer(v, b){
   }
 }
 $('subject').onchange = e => { S.math.subject = e.target.value; S.math.mixNext = 'math'; showSkills = false; save(); renderMath(); };
-$('grade').onchange = e => { if (e.target.value) setGrade(e.target.value); };
+$('grade').onclick = openGrown;
 $('mshow').onclick = () => { showSkills = !showSkills; renderMath(); };
 
 /* ---------- shop ---------- */
@@ -1834,7 +2097,7 @@ function renderShop(){
   }
 }
 $('b-math').onclick = openMath; $('smath').onclick = openMath; $('b-shop').onclick = openShop; $('a-dig').onclick = dig;
-$('mdone').onclick = () => { $('math').hidden = true; oneShot = null; lessonAfter = null; ui(); };
+$('mdone').onclick = () => { stopSpeak(); $('math').hidden = true; oneShot = null; lessonAfter = null; ui(); };
 $('sdone').onclick = () => { $('shop').hidden = true; ui(); };
 $('away-go').onclick = startRescue;
 $('away-other').onclick = () => { tab = 'dogs'; openShop(); };
@@ -2902,7 +3165,7 @@ $('adoptform').addEventListener('submit', e => {
 $('cancel').onclick = () => { $('adopt').hidden = true; };
 $('reset').onclick = () => {
   if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all dogs, bones and gear'; return; }
-  const snd = S.sound; S = fresh(); S.sound = snd; scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
+  const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = GL.grade || null; scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
 };
 
 /* ---------- main loop ---------- */

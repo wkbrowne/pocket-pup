@@ -18,10 +18,11 @@ Explore five themed areas, from Sunny Meadow to snowy Frostbite Peak and the cit
 
 Math powers everything. Each thing you gather is one question from the grade you choose.
 
+- The grade is locked with a grown-up code, so questions stay at the right level. It moves up only when the grade is mastered.
 - 73 skills across Kindergarten to Grade 6, each tagged with its Common Core standard (also the California standards).
 - Questions adapt: new skills open as earlier ones go well, weak skills come back more often, and missed ones return for another try.
 - Every skill has a short lesson with a worked example, one tap away from any question.
-- English for Grades 3 to 6 modelled on the Smarter Balanced / CAASPP test: full reading passages with several questions each, two-part evidence questions, choose-two questions, revising a draft, editing and research, all tagged with Common Core ELA standards.
+- English for Grades 3 to 6 modelled on the Smarter Balanced / CAASPP test: full reading passages with several questions each, two-part evidence questions, choose-two questions, listening questions read aloud, essays built part by part, revising a draft, editing and research, all tagged with Common Core ELA standards.
 - A missed question opens a worked explanation, and play continues once a fresh question on the same skill is answered correctly.
 - A slate of eight questions that can be skipped and returned to.
 - A progress view for parents showing mastery of every skill.

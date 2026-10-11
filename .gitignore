@@ -2,3 +2,6 @@
 *.log
 test.html
 .claude/
+ios/PopulationPup/Web/
+ios/build/
+xcuserdata/

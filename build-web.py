@@ -36,3 +36,11 @@ self.addEventListener('fetch', e => {
 });
 """ % (ver, json.dumps(files)))
 print('docs built', ver)
+
+# the iPad app bundles the same page with its fonts and the grader model, and no service worker
+import os
+web = 'ios/PopulationPup/Web'; os.makedirs(web + '/fonts', exist_ok=True)
+io.open(web + '/index.html', 'w', encoding='utf-8').write('<!doctype html>\n' + src.replace(font, head.split('\n')[0]))
+shutil.copyfile('pupgrader.js', web + '/pupgrader.js')
+for f in ['LilitaOne-Regular.ttf', 'Nunito.ttf']: shutil.copyfile('docs/fonts/' + f, web + '/fonts/' + f)
+print('ios web built')

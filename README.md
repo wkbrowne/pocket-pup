@@ -1,6 +1,8 @@
-# Pocket Pup
+# Population Pup
 
-A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentice to rebuild Woofwood Valley block by block. Every chop, dig and bowl of stew is a math question from the chosen grade (Kindergarten to Grade 6, Common Core / California standards).
+A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentice to rebuild Woofwood Valley block by block. Every chop, dig and bowl of stew is a math or English question from the chosen grade (Kindergarten to Grade 6, Common Core / California standards). Every building houses new neighbours, the population grows, and a ship opens up cities across the sea.
+
+The repo and the Android package id still use the original name, Pocket Pup.
 
 - `index.html` is the whole game: one self-contained web page. Open it in any modern browser.
 - `android/` wraps that page as a full-screen Android app for tablets, including Amazon Fire.
@@ -12,7 +14,7 @@ A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentic
 
 1. On the tablet's browser, open this repo's **Releases** page and tap `PocketPup.apk`.
 2. Open the downloaded file. When the tablet asks, allow installs from that browser ("Install unknown apps").
-3. Tap **Install**, then open Pocket Pup from the home screen.
+3. Tap **Install**, then open Population Pup from the home screen.
 
 ## Rebuild the app
 

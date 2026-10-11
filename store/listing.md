@@ -1,15 +1,15 @@
-# Amazon Appstore listing for Pocket Pup
+# Amazon Appstore listing for Population Pup
 
 Copy these into the Amazon Developer Console. Files to upload are in this folder.
 
 ## App file
-`PocketPup.apk` from the latest GitHub release (release-signed, version 1.1, no permissions).
+`PocketPup.apk` from the latest GitHub release (release-signed, version 1.2, no permissions).
 
 ## Title
-Pocket Pup: Math Building Quest
+Population Pup: Math and Reading Quest
 
 ## Short description (up to 1,200 characters; this is the one shown first)
-Raise a puppy, then rebuild a whole valley with math. Every tree chopped, rock mined and bowl of stew is one question from your child's grade, Kindergarten to Grade 6.
+Raise a puppy, rebuild a valley, then sail the world founding cities. Every tree chopped, rock mined and bowl of stew is one math or English question from your child's grade, Kindergarten to Grade 6.
 
 ## Long description
 The Great Gust has blown down every house in Woofwood Valley. Your pup is the apprentice of Granny Dot, the greatest builder the valley ever had, and it is up to the two of you to put it all back.
@@ -21,6 +21,8 @@ Math powers everything. Each thing you gather is one question from the grade you
 - 73 skills across Kindergarten to Grade 6, each tagged with its Common Core standard (also the California standards).
 - Questions adapt: new skills open as earlier ones go well, weak skills come back more often, and missed ones return for another try.
 - Every skill has a short lesson with a worked example, one tap away from any question.
+- English too: grammar, spelling, vocabulary and short reading passages, written in the style of state tests and tagged with Common Core ELA standards.
+- A missed question opens a worked explanation, and play continues once a fresh question on the same skill is answered correctly.
 - A slate of eight questions that can be skipped and returned to.
 - A progress view for parents showing mastery of every skill.
 
@@ -28,7 +30,10 @@ More to do:
 
 - Care for your pup at home: feed, play fetch, bathe and teach tricks.
 - Hatch surprise eggs with right answers and collect 18 pocket pals, including a unicorn and a dragon.
-- Rise through eight builder ranks as skills are mastered, with a new hard hat at each one.
+- Rise through eight builder ranks as skills are mastered, and win trophies for the dog house.
+- Grow the population from Hamlet to World Capital, with bigger prizes at every level.
+- Build a ship and found five cities across the sea, neighbourhood by neighbourhood, with your pals as the work crew.
+- Choose from seven breeds, a girl or boy pup, and a wardrobe of outfits.
 - Take on endless building jobs for new families who move to the valley.
 
 Made for families:
@@ -38,7 +43,7 @@ Made for families:
 - Saves on the device. Rest stops and a Pause button make it easy to stop at any time.
 
 ## Product feature bullets
-- Math practice for Kindergarten to Grade 6, aligned to Common Core standards
+- Math and English practice for Kindergarten to Grade 6, aligned to Common Core standards
 - Adaptive questions with a short lesson for every skill
 - Build houses, bridges and skyscrapers block by block
 - Collect 18 hatchable pocket pals
@@ -53,7 +58,7 @@ Kids, then Education (or Games > Educational if Kids is not offered)
 ## Images
 - Icon 512 x 512: `icon-512.png`
 - Icon 114 x 114: `icon-114.png`
-- Screenshots 1280 x 800 (landscape): `screenshots/01.png` to `07.png`
+- Screenshots 1280 x 800 (landscape): `screenshots/01.png` to `07.png` (taken before the rename and trophies update; retake before submitting)
 
 ## Privacy policy URL
 https://wkbrowne.github.io/pocket-pup/privacy.html

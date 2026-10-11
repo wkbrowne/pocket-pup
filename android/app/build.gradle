@@ -15,8 +15,8 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 2
-        versionName '1.1'
+        versionCode 3
+        versionName '1.2'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -45,7 +45,7 @@ tasks.register('copyGame', Copy) {
     from('../../index.html')
     into(gameAssets)
     filteringCharset = 'UTF-8'
-    inputs.property('filterVersion', 2)   // bump when the filter below changes, so Gradle re-copies
+    inputs.property('filterVersion', 3)   // bump when the filter below changes, so Gradle re-copies
     // index.html is written without a doctype (the web host adds one), so add it here
     // and it loads its two fonts from the web; the app uses the copies bundled in assets/fonts, so it needs no internet at all
     def first = true

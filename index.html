@@ -1,4 +1,4 @@
-<title>Pocket Pup</title>
+<title>Population Pup</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
@@ -84,6 +84,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 #mhow.pulse{animation:wiggle .5s 5}
 .lesson-ex{white-space:pre-line;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px 12px;font-size:15px}
 #ml-how{font-size:15px}
+.answers button.wide{grid-column:1/-1;font-size:17px;font-family:var(--body);font-weight:800}
+.answers.text button{font-size:17px;font-family:var(--body);font-weight:800;padding:9px 8px}
 .q.long{font-size:22px;line-height:1.25;text-wrap:balance}
 select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 8px;max-width:50%}
 .grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -111,7 +113,8 @@ select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#
 .c{aspect-ratio:1;border:0;padding:0;background:none;min-width:0;border-radius:0}
 .c.gh{opacity:.36;outline:2px dashed var(--ink);outline-offset:-3px}
 .bM{background:radial-gradient(circle at 18% 18%,#4A5568 0 7%,transparent 8%),radial-gradient(circle at 82% 82%,#4A5568 0 7%,transparent 8%),linear-gradient(135deg,#A3B0C6,#6F7E96)}
-.bW,.bS,.bB,.bT,.bG,.bD,.bM{box-shadow:inset 0 0 0 1.500px var(--ink),inset 0 4px 0 rgba(255,255,255,.28),inset 0 -4px 0 rgba(0,0,0,.14)}
+.bC{background:repeating-linear-gradient(90deg,#FDFBF2 0 46%,#E3DFCF 46% 50%)}
+.bW,.bS,.bB,.bT,.bG,.bD,.bM,.bC{box-shadow:inset 0 0 0 1.500px var(--ink),inset 0 4px 0 rgba(255,255,255,.28),inset 0 -4px 0 rgba(0,0,0,.14)}
 .bW{background:repeating-linear-gradient(0deg,#C98A4B 0 30%,#A96B32 30% 34%)}
 .bS{background:radial-gradient(circle at 30% 30%,#C9CFDA 0 18%,transparent 19%),radial-gradient(circle at 72% 66%,#8E97A8 0 16%,transparent 17%),#A9B1C0}
 .bB{background:linear-gradient(90deg,transparent 46%,#F3D9C0 46% 54%,transparent 54%) 0 0/100% 50% no-repeat,linear-gradient(transparent 46%,#F3D9C0 46% 54%,transparent 54%),#D9623F}
@@ -171,7 +174,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <div class="need">Energy<div class="bar" id="b-energy"><i></i></div></div>
       <div class="need">Fun<div class="bar" id="b-fun"><i></i></div></div>
       <div class="need">Clean<div class="bar" id="b-clean"><i></i></div></div>
-      <div class="wallet"><svg viewBox="0 0 24 24" aria-label="Bones"><path d="M7 17L17 7" stroke="#2B2350" stroke-width="7" stroke-linecap="round"/><g fill="#fff" stroke="#2B2350" stroke-width="1.500"><circle cx="5.500" cy="15.500" r="3"/><circle cx="8.500" cy="18.500" r="3"/><circle cx="15.500" cy="5.500" r="3"/><circle cx="18.500" cy="8.500" r="3"/></g><path d="M7 17L17 7" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg><span id="bones">0</span><button id="b-egg" aria-label="Your egg and pals"><svg viewBox="0 0 16 20"><ellipse cx="8" cy="11" rx="6.500" ry="8" fill="#FFF6E0" stroke="#2B2350" stroke-width="1.500"/><circle cx="6" cy="9" r="1.500" fill="#FF8FA3"/><circle cx="10.500" cy="13" r="1.800" fill="#5BC0EB"/></svg><span id="eggn">0/6</span></button><button id="b-math">Math</button><button id="b-shop">Shop</button></div>
+      <div class="wallet"><svg viewBox="0 0 24 24" aria-label="Bones"><path d="M7 17L17 7" stroke="#2B2350" stroke-width="7" stroke-linecap="round"/><g fill="#fff" stroke="#2B2350" stroke-width="1.500"><circle cx="5.500" cy="15.500" r="3"/><circle cx="8.500" cy="18.500" r="3"/><circle cx="15.500" cy="5.500" r="3"/><circle cx="18.500" cy="8.500" r="3"/></g><path d="M7 17L17 7" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg><span id="bones">0</span><button id="b-egg" aria-label="Your egg and pals"><svg viewBox="0 0 16 20"><ellipse cx="8" cy="11" rx="6.500" ry="8" fill="#FFF6E0" stroke="#2B2350" stroke-width="1.500"/><circle cx="6" cy="9" r="1.500" fill="#FF8FA3"/><circle cx="10.500" cy="13" r="1.800" fill="#5BC0EB"/></svg><span id="eggn">0/6</span></button><button id="b-math">Learn</button><button id="b-shop">Shop</button></div>
     </div>
   </div>
 
@@ -196,7 +199,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 
   <div class="modal" id="splash" hidden>
     <div class="card wide splash">
-      <h1>Pocket Pup</h1>
+      <h1>Population Pup</h1>
       <p class="sub" id="sp-sub">Pick a game to begin</p>
       <p class="pitch">Raise your pup at home. Then set out into Woofwood Valley, solve math puzzles to gather blocks, and rebuild every house the Great Gust blew down.</p>
       <button class="go" id="play" type="button">Play</button>
@@ -213,7 +216,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <div class="bgrid" id="bgrid"></div>
       <div class="pal" id="pal"></div>
       <div class="fb" id="bd-fb"></div>
-      <div class="row"><span class="sub" id="bd-hint"></span><button class="go small" id="bd-done" type="button">Done</button></div>
+      <div class="row"><span class="sub" id="bd-hint"></span><button class="link" id="bd-crew" type="button" hidden>Crew build</button><button class="go small" id="bd-done" type="button">Done</button></div>
     </div>
   </div>
 
@@ -223,6 +226,14 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <p id="pause-p">Your game is saved. It is safe to close it now.</p>
       <button class="go" id="resume" type="button">Keep playing</button>
       <button class="link" id="totitle" type="button">Back to the title screen</button>
+    </div>
+  </div>
+
+  <div class="modal" id="world" hidden>
+    <div class="card wide">
+      <div class="row"><h2>Where to, Captain?</h2><span class="sub" id="w-pop"></span></div>
+      <div class="list" id="w-list"></div>
+      <div class="row"><span class="sub">New shores open as the world's population grows.</span><button class="go small" id="w-done" type="button">Stay here</button></div>
     </div>
   </div>
 
@@ -237,7 +248,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 
   <div class="modal" id="math" hidden>
     <div class="card wide">
-      <div class="row"><h2>Math for bones</h2><select id="grade" aria-label="Grade level"></select></div>
+      <div class="row"><h2 id="math-h">Math for bones</h2><span style="display:flex;gap:6px;min-width:0"><select id="subject" aria-label="Subject"><option value="math">Math</option><option value="ela">English</option><option value="mix">Both</option></select><select id="grade" aria-label="Grade level"></select></span></div>
       <div class="stack" id="mpick">
         <p>Choose a grade to start. You can change it at the top any time. Questions follow the Common Core standards for that grade and adapt to what has and hasn't been learned.</p>
         <div class="grades" id="grades"></div>
@@ -245,10 +256,20 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <div class="slate" id="slate" hidden></div>
       <div class="stack" id="mplay">
         <div class="row" style="justify-content:center"><span class="sub skill" id="mskill"></span><button class="link" id="mhow" type="button">How to</button></div>
+        <p class="lesson-ex" id="mpass" hidden></p>
         <div class="q" id="q"></div>
         <div class="answers" id="answers"></div>
         <div class="fb" id="fb"></div>
         <div class="row"><span class="sub" id="mprog">0 of 0 skills mastered</span><div class="bar" id="mbar" style="flex:1"><i></i></div></div>
+      </div>
+      <div class="stack" id="mfix" hidden>
+        <h2 id="fx-h">Granny Dot: let's work it out</h2>
+        <p class="lesson-ex" id="fx-steps"></p>
+        <p id="fx-tip" style="white-space:pre-line;font-size:14px"></p>
+        <p class="lesson-ex" id="fx-pass" hidden></p>
+        <b id="fx-q" style="font-family:var(--display);font-weight:400;font-size:22px;text-align:center;text-wrap:balance"></b>
+        <div class="answers" id="fx-answers"></div>
+        <div class="fb" id="fx-fb"></div>
       </div>
       <div class="stack" id="mlesson" hidden>
         <h2 id="ml-h"></h2>
@@ -288,7 +309,9 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <h2 id="adopt-h">Adopt your puppy</h2>
       <p id="adopt-p">Feed, play, wash and train. A well cared-for puppy grows into a big dog.</p>
       <div><label for="nm">Name</label><input id="nm" maxlength="12" autocomplete="off" value="Biscuit"></div>
+      <div><label>Breed</label><div class="tabs" id="breeds" style="flex-wrap:wrap"></div></div>
       <div><label>Coat</label><div class="coats" id="coats"></div></div>
+      <div><label>Girl or boy</label><div class="tabs" id="sexes"></div></div>
       <button class="go" type="submit" id="adopt-go">Adopt</button>
       <button class="link" type="button" id="reset" hidden>Erase everything and start over</button>
       <button class="link" type="button" id="cancel" hidden>Not now</button>
@@ -306,6 +329,15 @@ const sstep = (a,b,x) => { x = clamp((x-a)/(b-a),0,1); return x*x*(3-2*x); };
 const hex = c => { const n = parseInt(c.slice(1),16); return [n>>16, n>>8&255, n&255]; };
 const mix = (a,b,t) => { const A = hex(a), B = hex(b); return 'rgb(' + A.map((v,i) => Math.round(lerp(v,B[i],t))).join(',') + ')'; };
 
+const BREEDS = [
+  {id:'lab', name:'Labrador', ear:'flop', legs:1, body:1, tail:'plain', snout:1},
+  {id:'corgi', name:'Corgi', ear:'point', legs:.55, body:1.12, tail:'stub', snout:.95},
+  {id:'husky', name:'Husky', ear:'point', legs:1.05, body:1, tail:'fluff', snout:1.05},
+  {id:'poodle', name:'Poodle', ear:'flop', legs:1.1, body:.92, tail:'pom', snout:.9, pom:1},
+  {id:'dachs', name:'Dachshund', ear:'long', legs:.45, body:1.3, tail:'plain', snout:1.15},
+  {id:'beagle', name:'Beagle', ear:'long', legs:.85, body:.98, tail:'up', snout:1},
+  {id:'shiba', name:'Shiba', ear:'point', legs:.9, body:.95, tail:'curl', snout:.9},
+];
 const COATS = [
   {id:'honey', base:'#E8A84C', dark:'#BE7A2A', light:'#FBE3B5'},
   {id:'cocoa', base:'#8A5A3C', dark:'#5E3A25', light:'#D9B48F'},
@@ -323,18 +355,18 @@ const TRICKS = [
 const STAGES = ['Puppy','Young dog','Grown dog'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
 
 function load(extra){
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
   if (extra && extra.S) S = Object.assign(fresh(), extra.S);
-  S.math = Object.assign(fresh().math, S.math); S.mode = 'both';
+  S.math = Object.assign(fresh().math, S.math); S.mode = 'both'; S.trophies = S.trophies || []; S.breed = S.breed || 'lab'; S.sex = S.sex || 'girl';
   // time away: needs drift down gently, never to zero
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
   if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
 }
-function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (scene === 'quest' && S.q) S.q.pos = [dog.x/TS(), dog.y/TS()]; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
 
 const level = () => Math.floor((1 + Math.sqrt(1 + 4*S.xp/25))/2);
 const lvlBase = L => 25*L*(L-1);
@@ -374,11 +406,11 @@ const ball = {active:false, x:0, y:0, z:0, vx:0, vy:0, vz:0, rest:0};
 const bowl = {full:false};
 let poops = [], parts = [];
 const PALS = [
-  {id:'mochi', name:'Mochi', g:.15, collar:'#5BC0EB', c:{base:'#F6E7C8', dark:'#D9B77E', light:'#FFFFFF'}},
-  {id:'duke', name:'Duke', g:1, collar:'#4FB06A', c:{base:'#6B4A36', dark:'#46301F', light:'#C9A27C'}},
-  {id:'pepper', name:'Pepper', g:.6, collar:'#FFC53D', c:{base:'#4A4654', dark:'#2E2A36', light:'#EDEBF2', spot:'#EDEBF2'}},
-  {id:'rusty', name:'Rusty', g:.8, collar:'#B58CFF', c:{base:'#D9743A', dark:'#A8501F', light:'#FFF1DC', mask:true}},
-  {id:'skye', name:'Skye', g:.9, collar:'#FF5D73', c:{base:'#DCE3EE', dark:'#9AA7BD', light:'#FFFFFF', mask:true}},
+  {id:'mochi', name:'Mochi', breed:'poodle', g:.15, collar:'#5BC0EB', c:{base:'#F6E7C8', dark:'#D9B77E', light:'#FFFFFF'}},
+  {id:'duke', name:'Duke', breed:'lab', g:1, collar:'#4FB06A', c:{base:'#6B4A36', dark:'#46301F', light:'#C9A27C'}},
+  {id:'pepper', name:'Pepper', breed:'beagle', sex:'girl', g:.6, collar:'#FFC53D', c:{base:'#4A4654', dark:'#2E2A36', light:'#EDEBF2', spot:'#EDEBF2'}},
+  {id:'rusty', name:'Rusty', breed:'corgi', g:.8, collar:'#B58CFF', c:{base:'#D9743A', dark:'#A8501F', light:'#FFF1DC', mask:true}},
+  {id:'skye', name:'Skye', breed:'husky', sex:'girl', g:.9, collar:'#FF5D73', c:{base:'#DCE3EE', dark:'#9AA7BD', light:'#FFFFFF', mask:true}},
 ];
 let scene = 'yard', npcs = [], trans = null;
 const palLove = p => (p && S.pals && S.pals[p.id]) || 0;
@@ -395,6 +427,11 @@ const ITEMS = [
   {id:'sieve', name:'Sieve', price:35, desc:'Sift 2 extra glass with every right answer.'},
   {id:'wrench', name:'Giant wrench', price:40, desc:'Salvage 2 extra steel with every right answer.'},
   {id:'barrow', name:'Wheelbarrow', price:60, desc:'1 extra block from everything you gather.'},
+  {id:'bow', name:'Hair bow', price:10, wear:true, desc:'A pink bow by the ear.', head:'Wardrobe: dress your pup'},
+  {id:'bowtie', name:'Bow tie', price:10, wear:true, desc:'A smart blue bow tie.'},
+  {id:'scarf', name:'Cosy scarf', price:20, wear:true, desc:'An orange scarf for chilly valleys.'},
+  {id:'crown', name:'Flower crown', price:25, wear:true, desc:'A ring of flowers.'},
+  {id:'cape', name:'Hero cape', price:40, wear:true, desc:'A purple cape that flutters as you walk.'},
   {id:'bandana', name:'Bandana', price:15, wear:true, head:'Pup gear', desc:'Stays clean for longer.'},
   {id:'bottle', name:'Water bottle', price:20, desc:'Gets half as tired at the park.'},
   {id:'frisbee', name:'Frisbee', price:25, desc:'Fetch is extra fun, at home and at the park.'},
@@ -412,8 +449,8 @@ const LOOT = [
   {id:'emerald', name:'Emerald', kind:'gem', col:'#4FB06A', at:'park'}, {id:'sapphire', name:'Sapphire', kind:'gem', col:'#5BC0EB', at:'park'},
   {id:'mammoth', name:'Mammoth bone', kind:'bone', col:'#C9BFAF', at:'park', rare:1}, {id:'medal', name:'Pirate medal', kind:'star', col:'#FF9F1C', at:'park', rare:1},
 ];
-const DOGKEYS = ['name','coat','food','energy','fun','clean','xp','age','grow','mastery','wear','pals','neglect','sick','away'];
-const newDog = (name, coat) => ({name, coat, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, mastery:{}, wear:{}, pals:{}, neglect:0, sick:false, away:false});
+const DOGKEYS = ['name','coat','breed','sex','food','energy','fun','clean','xp','age','grow','mastery','wear','pals','neglect','sick','away'];
+const newDog = (name, coat, breed, sex) => ({name, coat, breed:breed || 'lab', sex:sex || 'girl', food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, mastery:{}, wear:{}, pals:{}, neglect:0, sick:false, away:false});
 const packDog = () => { const o = {}; for (const k of DOGKEYS) o[k] = S[k]; return o; };
 const unpackDog = o => Object.assign(S, newDog('Biscuit','honey'), o);
 const adoptPrice = () => [60,150,300][S.kennel.length];
@@ -558,6 +595,7 @@ function drawLand(n){
   ctx.beginPath(); ctx.moveTo(hp.x-56*u, hp.y-56*u); ctx.lineTo(hp.x, hp.y-100*u); ctx.lineTo(hp.x+56*u, hp.y-56*u); ctx.closePath(); fs(SKY);
   ctx.beginPath(); ctx.moveTo(hp.x-20*u, hp.y); ctx.lineTo(hp.x-20*u, hp.y-26*u); ctx.arc(hp.x, hp.y-26*u, 20*u, Math.PI, 0); ctx.lineTo(hp.x+20*u, hp.y); ctx.closePath(); fs(INK);
   ctx.fillStyle = INK; ctx.font = 11*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.fillText(S.name.toUpperCase(), hp.x, hp.y-60*u-4*u+14*u-22*u+10*u);
+  drawTrophies();
 }
 function drawBowl(){
   const b = bowlPos(), u = U;
@@ -603,8 +641,11 @@ function cap(x1,y1,x2,y2,w,col){ ctx.strokeStyle = P ? col : INK; ctx.lineWidth 
 function ell(x,y,rx,ry,rot,col){ ctx.fillStyle = P ? col : INK; ctx.beginPath(); ctx.ellipse(x,y,Math.max(.1,rx+(P?0:OW)),Math.max(.1,ry+(P?0:OW)),rot,0,6.300); ctx.fill(); }
 function dogScale(d){ d = d || dog; return (.6 + .4*(d.g == null ? growth() : d.g)) * U * d.ds; }
 function drawDog(d){
-  d = d || dog; const hard = d.hard || (d === dog && scene === 'quest'), hatCol = RANKS[Math.min(S.rank || 0, RANKS.length-1)][2], wr = d === dog ? (S.wear || {}) : (d.wearSet || {}), c = d.c || coat(), g = d.g == null ? growth() : d.g, sc = dogScale(d);
-  const hs = 1.3 - .3*g, L = 60 + 20*g, BH = 34 + 4*g, G = 18 + 18*g, R = 21*hs;
+  d = d || dog; const mine = d === dog, wr = mine ? (S.wear || {}) : (d.wearSet || {}), c = d.c || coat(), g = d.g == null ? growth() : d.g, sc = dogScale(d);
+  const br = BREEDS.find(b => b.id === (mine ? S.breed : d.breed)) || BREEDS[0], girl = (mine ? S.sex : d.sex) === 'girl', sn = br.snout;
+  const hs = 1.3 - .3*g, L = (60 + 20*g)*br.body, BH = 34 + 4*g, G = (18 + 18*g)*br.legs, R = 21*hs;
+  const poly = (pts, col) => { ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.closePath(); ctx.fillStyle = P ? col : INK; ctx.fill(); if (!P){ ctx.strokeStyle = INK; ctx.lineWidth = 2*OW; ctx.lineJoin = 'round'; ctx.stroke(); } };
+  const trim = (pts, col) => { ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.closePath(); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.lineJoin = 'round'; fs(col); };   // an outfit piece with its own outline
   ctx.save(); ctx.translate(d.x, d.y);
   ctx.fillStyle = 'rgba(20,15,50,.22)'; ctx.beginPath(); ctx.ellipse(0, 1, L*.72*sc*(1-d.hop/400), 9*sc, 0, 0, 7); ctx.fill();
   ctx.translate(0, -d.hop*sc); ctx.scale(d.dir*sc*(d.flip || .02), sc);
@@ -621,49 +662,59 @@ function drawDog(d){
     return {tx:(front?sh.x+3:hip.x-3) + (i%2?0:5), ty:(front?sh.y:hip.y) + BH*.2,
       x:(front?sh.x+3+18*lie+2*sit:hip.x-3+15*sit+20*lie) + (i%2?0:5) + Math.sin(ph)*9*d.mv, y:-4 - Math.max(0,Math.cos(ph))*7*d.mv};
   });
-  const leg = (f,col,paw) => { cap(f.tx,f.ty,f.x,f.y,11,col); ell(f.x+3,f.y+1,7,4.500,0,paw); };
+  const leg = (f,col,paw) => { cap(f.tx,f.ty,f.x,f.y,11,col); ell(f.x+3,f.y+1,7,4.500,0,paw); if (br.pom) ell(f.x+1, f.y-7, 8, 6.500, 0, col); };
+  const tw = br.tail === 'fluff' ? 15 : br.tail === 'pom' ? 5 : 9, tl = br.tail === 'stub' ? 13 : 32, tu = br.tail === 'up' ? -.45 : 0;
   for (P = 0; P < 2; P++){
     // tail
     const sx = hip.x-8, sy = hip.y-5;
-    ctx.strokeStyle = P ? c.base : INK; ctx.lineWidth = 9 + (P?0:2*OW); ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(sx+Math.cos(ta+.5)*18, sy+Math.sin(ta+.5)*18, sx+Math.cos(ta)*32, sy+Math.sin(ta)*32); ctx.stroke();
-    if (P){ ctx.strokeStyle = c.light; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(sx+Math.cos(ta)*29, sy+Math.sin(ta)*29); ctx.lineTo(sx+Math.cos(ta)*32, sy+Math.sin(ta)*32); ctx.stroke(); }
+    ctx.strokeStyle = P ? c.base : INK; ctx.lineWidth = tw + (P?0:2*OW); ctx.lineCap = 'round'; const tb = ta + tu;
+    if (br.tail === 'curl'){ ctx.lineWidth = 9 + (P?0:2*OW); ctx.beginPath(); ctx.arc(sx-3, sy-13, 11, .9+wagA*.4, 5.300+wagA*.4); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(sx+Math.cos(tb+.5)*tl*.56, sy+Math.sin(tb+.5)*tl*.56, sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl); ctx.stroke();
+      if (br.tail === 'pom') ell(sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl, 8, 8, 0, c.base);
+      else if (P && br.tail !== 'stub'){ ctx.strokeStyle = c.light; ctx.lineWidth = tw-2; ctx.beginPath(); ctx.moveTo(sx+Math.cos(tb)*(tl-3), sy+Math.sin(tb)*(tl-3)); ctx.lineTo(sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl); ctx.stroke(); } }
     leg(feet[0], c.dark, c.dark); leg(feet[2], c.dark, c.dark);
     cap(hip.x,hip.y,sh.x,sh.y,BH,c.base);
-    if (P){ ell(sh.x+3, sh.y+5, BH*.3, BH*.34, 0, c.light); if (c.spot) ell(hip.x+12, hip.y-5, 12, 8, .3, c.spot); }
+    if (P){ ell(sh.x+3, sh.y+5, BH*.3, BH*.34, 0, c.light); if (c.spot) ell(hip.x+12, hip.y-5, 12, 8, .3, c.spot);
+      if (wr.cape) trim([[sh.x-2, sh.y-BH*.5],[hip.x-16, hip.y-BH*.2+Math.sin(d.t*5)*3],[hip.x-8, hip.y+BH*.38],[sh.x-10, sh.y+BH*.12]], '#B58CFF'); }
     leg(feet[1], c.base, c.light); leg(feet[3], c.base, c.light);
     cap(sh.x+3, sh.y-3, hd.x-5, hd.y+7, 19*hs, c.base);
     if (P){ const mx = lerp(sh.x+3,hd.x-5,.5), my = lerp(sh.y-3,hd.y+7,.5), a = Math.atan2(hd.y+10-sh.y, hd.x-8-sh.x);
       ctx.save(); ctx.translate(mx,my); ctx.rotate(a); ctx.fillStyle = d.collar || BERRY; ctx.fillRect(-3.500,-10*hs,7,20*hs); ctx.restore();
       ctx.fillStyle = SUN; ctx.beginPath(); ctx.arc(mx+4, my+9*hs, 3.500, 0, 7); ctx.fill();
+      if (wr.scarf){ ctx.save(); ctx.translate(mx,my); ctx.rotate(a); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.beginPath(); ctx.rect(-5.500,-11*hs,11,22*hs); fs('#FF8A3C'); ctx.restore(); trim([[mx-2, my+6*hs],[mx+8, my+8*hs],[mx+5, my+26*hs],[mx-5, my+24*hs]], '#FF8A3C'); }
+      if (wr.bowtie){ const bx = mx+5, by2 = my+10*hs; trim([[bx,by2],[bx-11,by2-7],[bx-11,by2+7]], SKY); trim([[bx,by2],[bx+11,by2-7],[bx+11,by2+7]], SKY); ctx.beginPath(); ctx.arc(bx,by2,3.200,0,7); fs('#2F8FBF'); }
       if (wr.bandana){ ctx.beginPath(); ctx.moveTo(mx-9, my-7*hs); ctx.lineTo(mx+10, my+3*hs); ctx.lineTo(mx+3, my+22*hs); ctx.closePath(); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.lineJoin = 'round'; fs(SKY); } }
     ctx.save(); ctx.translate(hd.x, hd.y); ctx.rotate(d.tilt + d.hd*.45);
     if (d.mouth > .15){ ell(R*.72, R*.6, R*.3, R*.24*d.mouth, 0, '#8A2E44'); if (P) { ctx.fillStyle = '#FF9DB0'; ctx.beginPath(); ctx.ellipse(R*.78, R*.72, R*.16, R*.26*d.mouth, 0, 0, 7); ctx.fill(); } }
+    if (br.ear === 'point') poly([[-R*.8,-R*.42],[-R*.52,-R*1.5],[R*.02,-R*.8]], c.dark);
     ell(0, 0, R, R*.94, 0, c.base);
-    ell(R*.76, R*.26, R*.56, R*.4, 0, c.light);
+    if (br.pom) ell(-R*.12, -R*.82, R*.52, R*.4, 0, c.base);
+    ell(R*.76*sn, R*.26, R*.56*sn, R*.4, 0, c.light);
     if (P){
       if (c.mask) ell(R*.2, R*.3, R*.62, R*.5, 0, c.light);
       if (c.spot) ell(R*.3, -R*.2, R*.34, R*.4, 0, c.spot);
-      ell(R*1.24, R*.1, R*.17, R*.13, 0, INK);
+      ell(R*1.24*sn, R*.1, R*.17, R*.13, 0, INK);
       ctx.strokeStyle = INK; ctx.lineWidth = 2.200; ctx.lineCap = 'round';
       if (d.mouth <= .15){ ctx.beginPath(); ctx.arc(R*.86, R*.3, R*.3, .5, 2.200); ctx.stroke(); }
       if (d.asleep || d.blink > 0){ ctx.beginPath(); ctx.arc(R*.3, -R*.2, R*.14, .2, Math.PI-.2); ctx.stroke(); }
       else { ell(R*.3, -R*.18, R*.13, R*.17, 0, INK); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(R*.35, -R*.25, R*.05, 0, 7); ctx.fill(); }
+      if (girl && !d.asleep && d.blink <= 0){ ctx.lineWidth = 1.800; ctx.beginPath(); ctx.moveTo(R*.4,-R*.33); ctx.lineTo(R*.52,-R*.45); ctx.moveTo(R*.3,-R*.36); ctx.lineTo(R*.34,-R*.5); ctx.stroke(); ctx.lineWidth = 2.200; }   // eyelashes
       if (d === dog && S.sick && scene !== 'quest'){ ctx.fillStyle = 'rgba(110,185,80,.6)'; ctx.beginPath(); ctx.ellipse(R*.1, R*.22, R*.24, R*.16, 0, 0, 7); ctx.fill(); }
       if (d.joy > 0 && !d.asleep){ ctx.fillStyle = 'rgba(255,93,115,.45)'; ctx.beginPath(); ctx.ellipse(R*.1, R*.22, R*.16, R*.1, 0, 0, 7); ctx.fill(); }
     }
-    ctx.save(); ctx.translate(-R*.34, -R*.6); ctx.rotate(.35 + d.ear); ell(0, R*.52, R*.36, R*.68, 0, c.dark); ctx.restore();
+    if (br.ear !== 'point'){ ctx.save(); ctx.translate(-R*.34, -R*.6); ctx.rotate(.35 + d.ear); if (br.ear === 'long') ell(0, R*.7, R*.36, R*.92, 0, c.dark); else ell(0, R*.52, R*.36, R*.68, 0, c.dark); ctx.restore(); }
+    if (P && wr.bow){ const bx = -R*.3, by2 = -R*.88; trim([[bx,by2],[bx-R*.5,by2-R*.32],[bx-R*.5,by2+R*.32]], '#FF8FB8'); trim([[bx,by2],[bx+R*.5,by2-R*.32],[bx+R*.5,by2+R*.32]], '#FF8FB8'); ctx.beginPath(); ctx.arc(bx,by2,R*.13,0,7); fs(BERRY); }
+    if (P && wr.crown){ ctx.lineWidth = 1.500; ctx.strokeStyle = INK; [[-.52,-.72,BERRY],[-.2,-.92,SUN],[.14,-.94,'#B58CFF'],[.44,-.8,'#FF8FB8']].forEach(q => { ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, R*.16, 0, 7); fs(q[2]); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, R*.06, 0, 7); ctx.fill(); }); }
     if (P && wr.shades){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.beginPath(); ctx.moveTo(-R*.7,-R*.3); ctx.lineTo(R*.5,-R*.22); ctx.stroke(); rr(R*.02,-R*.4,R*.62,R*.42,R*.14); ctx.fillStyle = INK; ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(R*.16,-R*.1); ctx.lineTo(R*.3,-R*.3); ctx.stroke(); }
-    if (P && wr.hat && !hard){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-R*.5,-R*.72); ctx.lineTo(R*.05,-R*1.85); ctx.lineTo(R*.45,-R*.8); ctx.closePath(); fs(BERRY); ctx.beginPath(); ctx.arc(R*.05,-R*1.85,R*.16,0,7); fs(SUN); }
-    if (P && hard){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.ellipse(-R*.02, -R*.5, R*.8, R*.62, 0, Math.PI, 0); ctx.closePath(); fs(hatCol); rr(-R*.86, -R*.6, R*2.02, R*.18, R*.09); fs(hatCol); ctx.beginPath(); ctx.moveTo(-R*.02, -R*1.1); ctx.lineTo(-R*.02, -R*.6); ctx.stroke(); }
+    if (P && wr.hat){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-R*.5,-R*.72); ctx.lineTo(R*.05,-R*1.85); ctx.lineTo(R*.45,-R*.8); ctx.closePath(); fs(BERRY); ctx.beginPath(); ctx.arc(R*.05,-R*1.85,R*.16,0,7); fs(SUN); }
     if (P && d.holding) ballAt(R*1.05, R*.55, 9*U/sc);
     ctx.restore();
   }
   P = 1;
   ctx.restore();
 }
-function dogHead(d){ d = d || dog; const sc = dogScale(d); return {x:d.x + d.dir*46*sc, y:d.y - (lerp(92,40,Math.max(d.lie,d.hd*.9)) - 14*d.sit)*sc - d.hop*sc}; }
+function dogHead(d){ d = d || dog; const sc = dogScale(d), bl = (BREEDS.find(b => b.id === (d === dog ? S.breed : d.breed)) || BREEDS[0]).legs; return {x:d.x + d.dir*46*sc, y:d.y - (lerp(92-(1-bl)*32,40,Math.max(d.lie,d.hd*.9)) - 14*d.sit)*sc - d.hop*sc}; }
 function drawTag(n){
   const kin = n.kin != null && S.kennel[n.kin], h = dogHead(n), u = U, f = palLove(n.pal), met = !kin && f > 0, hearts = f >= 100 ? 3 : f >= 50 ? 2 : f >= 20 ? 1 : 0, text = kin ? kin.name : met ? n.pal.name : 'New dog';
   ctx.font = 13*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'left';
@@ -782,13 +833,13 @@ function updateDog(dt){
 /* ---------- dog park ---------- */
 function makeNpc(p, i){
   const Y = yard();
-  return Object.assign({}, dog, {pal:p, c:p.c, g:p.g, collar:p.collar, x:W*(.38+.22*i)+rnd(-20,20), y:rnd(Y.y0,Y.y1), dir:Math.random() < .5 ? 1 : -1,
+  return Object.assign({}, dog, {pal:p, c:p.c, g:p.g, collar:p.collar, breed:p.breed || 'lab', sex:p.sex || 'boy', x:W*(.38+.22*i)+rnd(-20,20), y:rnd(Y.y0,Y.y1), dir:Math.random() < .5 ? 1 : -1,
     state:'idle', t:rnd(0,9), t0:0, dur:rnd(.5,2), holding:false, joy:0, pant:0, sit:0, lie:0, hd:0, hop:0, flip:1, roll:0, tilt:0, shake:0, mouth:0, mv:0, asleep:false, wag:.5, mood:.85, run:false, cb:null});
 }
 function travel(to, msg){ if (trans) return; trans = {t:0, to, msg}; $('tricks').hidden = true; }
 function arrive(to){
   bud.on = false;
-  if (scene === 'quest') QS().pos = [dog.x/TS(), dog.y/TS()];
+  if (scene === 'quest'){ const q = QS(); (q.posBy = q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; }
   scene = to; const Y = yard();
   ball.active = false; dog.holding = false; dog.pal = null; dog.x = Y.x0 + 30*U; dog.y = (Y.y0+Y.y1)/2; dog.dir = 1; idle(1.2); dog.joy = 1.5;
   holes = []; npcs = to === 'park' ? PALS.slice().sort(() => Math.random()-.5).slice(0,3).map(makeNpc) : []; refreshYard();
@@ -932,6 +983,7 @@ cv.addEventListener('pointerdown', e => {
   const i = scene === 'yard' ? poops.findIndex(o => Math.hypot(o.x-p.x, o.y-10*U-p.y) < 26*U) : -1;
   if (i >= 0){ puff('star', poops[i].x, poops[i].y-10*U, 3); poops.splice(i,1); pop(); gainXp(3); bump('clean',4); toast('Scooped. Thanks!'); return; }
   if (onDog(p)){ pet(); return; }
+  const sb = shelfBox(); if (scene === 'yard' && (S.trophies || []).length && p.x > sb.x0 && p.x < sb.x1 && p.y > sb.y0 && p.y < sb.y1+20*U){ tab = 'trophies'; openShop(); return; }
   const pal = npcs.find(n => onDog(p, n));
   if (pal && pal.kin != null){ if (!blocked()) switchDog(pal.kin); return; }
   if (pal){ if (!blocked()){ if (['idle','walk','sitidle'].includes(pal.state)) meet(pal); else toast(pal.pal.name + ' is busy playing.'); } return; }
@@ -979,7 +1031,7 @@ function refreshYard(){
   if (scene !== 'yard') return;
   const old = npcs;
   npcs = S.kennel.map((k,i) => { const n = makeNpc({c:COATS.find(c => c.id === k.coat) || COATS[0], g:clamp(k.grow,0,1)}, i), o = old.find(q => q.kin === i);
-    n.pal = null; n.kin = i; n.wearSet = k.wear || {}; n.x = o ? o.x : rnd(W*.15, W*.85); if (o) n.y = o.y; return n; }).filter(n => !S.kennel[n.kin].away);
+    n.pal = null; n.kin = i; n.wearSet = k.wear || {}; n.breed = k.breed || 'lab'; n.sex = k.sex || 'girl'; n.x = o ? o.x : rnd(W*.15, W*.85); if (o) n.y = o.y; return n; }).filter(n => !S.kennel[n.kin].away);
 }
 function switchDog(i){
   const nx = S.kennel[i]; if (!nx) return;
@@ -1143,15 +1195,103 @@ const GRADES = [
     ['6.G.A.1', 'Area of a triangle', () => { const b = ri(2,10)*2, h = ri(3,12); return ask('A triangle has base ' + b + ' and height ' + h + '. What is its area?', b*h/2, [b*h, b+h]); }],
   ]},
 ];
-const curGrade = () => GRADES.find(g => g.id === S.math.grade);
+/* ---------- English: original questions in the style of the state tests, by Common Core ELA standard ---------- */
+const pk = (q, ans, wrong, pass) => { const p = pickFrom(q, ans, wrong); if (pass) p.pass = pass; return p; };
+const bank = items => () => { const it = pickOf(items); return pk(it[0], it[1], it[2], it[3]); };
+const others = (list, not, n) => shuffle(list.filter(x => x !== not)).slice(0, n);
+const RHYME = [['cat','hat',['dog','sun','cup']],['dog','log',['cat','pig','bed']],['sun','fun',['sit','map','top']],['bed','red',['bag','big','bus']],['pig','wig',['pan','peg','dot']],['cake','lake',['kite','cook','duck']],['tree','bee',['toy','top','tap']],['star','car',['sit','sock','sun']],['fish','dish',['fan','frog','foot']],['bug','rug',['bag','big','beg']],['hen','pen',['hat','hop','hug']],['king','ring',['kite','can','rock']]];
+const BEGIN = [['ball','bat',['cat','dog','sun']],['sun','sock',['moon','top','fan']],['dog','duck',['pig','cat','bug']],['moon','map',['nap','pan','sun']],['fish','fan',['van','pan','dish']],['top','ten',['pot','dot','hen']],['pig','pan',['big','dig','tan']],['hat','hen',['cat','bat','ten']],['lamp','leg',['ram','map','peg']],['ring','rug',['king','wing','bug']]];
+const SENT1 = ['the dog ran fast','we went to the park','my cat likes milk','i see a red bird','she has a big hat','he can jump high','the sun is hot','i like to read'];
+const PLURAL1 = [['cat','cats',['cates','catts','cat']],['dog','dogs',['doges','dogz','dog']],['box','boxes',['boxs','boxies','boxen']],['bus','buses',['buss','busies','bus']],['dish','dishes',['dishs','dishies','dishe']],['fox','foxes',['foxs','foxies','foxen']],['bird','birds',['birdes','birdies','bird']],['wish','wishes',['wishs','wishies','wishe']]];
+const OPP = [['hot','cold'],['up','down'],['big','little'],['happy','sad'],['fast','slow'],['day','night'],['wet','dry'],['open','shut'],['full','empty'],['soft','hard']];
+const PLURAL2 = [['child','children',['childs','childes','childrens']],['mouse','mice',['mouses','mices','mouse']],['foot','feet',['foots','feets','footes']],['tooth','teeth',['tooths','teeths','toothes']],['leaf','leaves',['leafs','leafes','leavs']],['wolf','wolves',['wolfs','wolfes','wolvs']],['knife','knives',['knifes','knifs','knivs']],['city','cities',['citys','cityes','citis']],['puppy','puppies',['puppys','puppyes','puppis']],['man','men',['mans','mens','manes']],['goose','geese',['gooses','geeses','goosies']],['story','stories',['storys','storyes','storis']],['shelf','shelves',['shelfs','shelfes','shelvs']]];
+const PAST = [['go','went','Yesterday, we ___ to the park.'],['see','saw','Last night, I ___ a shooting star.'],['eat','ate','This morning, Leo ___ two pancakes.'],['run','ran','Yesterday, the puppy ___ across the yard.'],['take','took','Last week, Mia ___ her dog to the vet.'],['give','gave','On my birthday, Grandma ___ me a book.'],['write','wrote','Yesterday, Sam ___ a letter to his friend.'],['bring','brought','Last Friday, Ana ___ cupcakes to class.'],['think','thought','At first, I ___ the answer was ten.'],['catch','caught','Yesterday, Dad ___ a huge fish.'],['teach','taught','Last year, Mr. Lee ___ us how to swim.'],['buy','bought','Last weekend, we ___ a new tent.'],['fly','flew','This morning, a bird ___ into the garage.'],['draw','drew','Yesterday, Maya ___ a picture of her cat.'],['swim','swam','Last summer, we ___ in the lake every day.'],['begin','began','The show ___ an hour ago.'],['choose','chose','Yesterday, Jon ___ the blue kite.'],['speak','spoke','Last night, the mayor ___ to the crowd.'],['break','broke','Yesterday, the vase fell and ___.'],['hide','hid','Last night, the cat ___ under the bed.']];
+const CONTR = [['do not',"don't",['dont',"do'nt","dont'"]],['I am',"I'm",['Im',"I'am","Im'"]],['can not',"can't",['cant',"ca'nt","cant'"]],['it is',"it's",['its',"its'","i'ts"]],['we are',"we're",['were',"wer'e","we'ar"]],['they will',"they'll",['theyll',"they'l","theyl'l"]],['is not',"isn't",['isnt',"is'nt","isnt'"]],['you have',"you've",['youve',"you'hve","youv'e"]]];
+const POSS = [['the bone that belongs to the dog',"the dog's bone",['the dogs bone',"the dogs' bone","the dog bone's"]],['the hat that belongs to Maria',"Maria's hat",['Marias hat',"Marias' hat","Maria hat's"]],['the nest that belongs to the bird',"the bird's nest",['the birds nest',"the birds' nest","the bird nest's"]],['the bike that belongs to my brother',"my brother's bike",['my brothers bike',"my brothers' bike","my brother bike's"]]];
+const SPELL = {
+  A:[['because',['becuase','becaus','beacause']],['friend',['freind','frend','friennd']],['people',['peeple','poeple','peple']],['again',['agin','agen','againe']],['said',['sed','siad','sayed']],['could',['cood','coud','culd']],['school',['skool','scool','shcool']],['little',['littel','litle','littul']],['would',['wood','woud','wuld']],['every',['evry','everey','evrey']]],
+  B:[['beautiful',['beutiful','beautifull','butiful']],['different',['diffrent','diferent','differant']],['favorite',['favrite','faverite','favorit']],['enough',['enuff','enogh','enouf']],['through',['thru','throgh','threw']],['surprise',['suprise','surprize','serprise']],['believe',['beleive','belive','beleve']],['caught',['cought','cawt','caugt']],['thought',['thout','thaught','thougt']],['minute',['minit','minnute','minuet']],['answer',['anser','answar','ansewr']],['island',['iland','ileland','islend']]],
+  C:[['receive',['recieve','receve','reiceve']],['separate',['seperate','separat','sepparate']],['necessary',['neccessary','necesary','nesessary']],['definitely',['definately','definitly','defanitely']],['calendar',['calender','calandar','calander']],['neighbor',['nieghbor','nabor','neighber']],['weird',['wierd','weerd','wered']],['tomorrow',['tommorow','tomorow','tommorrow']],['library',['libary','librery','liberry']],['February',['Febuary','Februery','Febrary']],['probably',['probly','probaly','probibly']],['especially',['especialy','expecially','espeshally']]],
+  D:[['accommodate',['accomodate','acommodate','acomodate']],['embarrass',['embarass','embarras','imbarrass']],['rhythm',['rythm','rhythem','rythem']],['occurred',['occured','ocurred','occurrd']],['conscience',['concience','consience','conshence']],['privilege',['privelege','priviledge','privlege']],['recommend',['reccomend','recomend','reccommend']],['exaggerate',['exagerate','exaggarate','exadgerate']],['temperature',['temperture','tempature','temprature']],['government',['goverment','govermint','governmant']]]};
+const SYN = {A:[['big','large'],['happy','glad'],['quick','fast'],['begin','start'],['tiny','small'],['shout','yell'],['gift','present'],['under','below']], B:[['brave','courageous'],['enormous','huge'],['ancient','old'],['assist','help'],['purchase','buy'],['difficult','hard'],['silent','quiet'],['frequently','often'],['conclude','end'],['fortunate','lucky']]};
+const ANT = [['early','late'],['empty','full'],['ancient','modern'],['generous','selfish'],['expand','shrink'],['victory','defeat'],['rough','smooth'],['arrive','depart'],['temporary','permanent'],['increase','decrease']];
+const AGREE = [['The puppies','play','plays','in the yard every morning.',1],['My sister','ride','rides','her bike to school.',0],['The birds','sing','sings','at sunrise.',1],['Our teacher','read','reads','a story after lunch.',0],['The boys','watch','watches','the game on Saturdays.',1],['A frog','jump','jumps','into the pond.',0],['Dogs','bark','barks','at the mail truck.',1],['Each student','bring','brings','a pencil to class.',0],['Ava and Leo','walk','walks','home together.',1],['The moon','shine','shines','brightly at night.',0]];
+const POS = [['The sleepy puppy quickly chased a red ball.',{noun:'puppy',verb:'chased',adjective:'sleepy',adverb:'quickly'}],['Maya carefully painted a tall tree.',{noun:'tree',verb:'painted',adjective:'tall',adverb:'carefully'}],['The loud thunder suddenly shook our house.',{noun:'thunder',verb:'shook',adjective:'loud',adverb:'suddenly'}],['A tiny mouse quietly nibbled the cheese.',{noun:'mouse',verb:'nibbled',adjective:'tiny',adverb:'quietly'}],['My brother happily baked fresh bread.',{noun:'bread',verb:'baked',adjective:'fresh',adverb:'happily'}],['The cold wind gently moved the curtains.',{noun:'wind',verb:'moved',adjective:'cold',adverb:'gently'}]];
+const AFFIX = [['un','happy','not happy'],['un','kind','not kind'],['re','read','read again'],['re','build','build again'],['pre','heat','heat before'],['mis','spell','spell wrongly'],['dis','agree','not agree'],['un','lock','do the opposite of lock']];
+const SUFFIX = [['care','less','without care'],['hope','ful','full of hope'],['teach','er','a person who teaches'],['wash','able','able to be washed'],['fear','less','without fear'],['joy','ful','full of joy'],['paint','er','a person who paints'],['break','able','able to be broken']];
+const ROOTS = [['"tele" in telephone and telescope','far',['sound','small','water']],['"bio" in biology and biography','life',['book','earth','two']],['"aqua" in aquarium and aquatic','water',['fish','glass','blue']],['"port" in transport and portable','carry',['door','ship','leave']],['"graph" in autograph and paragraph','write',['picture','self','read']],['"therm" in thermometer and thermal','heat',['measure','glass','cold']],['"micro" in microscope and microchip','small',['see','far','many']],['"spect" in inspect and spectator','look',['special','wait','sport']],['"dict" in predict and dictionary','say',['book','before','rule']],['"struct" in construct and structure','build',['break','strong','street']]];
+const CTX = {
+  A:[['The desert was so arid that no plants could grow there.','arid','dry',['crowded','cold','noisy']],['After the long hike, Ben was famished and ate three sandwiches.','famished','very hungry',['very tired','very happy','very cold']],['The puppy was timid and hid behind the couch when guests arrived.','timid','shy',['playful','angry','sleepy']],['Mia gazed at the stars for an hour without looking away.','gazed','looked for a long time',['ran quickly','shouted loudly','slept deeply']],['The enormous whale was longer than a school bus.','enormous','very large',['very fast','very old','very quiet']],['Dad was furious when he saw the mud on the new carpet.','furious','very angry',['very sleepy','very proud','very hungry']],['The fragile vase broke when it fell off the shelf.','fragile','easily broken',['very heavy','brightly colored','hard to see']],['We need to conserve water during the dry summer.','conserve','save',['waste','boil','color']]],
+  B:[['The scientist will examine the rock closely under a microscope.','examine','look at carefully',['throw away','break apart','hide quickly']],['Rain is scarce in the desert, so the plants there store water.','scarce','hard to find',['very loud','easy to see','always falling']],['The hikers were reluctant to cross the shaky bridge.','reluctant','not willing',['very excited','well prepared','extremely fast']],['Her explanation was so vague that no one understood the plan.','vague','not clear',['very funny','too long','quite loud']],['The mayor will abolish the old rule so that people can ride bikes in the park.','abolish','get rid of',['write down','make longer','talk about']],['The coach praised the team for their persistent effort, even when they were losing.','persistent','not giving up',['not caring','very quiet','quickly finished']],['The two rivers merge into one wide river near the town.','merge','join together',['dry up','split apart','freeze over']],['The teacher asked us to summarize the chapter in two sentences.','summarize','tell the main points briefly',['copy every word','draw a picture','read aloud']]]};
+const FIG = [['Maya was as quiet as a mouse during the movie.','What does the simile show about Maya?','She made almost no noise.',['She was hungry.','She was very small.','She was afraid of cats.']],['The classroom was a zoo after the bell rang.','What does the metaphor mean?','The classroom was noisy and wild.',['The classroom had animals in it.','The classroom was very large.','The classroom was outdoors.']],['Finishing the puzzle was a piece of cake.','What does the idiom "a piece of cake" mean?','very easy',['very tasty','very messy','very slow']],['It was raining cats and dogs when we left school.','What does the idiom "raining cats and dogs" mean?','raining very hard',['animals were outside','raining lightly','the sun was out']],['Leo had butterflies in his stomach before the spelling bee.','What does "butterflies in his stomach" mean?','He felt nervous.',['He ate something strange.','He was very hungry.','He felt sleepy.']],['The stars were diamonds scattered across the sky.','The author compares the stars to diamonds to show that the stars','sparkled brightly',['were very hard','cost a lot of money','were falling']],['Grandpa told me to hit the books before my test.','What does "hit the books" mean?','study',['throw books','buy books','close the books']],['Her smile was as bright as the sun.','What does the simile show?','Her smile was warm and cheerful.',['Her smile was hot.','She was standing outside.','She was squinting.']],['The wind whispered through the trees.','What does the author mean?','The wind made a soft sound.',['The wind could talk.','The trees were listening.','The wind stopped blowing.']],['Sam decided to break the ice by telling a joke.','What does "break the ice" mean?','help people feel comfortable',['crack something frozen','leave the room','start an argument']]];
+const HOMO = [['The birds built ___ nest in the oak tree.','their',['there',"they're",'thier']],['Please put your backpack over ___ by the door.','there',['their',"they're",'thair']],['___ going to the museum on Friday.',"They're",['Their','There','Theyre']],['I would like to come ___!','too',['to','two','tow']],['We walked ___ the library after school.','to',['too','two','tow']],['Is this ___ jacket on the chair?','your',["you're",'yore','youre']],['___ the fastest runner on the team.',"You're",['Your','Yore','Youre']],['The dog wagged ___ tail.','its',["it's","its'",'itz']],['___ time to go home.',"It's",['Its',"Its'",'Itz']],['Did you ___ the thunder last night?','hear',['here','heir','hare']],['I do not know ___ it will rain today.','whether',['weather','wether','whither']],['May I have a ___ of pie?','piece',['peace','peice','pease']],['___ book is this on the floor?','Whose',["Who's",'Whos','Whoose']],['Turn ___ at the corner.','right',['write','rite','wright']]];
+const SERIES = [['We packed','apples','cheese','bread',' for the picnic'],['The campers brought','a tent','a lantern','sleeping bags',''],['My favorite sports are','soccer','tennis','chess',''],['I invited','Mia','Jon','Priya',' to my party'],['The store sells','pens','paper','glue','']];
+const EASY = [
+  ["Pip is a small brown puppy. Pip likes to dig in the garden. One day Pip dug up an old red ball. Pip wagged his tail and ran to show Mom.", [['What did Pip dig up?','an old red ball',['a bone','a shoe','a carrot']],['How did Pip feel when he found it?','happy',['sad','sleepy','scared']],['Where does Pip like to dig?','in the garden',['at the beach','in the house','at the park']]]],
+  ["Ana planted a seed in a cup. She gave it water every day and put it by the window. After a week, a tiny green leaf popped out of the soil.", [['What is this story mostly about?','Ana growing a plant',['Ana washing a cup','Ana looking out a window','Ana going to school']],['Why did Ana put the cup by the window?','so the seed could get sunlight',['so she could see outside','so it would stay cold','so the cat could find it']],['What happened after a week?','A tiny leaf popped out.',['The cup broke.','It began to rain.','Ana planted a tree.']]]],
+  ["Owls sleep during the day and hunt at night. They have big eyes that help them see in the dark. Their soft feathers let them fly without a sound.", [['When do owls hunt?','at night',['in the morning','at lunchtime','all day']],['What helps owls see in the dark?','their big eyes',['their soft feathers','their sharp beaks','their long legs']],['Why can owls fly quietly?','They have soft feathers.',['They fly slowly.','They are very small.','They sleep all day.']]]]];
+const READS = [
+  ["Honeybees are important helpers for farmers. As bees fly from flower to flower collecting nectar, they carry pollen with them. This pollen helps plants make fruits and seeds. Without bees, many foods such as apples, almonds, and blueberries would be much harder to grow.", [['What is the main idea of the passage?','Bees help plants produce food.',['Bees make honey in hives.','Farmers grow apples and almonds.','Flowers come in many colors.']],['According to the passage, what do bees carry from flower to flower?','pollen',['seeds','honey','water']],['Which detail best supports the idea that bees matter to people?','Many foods would be harder to grow without bees.',['Bees fly from flower to flower.','Bees collect nectar.','Plants make seeds.']]]],
+  ["Jada stared at the diving board high above the pool. Her knees shook as she climbed the ladder. She took a deep breath, counted to three, and jumped. When she came up from the water, she was grinning from ear to ear. \"Again!\" she shouted.", [['How does Jada feel at the beginning of the passage?','nervous',['bored','angry','sleepy']],['What does the phrase "grinning from ear to ear" show about Jada?','She is very happy.',['She hurt her ears.','She is cold.','She is confused.']],['Which lesson does the passage best show?','Trying something scary can be rewarding.',['Swimming pools are dangerous.','It is important to count carefully.','Ladders are hard to climb.']]]],
+  ["Long ago, people sent messages across the country by horseback. Riders for the Pony Express carried mail between Missouri and California in about ten days. Each rider rode fast for many miles and then passed the mailbag to a fresh rider. The service lasted less than two years, because telegraph wires soon carried messages in minutes.", [['Why did the Pony Express end?','The telegraph could send messages faster.',['The horses grew too tired.','Riders refused to carry mail.','California was too far away.']],['What does the word "fresh" mean as it is used in the passage?','rested',['newly washed','cold','rude']],['What is the passage mostly about?','how mail was once carried quickly across the country',['how to ride a horse','why California became a state','who invented the telegraph']]]],
+  ["Marco's kite refused to fly. Each time he ran, it flopped onto the grass. His little sister Lucia watched for a while, then pointed to the hilltop. \"It's windier up there,\" she said. Marco carried the kite up the hill, and this time it soared.", [['What problem does Marco have?','His kite will not fly.',['He lost his kite.','His sister is bothering him.','The hill is too steep.']],['How is the problem solved?','He moves to a windier place.',['He buys a new kite.','He runs faster on the grass.','He gives the kite to Lucia.']],['Which word best describes Lucia?','helpful',['selfish','shy','careless']]]],
+  ["The sea otter has the thickest fur of any animal. Unlike whales and seals, otters have no layer of fat to keep them warm, so their fur must trap air against their skin. Otters spend hours each day cleaning their fur. If the fur becomes dirty, it cannot hold air, and the otter may become dangerously cold.", [['Why do sea otters spend so much time cleaning their fur?','Clean fur keeps them warm.',['Clean fur helps them swim faster.','They like to look shiny.','Dirty fur attracts sharks.']],['How are sea otters different from whales and seals?','They have no layer of fat.',['They cannot swim.','They live on land.','They have no fur.']],['What does the word "trap" mean as it is used in the passage?','hold in',['catch an animal','trick someone','fall into']]]],
+  ["Our school should start a garden. A garden would give students a chance to learn where food comes from. Working outside is also good exercise. Best of all, the vegetables we grow could be served in the cafeteria.", [['What is the author\'s opinion?','The school should start a garden.',['Students need more exercise.','The cafeteria food is bad.','Vegetables are hard to grow.']],['Which detail supports the author\'s opinion?','Students would learn where food comes from.',['Many schools have cafeterias.','Vegetables come in many colors.','Gardens need water.']],['What is the author\'s purpose for writing this passage?','to persuade readers to support a school garden',['to explain how plants grow','to tell a funny story','to describe a cafeteria']]]]];
+const eRead = set => () => { const [t, qs] = pickOf(set), q = pickOf(qs); return pk(q[0], q[1], q[2], t); };
+const eSpell = L => () => { const it = pickOf(SPELL[L]); return pk('Which word is spelled correctly?', it[0], it[1]); };
+const eSyn = L => () => { const it = pickOf(SYN[L]), flip = Math.random() < .5, w = it[flip ? 1 : 0], a = it[flip ? 0 : 1]; return pk('Which word means almost the same as "' + w + '"?', a, others(SYN[L].map(x => x[0]).concat(ANT.map(x => x[1])), a, 6).filter(x => x !== w).slice(0,3)); };
+const eAnt = () => { const it = pickOf(ANT), flip = Math.random() < .5, w = it[flip ? 1 : 0], a = it[flip ? 0 : 1]; return pk('Which word means the opposite of "' + w + '"?', a, others(ANT.map(x => x[0]).concat(ANT.map(x => x[1])), a, 8).filter(x => x !== w).slice(0,3)); };
+const ePast = () => { const it = pickOf(PAST); return pk('Choose the word that correctly completes the sentence.', it[1], [it[0] + 'ed', it[0], it[0] + 'ing'], it[2]); };
+const eAgree = () => { const it = pickOf(AGREE); return pk('Choose the word that correctly completes the sentence.', it[4] ? it[1] : it[2], [it[4] ? it[2] : it[1], it[1] + 'ing', 'is ' + it[1]], it[0] + ' ___ ' + it[3]); };
+const eCaps = () => { const d = pickOf(['Monday','Friday','Saturday','Sunday']), n = pickOf(['Ana','Leo','Maya','Sam']), pl = pickOf(['Lake Tahoe','San Diego','Yosemite','Golden Gate Park','Texas','Oak Street Library']), f = (dd, i, pp) => 'On ' + dd + ', ' + n + ' and ' + i + ' visited ' + pp + '.';
+  return pk('Which sentence is written correctly?', f(d,'I',pl), [f(d.toLowerCase(),'I',pl), f(d,'i',pl), f(d,'I',pl.toLowerCase())]); };
+const eQuote = () => { const t = pickOf(['Wait for me','I found it','Please pass the salt','We are going to be late','Look at that rainbow']), w = pickOf(['said Leo','shouted Ana','whispered Maya','called Sam']); return pk('Which sentence uses quotation marks and commas correctly?', '"' + t + '," ' + w + '.', ['"' + t + '", ' + w + '.', t + ', ' + w + '.', '"' + t + ', ' + w + '."']); };
+const eSeries = () => { const it = pickOf(SERIES); return pk('Which sentence uses commas correctly?', it[0] + ' ' + it[1] + ', ' + it[2] + ', and ' + it[3] + it[4] + '.', [it[0] + ' ' + it[1] + ' ' + it[2] + ' and ' + it[3] + it[4] + '.', it[0] + ' ' + it[1] + ' ' + it[2] + ', and ' + it[3] + it[4] + '.', it[0] + ', ' + it[1] + ', ' + it[2] + ', and, ' + it[3] + it[4] + '.']); };
+const eAffix = both => () => { if (both && Math.random() < .5){ const it = pickOf(SUFFIX), w = (it[0].slice(-1) === 'e' && it[1] === 'able' ? it[0].slice(0,-1) : it[0]) + it[1]; return pk('What does the word "' + w + '" mean?', it[2], ['without ' + it[0], 'full of ' + it[0], 'a person who ' + it[0] + (/(sh|ch|s|x)$/.test(it[0]) ? 'es' : 's'), it[0] + ' again'].filter(x => x !== it[2]).slice(0,3)); }
+  const it = pickOf(AFFIX); return pk('What does the word "' + it[0] + it[1] + '" mean?', it[2], ['not ' + it[1], it[1] + ' again', it[1] + ' before', it[1] + ' wrongly'].filter(x => x !== it[2]).slice(0,3)); };
+const eCtx = L => () => { const it = pickOf(CTX[L]); return pk('Read the sentence. What does the word "' + it[1] + '" most likely mean?', it[2], it[3], it[0]); };
+const eFig = () => { const it = pickOf(FIG); return pk(it[1], it[2], it[3], it[0]); };
+const eHomo = () => { const it = pickOf(HOMO); return pk('Choose the word that correctly completes the sentence.', it[1], it[2], it[0]); };
+const ePos = () => { const it = pickOf(POS), kind = pickOf(['noun','verb','adjective','adverb']); return pk('Read the sentence. Which word is ' + (kind[0] === 'a' ? 'an ' : 'a ') + kind + '?', it[1][kind], Object.values(it[1]).filter(x => x !== it[1][kind]), it[0]); };
+const E_K = [
+  ['RF.K.2', 'Rhyming words', () => { const it = pickOf(RHYME); return pk('Which word rhymes with "' + it[0] + '"?', it[1], it[2]); }],
+  ['RF.K.2', 'Beginning sounds', () => { const it = pickOf(BEGIN); return pk('Which word begins with the same sound as "' + it[0] + '"?', it[1], it[2]); }],
+  ['L.1.2', 'Sentences: capital letter and end mark', () => { const t = pickOf(SENT1), C = cap1(t); return pk('Which sentence is written correctly?', C + '.', [t + '.', C, t]); }],
+  ['L.1.1', 'Plural nouns', () => { const it = pickOf(PLURAL1); return pk('Which word means more than one ' + it[0] + '?', it[1], it[2]); }],
+  ['L.K.5', 'Opposites', () => { const it = pickOf(OPP); return pk('Which word is the opposite of "' + it[0] + '"?', it[1], others(OPP.map(x => x[1]), it[1], 3)); }],
+  ['RL.1.1', 'Read and understand a short text', eRead(EASY)]];
+const E_2 = [
+  ['L.2.1', 'Irregular plural nouns', () => { const it = pickOf(PLURAL2); return pk('Which word is the correct plural of "' + it[0] + '"?', it[1], it[2]); }],
+  ['L.2.1', 'Past tense of irregular verbs', ePast],
+  ['L.2.2', 'Contractions and possessives', () => { if (Math.random() < .6){ const it = pickOf(CONTR); return pk('Which contraction means "' + it[0] + '"?', it[1], it[2]); } const it = pickOf(POSS); return pk('Which phrase correctly shows ' + it[0] + '?', it[1], it[2]); }],
+  ['L.2.2', 'Spelling', eSpell('A')], ['L.2.5', 'Words with similar meanings', eSyn('A')], ['L.2.4', 'Prefixes', eAffix(false)], ['RL.2.1', 'Read and understand a short text', eRead(EASY)]];
+const E_3 = [
+  ['L.3.1', 'Subject-verb agreement', eAgree], ['L.3.1', 'Parts of speech', ePos], ['L.3.2', 'Capital letters', eCaps], ['L.3.2', 'Quotation marks in dialogue', eQuote],
+  ['L.3.2', 'Spelling', eSpell('B')], ['L.3.4', 'Prefixes and suffixes', eAffix(true)], ['L.3.4', 'Context clues', eCtx('A')], ['RI.3.2', 'Reading: main idea and details', eRead(READS)]];
+const E_4 = [
+  ['L.4.1', 'Frequently confused words', eHomo], ['L.4.2', 'Commas and quotation marks', () => Math.random() < .5 ? eQuote() : eSeries()], ['L.4.2', 'Spelling', eSpell('C')], ['L.4.4', 'Context clues', eCtx('B')],
+  ['L.4.5', 'Synonyms and antonyms', () => Math.random() < .5 ? eSyn('B')() : eAnt()], ['L.4.5', 'Similes, metaphors and idioms', eFig], ['RI.4.2', 'Reading: main idea and inference', eRead(READS)]];
+const E_5 = [
+  ['L.5.1', 'Verb tense and agreement', () => Math.random() < .5 ? ePast() : eAgree()], ['L.5.2', 'Commas in a series', eSeries], ['L.5.2', 'Spelling', eSpell('D')],
+  ['L.5.4', 'Greek and Latin roots', () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }],
+  ['L.5.4', 'Context clues', eCtx('B')], ['L.5.5', 'Figurative language', eFig], ['RI.5.2', 'Reading: main idea and inference', eRead(READS)]];
+const ELA = {K:E_K, '1':E_K, '2':E_2, '3':E_3, '4':E_4, '5':E_5, '6':E_5};
+
+const mathGrade = id => GRADES.find(g => g.id === id);
+// English shares the grade picker: its skill sets are in ELA, and its ids start with E
+function allGrade(gid){ if (!gid) return null; if (gid[0] === 'E'){ const b = mathGrade(gid.slice(1)); return b ? {id:gid, name:b.name + ' English', skills:ELA[b.id], ela:true} : null; } return mathGrade(gid) || null; }
+const curSub = () => { const m = S.math; return m.subject === 'ela' ? 'ela' : m.subject === 'mix' ? (m.mixNext || 'math') : 'math'; };
+const curGrade = () => S.math.grade ? allGrade((curSub() === 'ela' ? 'E' : '') + S.math.grade) : null;
+const gradeIdx = g => GRADES.findIndex(x => x.id === g.id.replace(/^E/, ''));
+const probGrade = () => (prob && allGrade(prob.gid)) || curGrade();
 const skState = id => S.math.sk[id] || (S.math.sk[id] = {m:0, n:0, last:0});
 const isMastered = st => st.m >= .8 && st.n >= 4;
 // skills open up in order: three to begin, one more each time an open skill is going well
 function openCount(g){ let k = 3; for (let i = 0; i < g.skills.length && i < k; i++) if (skState(g.id+':'+i).m >= .6) k++; return Math.min(k, g.skills.length); }
-function pickSkill(){
-  const g = curGrade(), m = S.math, k = openCount(g);
-  m.redo = (m.redo || []).filter(r => r.g === g.id);
-  const due = m.redo.findIndex(r => r.at <= m.n); if (due >= 0) return m.redo.splice(due,1)[0].i;     // a missed skill comes back two questions later
+function pickSkill(g){
+  const m = S.math, k = openCount(g);
+  m.redo = (m.redo || []).slice(-24);
+  const due = m.redo.findIndex(r => r.g === g.id && r.at <= m.n); if (due >= 0) return m.redo.splice(due,1)[0].i;     // a missed skill comes back two questions later
   const w = []; let tot = 0;
   for (let i = 0; i < k; i++){ if (k > 1 && i === m.lastI) continue; const st = skState(g.id+':'+i);
     const v = .15 + 2*(1-st.m)*(1-st.m) + (st.n ? 0 : .6) + st.m*Math.min(.5, (m.n-st.last)*.02); w.push([i,v]); tot += v; }   // weak and new skills most, mastered ones as spaced review
@@ -1174,25 +1314,26 @@ function renderMath(){
   const g = curGrade(), sel = $('grade'), gb = $('grades');
   sel.textContent = ''; gb.textContent = '';
   if (!g){ const o = el('option','', 'Pick a grade'); o.value = ''; sel.appendChild(o); }
-  for (const x of GRADES){ const o = el('option','', x.name); o.value = x.id; o.selected = !!g && g.id === x.id; sel.appendChild(o);
+  for (const x of GRADES){ const o = el('option','', x.name); o.value = x.id; o.selected = S.math.grade === x.id; sel.appendChild(o);
     const b = el('button','', x.name); b.type = 'button'; b.id = 'grade-' + x.id; b.onclick = () => setGrade(x.id); gb.appendChild(b); }
-  $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true;
+  $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('subject').value = S.math.subject || 'math';
   $('mpick').hidden = !!g; $('mplay').hidden = !g || showSkills; $('mlist').hidden = !g || !showSkills; $('mshow').hidden = !g; $('mshow').textContent = showSkills ? 'Back to questions' : 'Show skills';
   if (!g){ $('mup').hidden = true; return; }
-  renderProgress(); if (showSkills) renderSkills(); else nextProb();
+  renderProgress(); if (S.math.fix){ openFix(); return; }
+  if (showSkills) renderSkills(); else nextProb();
 }
 function renderProgress(){
-  const g = curGrade(), done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = GRADES[GRADES.indexOf(g)+1];
+  const g = probGrade(), done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = g.ela ? null : GRADES[GRADES.indexOf(g)+1];
   $('mprog').textContent = 'Egg ' + S.egg.w + '/' + EGG_N + ' \u00b7 ' + done + ' of ' + g.skills.length + ' skills mastered'; $('mbar').firstElementChild.style.width = done/g.skills.length*100 + '%';
   $('mearn').textContent = 'Earned ' + session + ' bones';
   const all = done === g.skills.length;
-  if (all && !S.math.done[g.id]){ S.math.done[g.id] = true; S.bones += 25; session += 25; chime(); toast(g.name + ' mastered! +25 bones', 4000); }
+  if (all && !S.math.done[g.id]){ S.math.done[g.id] = true; const prize = 40 + 20*gradeIdx(g); S.bones += prize; session += prize; award('grade' + g.id, g.name + ' mastered', 2, true); chime(); toast(g.name + ' mastered! +' + prize + ' bones and a gold trophy', 4500); }
   $('mup').hidden = !(all && nx); if (all && nx){ $('mup').textContent = g.name + ' mastered! Move up to ' + nx.name; $('mup').onclick = () => setGrade(nx.id); }
 }
 function renderSkills(){
-  const g = curGrade(), k = openCount(g), box = $('mlist'); box.textContent = '';
+  const g = probGrade(), k = openCount(g), box = $('mlist'); box.textContent = '';
   g.skills.forEach((s,i) => { const st = skState(g.id+':'+i), row = el('div', 'item' + (i >= k ? ' locked' : '')), info = el('div');
-    info.appendChild(el('b','', s[1])); info.appendChild(document.createTextNode('CCSS ' + s[0] + ' · ' + (i >= k ? 'Coming up' : isMastered(st) ? 'Mastered' : st.n ? st.n + ' answered' : 'New')));
+    info.appendChild(el('b','', s[1])); info.appendChild(document.createTextNode('CCSS ' + (g.ela ? 'ELA ' : '') + s[0] + ' · ' + (i >= k ? 'Coming up' : isMastered(st) ? 'Mastered' : st.n ? st.n + ' answered' : 'New')));
     const lb = el('button', '', 'Lesson'); lb.type = 'button'; lb.id = 'lesson-' + i; lb.onclick = () => openLesson(s, 'list');
     row.appendChild(info); row.appendChild(el('span','pct', i >= k ? '' : Math.round(st.m*100) + '%')); row.appendChild(lb); box.appendChild(row); });
 }
@@ -1270,6 +1411,36 @@ const LESSON = {
   "Solve one-step equations": ["Undo what is being done to x, and do the same thing to both sides.", "x + 7 = 19: subtract 7 from both sides, so x = 12.\n4x = 36: divide both sides by 4, so x = 9."],
   "Area of a triangle": ["A triangle is half of a rectangle. Multiply the base by the height, then halve it.", "Base 8, height 5: 8 × 5 = 40, and half of 40 is 20."],
 };
+Object.assign(LESSON, {
+  "Rhyming words": ["Rhyming words end with the same sound.", "cat and hat both end with -at, so they rhyme. cat and cup do not."],
+  "Beginning sounds": ["Say each word slowly and listen to the very first sound.", "ball and bat both start with the b sound."],
+  "Sentences: capital letter and end mark": ["Every sentence starts with a capital letter and ends with a mark such as a period.", "the dog ran  →  The dog ran."],
+  "Plural nouns": ["Plural means more than one. Most words add -s. Words ending in s, x, sh or ch add -es.", "one cat, two cats. one box, two boxes."],
+  "Opposites": ["Opposites are words that mean completely different things.", "hot and cold are opposites. So are up and down."],
+  "Read and understand a short text": ["Read every sentence. Then look back in the text to find the answer. Do not guess from memory.", "If the question asks where, look for the sentence that names a place."],
+  "Irregular plural nouns": ["Some plurals do not just add -s. Words ending in f often change to -ves, words ending in consonant + y change to -ies, and a few change completely.", "leaf → leaves. puppy → puppies. child → children. mouse → mice."],
+  "Past tense of irregular verbs": ["Most verbs add -ed for the past, but irregular verbs change in their own way. Clue words like yesterday and last week tell you the past is needed.", "go → went, not goed. catch → caught. Yesterday, we went to the park."],
+  "Contractions and possessives": ["A contraction joins two words, and the apostrophe stands where letters were taken out. A possessive uses 's to show that something belongs to someone.", "do not → don't (the apostrophe replaces the o). The bone that belongs to the dog → the dog's bone."],
+  "Spelling": ["Look at each choice letter by letter. Say the word slowly and check the tricky part.", "because: b-e-c-a-u-s-e. friend: the i comes before the e."],
+  "Words with similar meanings": ["Synonyms are words that mean almost the same thing. Try the choice in a sentence in place of the word.", "The big dog barked. The large dog barked. big and large are synonyms."],
+  "Prefixes": ["A prefix is added to the front of a word and changes its meaning. un- means not, re- means again, pre- means before, mis- means wrongly.", "unhappy = not happy. reread = read again."],
+  "Subject-verb agreement": ["A verb must match its subject. One person or thing takes a verb ending in -s. More than one takes the verb with no -s.", "The dog barks. The dogs bark. Ava and Leo walk."],
+  "Parts of speech": ["A noun names a person, place or thing. A verb shows action. An adjective describes a noun. An adverb describes a verb and often ends in -ly.", "The sleepy puppy quickly chased a ball. puppy = noun, chased = verb, sleepy = adjective, quickly = adverb."],
+  "Capital letters": ["Capitalize the first word of a sentence, the word I, names of people, days, months and particular places.", "On Monday, Ana and I visited Lake Tahoe."],
+  "Quotation marks in dialogue": ["Put quotation marks around the exact words someone says. The comma goes inside the closing quotation mark.", "\"Wait for me,\" said Leo."],
+  "Prefixes and suffixes": ["A prefix goes on the front of a word and a suffix goes on the end. -less means without, -ful means full of, -er means a person who, -able means able to be.", "careless = without care. hopeful = full of hope. teacher = a person who teaches."],
+  "Context clues": ["When you do not know a word, look at the other words in the sentence for clues to its meaning. Then test your choice by putting it in the sentence.", "The desert was so arid that no plants could grow. Plants need water, so arid must mean dry."],
+  "Reading: main idea and details": ["The main idea is what the whole passage is mostly about. Details are the facts that support it. Go back to the passage to check every answer.", "If most sentences tell how bees help plants, the main idea is that bees help plants produce food."],
+  "Frequently confused words": ["Some words sound alike but are spelled differently. their shows belonging, there is a place, they're means they are. its shows belonging, it's means it is.", "The birds built their nest over there. They're very busy."],
+  "Commas and quotation marks": ["Use commas between three or more items in a list. In dialogue, the comma goes inside the closing quotation mark.", "We packed apples, cheese, and bread. \"I found it,\" said Ana."],
+  "Synonyms and antonyms": ["Synonyms mean almost the same. Antonyms mean the opposite. Read the question carefully to see which one it asks for.", "enormous and huge are synonyms. expand and shrink are antonyms."],
+  "Similes, metaphors and idioms": ["A simile compares using like or as. A metaphor says one thing is another. An idiom is a saying that does not mean exactly what the words say.", "as quiet as a mouse (simile) = very quiet. a piece of cake (idiom) = very easy."],
+  "Reading: main idea and inference": ["The main idea is what the passage is mostly about. An inference is something the passage does not say outright, but that the clues make clear. Always check your answer against the text.", "Her knees shook as she climbed. The passage does not say nervous, but shaking knees are the clue."],
+  "Verb tense and agreement": ["Keep the verb in the right time: clue words like yesterday need the past tense. Make the verb match its subject.", "Yesterday, Dad caught a fish. Each student brings a pencil."],
+  "Commas in a series": ["Put a comma after each item in a list of three or more, including before and.", "My favorite sports are soccer, tennis, and chess."],
+  "Greek and Latin roots": ["Many English words are built from Greek and Latin roots. If you know the root, you can work out new words.", "tele means far: a telescope sees far and a telephone carries sound far."],
+  "Figurative language": ["Figurative language says something in a colorful way that is not exactly literal. Ask what the author really means.", "The classroom was a zoo = the classroom was noisy and wild."],
+});
 let lessonOf = null, lessonBack = null, lessonAfter = null;
 function lessonTry(){
   const p = lessonOf[2](false), btn = $('ml-show'); let shown = false; $('ml-try').textContent = 'Try one: ' + p.q; btn.textContent = 'Show the answer';
@@ -1280,7 +1451,7 @@ function openLesson(sk, back){
   $('ml-h').textContent = "Granny Dot's lesson: " + sk[1]; $('ml-how').textContent = L[0]; $('ml-ex').textContent = L[1] ? 'Example\n' + L[1] : ''; $('ml-ex').hidden = !L[1]; lessonTry();
   $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = false; $('mhow').classList.remove('pulse');
 }
-$('mhow').onclick = () => { if (prob && curGrade()) openLesson(curGrade().skills[prob.i], 'q'); };
+$('mhow').onclick = () => { if (prob && probGrade()) openLesson(probGrade().skills[prob.i], 'q'); };
 $('ml-back').onclick = () => {
   $('mlesson').hidden = true;
   if (lessonAfter){ const f = lessonAfter; lessonAfter = null; f(); return; }
@@ -1309,10 +1480,16 @@ function celebrate(btn, big){
 }
 // a slate of questions: answer in any order, skip one and come back to it later
 const SLATE_N = 8, single = () => !!oneShot || rescue > 0;      // gathering, stew and rescues ask one question at a time instead
-function makeProb(){ const g = curGrade(), i = pickSkill(), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.list = choices(p); p.st = 0; S.math.lastI = i; return p; }
+function makeProb(gid){
+  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.gid = g.id; p.list = choices(p); p.st = 0; S.math.lastI = i;
+  if (!gid && S.math.subject === 'mix') S.math.mixNext = curSub() === 'math' ? 'ela' : 'math';      // with Both chosen, single questions take turns
+  return p;
+}
 function slate(){
-  const m = S.math, g = curGrade();
-  if (!m.slate || m.slate.g !== g.id || !m.slate.items || !m.slate.items.length){ m.slate = {g:g.id, cur:0, paid:false, items:[]}; for (let k = 0; k < SLATE_N; k++) m.slate.items.push(makeProb()); }
+  const m = S.math, key = m.grade + '|' + (m.subject || 'math');
+  if (!m.slate || m.slate.key !== key || !m.slate.items || !m.slate.items.length){
+    const sub = m.subject === 'mix' ? (m.slateSub = m.slateSub === 'math' ? 'ela' : 'math') : (m.subject || 'math'), gid = (sub === 'ela' ? 'E' : '') + m.grade;     // and so do whole slates
+    m.slate = {key, g:gid, cur:0, paid:false, items:[]}; for (let k = 0; k < SLATE_N; k++) m.slate.items.push(makeProb(gid)); }
   return m.slate;
 }
 function nextProb(){
@@ -1329,18 +1506,23 @@ function renderStrip(){
   if (!prob.st && $('msum').hidden && sl.items.filter(p => !p.st).length > 1){ const b = el('button', 'skip', 'Skip'); b.type = 'button'; b.id = 'mskip'; b.onclick = skipProb; strip.appendChild(b); }
 }
 function skipProb(){ const sl = slate(), n = sl.items.length; for (let d = 1; d <= n; d++){ const j = (sl.cur + d) % n; if (!sl.items[j].st){ sl.cur = j; prob = sl.items[j]; showProb(); return; } } }
+// answer buttons: short answers sit two to a row, sentence-length ones take a full row each
+function fillAnswers(box, p, done, onPick, idp){
+  box.textContent = ''; const long = p.list.some(v => String(v).length > 14); box.className = 'answers' + (typeof p.ans === 'string' && !/^[\d\/<>=]+$/.test(p.ans) ? ' text' : '');
+  p.list.forEach((v,j) => { const b = el('button', (long ? 'wide ' : '') + (done && v === p.ans ? 'ok' : done && v === p.pick ? 'no' : ''), fmt(v)); b.type = 'button'; b.id = idp + j; if (done) b.disabled = true; else b.onclick = () => onPick(v, b); box.appendChild(b); });
+}
 function showProb(){
-  const s = curGrade().skills[prob.i], done = !!prob.st;
-  mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true;
-  $('q').textContent = prob.q; $('q').className = prob.q.length > 16 ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + s[0];
+  const g = probGrade(), s = g.skills[prob.i], done = !!prob.st;
+  mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true;
+  $('mpass').hidden = !prob.pass; $('mpass').textContent = prob.pass || '';
+  $('q').textContent = prob.q; $('q').className = prob.q.length > 16 || prob.pass ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
   $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + prob.sol) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
-  const box = $('answers'); box.textContent = '';
-  prob.list.forEach((v,j) => { const b = el('button', done && v === prob.ans ? 'ok' : done && v === prob.pick ? 'no' : '', fmt(v)); b.type = 'button'; b.id = 'ans-' + j; if (done) b.disabled = true; else b.onclick = () => answer(v, b); box.appendChild(b); });
-  renderStrip();
+  fillAnswers($('answers'), prob, done, answer, 'ans-');
+  $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
 }
 function slateDone(){
   const sl = slate(), right = sl.items.filter(p => p.st === 1).length, n = sl.items.length, bonus = right === n ? 10 : right >= n-2 ? 4 : 0, box = $('msum-l');
-  if (!sl.paid){ sl.paid = true; if (bonus){ S.bones += bonus; session += bonus; chime(); } save(); }
+  if (!sl.paid){ sl.paid = true; if (bonus){ S.bones += bonus; session += bonus; chime(); } if (right === n) award('slate', 'A perfect slate', 0); save(); }
   $('mplay').hidden = true; $('msum').hidden = false; box.textContent = '';
   $('msum-h').textContent = right + ' of ' + n + ' right' + (bonus ? '. Slate bonus +' + bonus + ' bones!' : '.');
   sl.items.forEach((p,j) => { if (p.st !== 2) return; const row = el('div','item'), info = el('div'); info.appendChild(el('b','', 'Question ' + (j+1) + ': ' + p.q)); info.appendChild(document.createTextNode(p.sol + ' This skill will come back for more practice.')); row.appendChild(info); box.appendChild(row); });
@@ -1349,24 +1531,99 @@ function slateDone(){
 $('mnew').onclick = () => { S.math.slate = null; nextProb(); };
 function answer(v, b){
   if (mathLock || !prob) return; mathLock = true;
-  const m = S.math, g = curGrade(), st = skState(g.id+':'+prob.i), ok = v === prob.ans, was = isMastered(st);
+  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), ok = v === prob.ans, was = isMastered(st);
   prob.st = ok ? 1 : 2; prob.pick = v;
   st.n++; st.last = m.n; m.n++;
   if (ok){
-    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(GRADES.indexOf(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0);
-    S.bones += r; session += r; b.className = 'ok'; celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
+    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0);
+    S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
     $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
-  } else {
-    m.streak = 0; st.m *= .55; m.redo.push({g:g.id, i:prob.i, at:m.n+2}); b.className = 'no';
-    [...$('answers').children].forEach((o,j) => { if (prob.list[j] === prob.ans) o.className = 'ok'; });
-    $('fb').textContent = 'Not quite. ' + prob.sol + ' Tap How to for a tip.'; $('mhow').classList.add('pulse'); beep(220,.2,'sine',.06,.7);
+    if (rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
+    renderProgress(); ui(); save();
+    if (oneShot){ const o = oneShot, fin = () => { $('math').hidden = true; o.fn(true); ui(); }; oneShot = null; setTimeout(() => { if ($('mlesson').hidden) fin(); else lessonAfter = fin; }, 800); return; }
+    renderStrip(); const cur0 = prob;
+    setTimeout(() => { if (!$('math').hidden && !showSkills && curGrade() && prob === cur0 && $('mlesson').hidden) nextProb(); }, 1000);
+    return;
   }
-  if (ok && rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
-  renderProgress(); ui(); save();
-  if (oneShot){ const o = oneShot, fin = () => { $('math').hidden = true; o.fn(ok); ui(); }; oneShot = null; setTimeout(() => { if ($('mlesson').hidden) fin(); else lessonAfter = fin; }, ok ? 800 : 2600); return; }   // a lesson being read is never closed under you
-  renderStrip(); const cur0 = prob;
-  setTimeout(() => { if (!$('math').hidden && !showSkills && curGrade() && prob === cur0 && $('mlesson').hidden) nextProb(); }, ok ? 1000 : 2800);
+  // A miss stops play: Granny Dot explains this exact problem, then a fresh one on the same skill must be answered correctly.
+  m.streak = 0; st.m *= .55; m.redo.push({g:g.id, i:prob.i, at:m.n+2}); b.classList.add('no');
+  [...$('answers').children].forEach((o,j) => { if (prob.list[j] === prob.ans) o.classList.add('ok'); });
+  $('fb').textContent = 'Not quite. Let us work it out together.'; beep(220,.2,'sine',.06,.7);
+  m.fix = {gid:g.id, i:prob.i}; fixMissed = prob;
+  if (oneShot){ const o = oneShot; oneShot = null; fixResume = () => { $('math').hidden = true; o.fn(true); ui(); }; }          // prove the skill and the gathering still pays
+  else if (rescue > 0) fixResume = () => { rescue--; if (rescue > 0) nextProb(); else comeHome(); };
+  else fixResume = null;
+  renderProgress(); renderStrip(); ui(); save();
+  setTimeout(openFix, 1300);
 }
+let fixMissed = null, fixResume = null, fixProb = null, fixLock = false;
+const cap1 = t => t[0].toUpperCase() + t.slice(1), PLACE = ['ones','tens','hundreds','thousands','ten thousands','hundred thousands'];
+function exAdd(a, b){
+  if (a < 10 && b < 10 && a+b > 10){ const big = Math.max(a,b), sm = Math.min(a,b), need = 10-big; return ['Make a ten first. ' + big + ' needs ' + need + ' more to make 10.', 'Take ' + need + ' from the ' + sm + '. That leaves ' + (sm-need) + '.', '10 + ' + (sm-need) + ' = ' + (a+b) + '.']; }
+  if (a+b <= 20){ const big = Math.max(a,b), sm = Math.min(a,b), seq = []; for (let k = 1; k <= sm; k++) seq.push(big+k); return sm ? ['Start at the bigger number, ' + big + ', and count on ' + sm + ' more:', seq.join(', ') + '.', 'So ' + a + ' + ' + b + ' = ' + (a+b) + '.'] : ['Adding zero changes nothing.', a + ' + ' + b + ' = ' + (a+b) + '.']; }
+  const out = ['Line the numbers up and add one place at a time, starting with the ones.']; let carry = 0, x = a, y = b, i = 0;
+  while (x > 0 || y > 0 || carry){ const da = x % 10, db = y % 10, sum = da+db+carry; out.push(cap1(PLACE[i]) + ': ' + da + ' + ' + db + (carry ? ' + 1 carried' : '') + ' = ' + sum + (sum >= 10 ? '. Write ' + (sum % 10) + ' and carry 1.' : '.')); carry = sum >= 10 ? 1 : 0; x = Math.floor(x/10); y = Math.floor(y/10); i++; }
+  out.push('Answer: ' + fmt(a+b) + '.'); return out;
+}
+function exSub(a, b){
+  if (a <= 20) return ['Think of it as a missing piece: ' + b + ' + ? = ' + a + '.', 'Count up from ' + b + ' to ' + a + '. That is ' + (a-b) + (a-b === 1 ? ' step.' : ' steps.'), 'So ' + a + ' − ' + b + ' = ' + (a-b) + '.'];
+  const out = ['Line the numbers up and subtract one place at a time, starting with the ones.']; let borrow = 0, x = a, y = b, i = 0;
+  while (x > 0 || y > 0){ const da = x % 10 - borrow, db = y % 10, nm = cap1(PLACE[i]);
+    if (da < db){ out.push(nm + ': there is not enough to take ' + db + ' away, so trade 1 from the next place. ' + (da+10) + ' − ' + db + ' = ' + (da+10-db) + '.'); borrow = 1; } else { out.push(nm + ': ' + da + ' − ' + db + ' = ' + (da-db) + '.'); borrow = 0; }
+    x = Math.floor(x/10); y = Math.floor(y/10); i++; }
+  out.push('Answer: ' + fmt(a-b) + '.'); return out;
+}
+function exMul(a, b){
+  const X2 = ' × ', big = Math.max(a,b), sm = Math.min(a,b);
+  if (big <= 10){ if (sm <= 6){ const seq = []; for (let k = 1; k <= sm; k++) seq.push(big*k); return [a + X2 + b + ' means ' + sm + (sm === 1 ? ' group of ' : ' groups of ') + big + '.', 'Count by ' + big + 's: ' + seq.join(', ') + '.', 'So ' + a + X2 + b + ' = ' + a*b + '.']; }
+    return ['Break ' + sm + ' into 5 and ' + (sm-5) + '.', '5' + X2 + big + ' = ' + 5*big + ', and ' + (sm-5) + X2 + big + ' = ' + (sm-5)*big + '.', 'Add them: ' + 5*big + ' + ' + (sm-5)*big + ' = ' + a*b + '.']; }
+  const split = n => { const parts = []; let x = n, pl = 1; while (x > 0){ if (x % 10) parts.unshift((x % 10)*pl); x = Math.floor(x/10); pl *= 10; } return parts; };
+  const breakN = sm >= 10 ? sm : big, keep = sm >= 10 ? big : sm, parts = split(breakN);
+  if (parts.length === 1) return ['Multiply the front digits first, then put the zeros back.', fmt(a) + X2 + fmt(b) + ' = ' + fmt(a*b) + '.'];
+  const out = ['Break ' + fmt(breakN) + ' into ' + parts.map(fmt).join(' + ') + ' and multiply each part by ' + fmt(keep) + '.'];
+  for (const q of parts) out.push(fmt(keep) + X2 + fmt(q) + ' = ' + fmt(keep*q) + '.');
+  out.push('Add the parts: ' + parts.map(q => fmt(keep*q)).join(' + ') + ' = ' + fmt(a*b) + '.'); return out;
+}
+function exDiv(a, b){
+  const q = a/b, X2 = ' × '; if (!Number.isInteger(q)) return null;
+  if (q <= 12) return ['Division undoes multiplication. Think: ' + b + X2 + '? = ' + fmt(a) + '.', b + X2 + q + ' = ' + fmt(a) + ', so ' + fmt(a) + ' ÷ ' + b + ' = ' + q + '.'];
+  const t = Math.floor(q/10)*10, out = ['Think: ' + b + X2 + '? = ' + fmt(a) + '. Take it in easy chunks.', b + X2 + t + ' = ' + fmt(b*t) + '. That leaves ' + fmt(a-b*t) + '.'];
+  if (q-t) out.push(b + X2 + (q-t) + ' = ' + fmt(a-b*t) + '.', t + ' + ' + (q-t) + ' = ' + q + '.'); else out.push('So the answer is ' + q + '.'); return out;
+}
+// worked steps for this exact problem, where the problem is plain arithmetic; other kinds fall back to the skill's lesson
+function explain(p){
+  const N = t => +t.replace(/,/g, ''); let m = /^([\d,]+) ([+−×÷]) ([\d,]+) = \?$/.exec(p.q);
+  if (m){ const a = N(m[1]), b = N(m[3]); return m[2] === '+' ? exAdd(a,b) : m[2] === '−' ? exSub(a,b) : m[2] === '×' ? exMul(a,b) : exDiv(a,b); }
+  if ((m = /^(\d+) \+ \? = (\d+)$/.exec(p.q))) return ['The ? is the missing part. Take what you know away from the total.', m[2] + ' − ' + m[1] + ' = ' + (m[2]-m[1]) + '.', 'Check: ' + m[1] + ' + ' + (m[2]-m[1]) + ' = ' + m[2] + '.'];
+  if ((m = /^\? × (\d+) = (\d+)$/.exec(p.q))) return ['Use division to find the missing factor.', m[2] + ' ÷ ' + m[1] + ' = ' + (m[2]/m[1]) + '.', 'Check: ' + (m[2]/m[1]) + ' × ' + m[1] + ' = ' + m[2] + '.'];
+  return null;
+}
+function fixLocks(on){ $('mdone').hidden = on; $('mshow').hidden = on || !curGrade(); $('grade').disabled = on; $('subject').disabled = on; }
+function openFix(){
+  const f = S.math.fix, g = f && allGrade(f.gid); if (!g || !g.skills[f.i]){ S.math.fix = null; fixLocks(false); nextProb(); return; }
+  const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], m0 = fixMissed, steps = m0 ? explain(m0) : null;
+  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mfix').hidden = false; fixLocks(true);
+  $('fx-h').textContent = "Granny Dot: let's work it out"; $('fx-fb').textContent = '';
+  $('fx-steps').hidden = !m0; if (m0) $('fx-steps').textContent = (m0.pass ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (steps ? steps.join('\n') : m0.sol);
+  $('fx-tip').textContent = 'How it works: ' + L[0] + (!steps && L[1] ? '\n\nExample: ' + L[1] : '');
+  let p; for (let k = 0; k < 10; k++){ p = sk[2](false); if (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || '')) break; }
+  p.list = choices(p); fixProb = p; fixLock = false;
+  $('fx-pass').hidden = !p.pass; $('fx-pass').textContent = p.pass || ''; $('fx-q').textContent = 'Now you try: ' + p.q;
+  fillAnswers($('fx-answers'), p, false, checkAnswer, 'fx-');
+}
+function checkAnswer(v, b){
+  if (fixLock) return; fixLock = true; const f = S.math.fix, st = skState(f.gid+':'+f.i);
+  if (v === fixProb.ans){
+    b.classList.add('ok'); st.m += (1-st.m)*.15; celebrate(b, false); $('fx-fb').textContent = 'That is it. You have got it!'; beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
+    S.math.fix = null; const r = fixResume; fixResume = null; fixMissed = null; save();
+    setTimeout(() => { $('mfix').hidden = true; fixLocks(false); if (r) r(); else if (!$('math').hidden) nextProb(); }, 1200);
+  } else {
+    b.classList.add('no'); [...$('fx-answers').children].forEach((o,j) => { if (fixProb.list[j] === fixProb.ans) o.classList.add('ok'); });
+    fixProb.pick = v; fixMissed = fixProb; st.m *= .85; $('fx-fb').textContent = 'Not yet. Look at the steps, then try another one.'; beep(220,.2,'sine',.06,.7); save();
+    setTimeout(openFix, 2000);
+  }
+}
+$('subject').onchange = e => { S.math.subject = e.target.value; S.math.mixNext = 'math'; showSkills = false; save(); renderMath(); };
 $('grade').onchange = e => { if (e.target.value) setGrade(e.target.value); };
 $('mshow').onclick = () => { showSkills = !showSkills; renderMath(); };
 
@@ -1389,7 +1646,7 @@ function openShop(){ if (!S.adopted) return; $('tricks').hidden = true; $('math'
 function renderShop(){
   $('sbones').textContent = S.bones + ' bones';
   const tabs = $('tabs'), box = $('shoplist'); tabs.textContent = ''; box.textContent = '';
-  for (const [id,label] of [['gear','Gear'],['pals','Pals'],['dogs','Dogs'],['finds','Treasures']]){ const b = el('button','',label); b.type = 'button'; b.id = 'tab-' + id; b.setAttribute('aria-pressed', String(tab === id)); b.onclick = () => { tab = id; renderShop(); }; tabs.appendChild(b); }
+  for (const [id,label] of [['gear','Gear'],['pals','Pals'],['dogs','Dogs'],['finds','Finds'],['trophies','Trophies']]){ const b = el('button','',label); b.type = 'button'; b.id = 'tab-' + id; b.setAttribute('aria-pressed', String(tab === id)); b.onclick = () => { tab = id; renderShop(); }; tabs.appendChild(b); }
   if (tab === 'gear' && S.sick && !S.away) box.appendChild(shopRow('Vet visit', S.name + ' feels sick. The vet makes them better right away.', '12 bones', 'buy-vet', S.bones >= 12, () => {
     S.bones -= 12; for (const k in WARN) S[k] = Math.max(S[k], 60); cure('The vet made ' + S.name + ' all better.'); renderShop(); ui(); save(); }));
   if (tab === 'gear') for (const it of ITEMS){ if (it.head) box.appendChild(el('p','sub',it.head));
@@ -1398,6 +1655,9 @@ function renderShop(){
     else box.appendChild(shopRow(it.name, it.desc, 'Owned', 'buy-' + it.id, false, null));
   }
   else if (tab === 'pals') renderPals(box);
+  else if (tab === 'trophies'){ const T = (S.trophies || []).slice().sort((p,q) => q[2]-p[2]);
+    box.appendChild(el('p','sub', T.length ? T.length + ' trophies. They stand beside your dog house at home.' : 'No trophies yet. Rise a rank, finish a chapter or complete a neighbourhood to win one.'));
+    for (const t of T){ const row = el('div','item'), info = el('div'); info.appendChild(el('b','',t[1])); info.appendChild(document.createTextNode(CUPNAME[t[2]] + ' trophy')); const dot = el('span','pct','\u2605'); dot.style.color = CUPCOL[t[2]]; dot.style.fontSize = '24px'; dot.style.webkitTextStroke = '1.5px #2B2350'; row.appendChild(dot); row.appendChild(info); box.appendChild(row); } }
   else if (tab === 'dogs'){
     box.appendChild(shopRow(S.name, S.away ? 'Ran away' : S.sick ? 'Feeling sick' : STAGES[stage()] + ', bond ' + level(), 'Playing', 'dog-cur', false, null));
     S.kennel.forEach((k,i) => box.appendChild(shopRow(k.name, k.away ? 'Ran away' : k.sick ? 'Feeling sick' : 'Waiting in the yard', 'Play', 'dog-' + i, true, () => {
@@ -1417,21 +1677,22 @@ $('mdone').onclick = () => { $('math').hidden = true; oneShot = null; lessonAfte
 $('sdone').onclick = () => { $('shop').hidden = true; ui(); };
 $('away-go').onclick = startRescue;
 $('away-other').onclick = () => { tab = 'dogs'; openShop(); };
-const paused = () => !$('hatchm').hidden || !$('pausem').hidden || !$('splash').hidden || !$('build').hidden || !$('awaym').hidden || !$('math').hidden || !$('shop').hidden || (S.adopted && !$('adopt').hidden);
+$('w-done').onclick = () => { $('world').hidden = true; ui(); };
+const paused = () => !$('world').hidden || !$('hatchm').hidden || !$('pausem').hidden || !$('splash').hidden || !$('build').hidden || !$('awaym').hidden || !$('math').hidden || !$('shop').hidden || (S.adopted && !$('adopt').hidden);
 
 /* ---------- quest: rebuilding Woofwood Valley ---------- */
-const MW = 78, MH = 38, TS = () => 56*U;
+let MW = 78, MH = 38; const TS = () => 56*U;
 const NODE = {t:['wood','Chop'], r:['thatch','Cut'], o:['stone','Mine'], c:['brick','Dig'], s:['glass','Sift'], m:['steel','Salvage']};
-const BRES = {W:'wood', D:'wood', S:'stone', B:'brick', T:'thatch', G:'glass', M:'steel'};
-const BCOL = {W:'#C98A4B', S:'#A9B1C0', B:'#D9623F', T:'#F2C14E', G:'#9ED8F2', D:'#6E4426', M:'#7D8CA3'};
+const BRES = {C:'thatch', W:'wood', D:'wood', S:'stone', B:'brick', T:'thatch', G:'glass', M:'steel'};
+const BCOL = {C:'#FDFBF2', W:'#C98A4B', S:'#A9B1C0', B:'#D9623F', T:'#F2C14E', G:'#9ED8F2', D:'#6E4426', M:'#7D8CA3'};
 const RESN = ['wood','thatch','stone','brick','glass','steel'], RESB = {wood:'W', thatch:'T', stone:'S', brick:'B', glass:'G', steel:'M'};
 const HOW = {wood:'Chop trees in the valley.', thatch:'Cut reeds by the brook.', stone:'Mine the grey rocks.', brick:'Dig orange clay on the beach.', glass:'Sift the sparkly dunes on the beach, or the sand piles in the city.', steel:'Salvage girder piles on Frostbite Peak or in Barkopolis.'};
 const TOOL = {wood:'axe', thatch:'sickle', stone:'pick', brick:'trowel', glass:'sieve', steel:'wrench'};
 const WHO = {mochi:'Mochi', duke:'Duke', pepper:'Pepper', rusty:'Mayor Rusty', skye:'Skye'};
-const FREE_AT = [20,29], HOME_AT = [3,18];
-const EXTRA = [[5,8],[22,12],[6,24],[24,22],[8,33],[36,6],[53,6],[36,23],[54,23],[62,8],[74,10],[65,30]];   // empty lots where new families ask for homes, forever
-const STALLS = [[13,13,'PAWSTON'],[19,25,'WOOFWOOD TOWN'],[41,11,'STONEBARK'],[43,27,'SANDY PAWS'],[63,16,'BARKOPOLIS']];   // each town has a food stall
-const BEDS = [[15,13],[21,25],[43,11],[41,27],[63,20]];   // and a rest stop: nap there to refill energy and save the game
+let FREE_AT = [20,29], HOME_AT = [3,18];
+let EXTRA = [[5,8],[22,12],[6,24],[24,22],[8,33],[36,6],[53,6],[36,23],[54,23],[62,8],[74,10],[65,30]];   // empty lots where new families ask for homes, forever
+let STALLS = [[13,13,'PAWSTON'],[19,25,'WOOFWOOD TOWN'],[41,11,'STONEBARK'],[43,27,'SANDY PAWS'],[63,16,'BARKOPOLIS']];   // each town has a food stall
+let BEDS = [[15,13],[21,25],[43,11],[41,27],[63,20]];   // and a rest stop: nap there to refill energy and save the game
 const CH = [
   {id:'hut', who:'mochi', title:"Mochi's Hut", at:[10,10], npc:[12,11], cs:.42, reward:20, bp:['..T..','.TTT.','TTTTT','WWWWW','WWDWW'],
     intro:[['Mochi',"{n}! Thank dogness you are here. The Great Gust huffed and puffed and blew my hut clean away!"],
@@ -1475,11 +1736,18 @@ const CH = [
       ['Skye',"It will take a mountain of steel. Good thing you are quick with your sums."]],
     done:[['Skye',"It touches the clouds. I am not crying, it is just windy up here."],
       ['Skye',"From a pile of sticks to a skyline. Whatever you build next, {n}, build it tall."]]},
+  {id:'ship', who:'pepper', title:'The Good Ship Wagtail', at:[40,33], npc:[42,32], cs:.34, reward:250, bp:['....W....','...CW....','..CCWCC..','.CCCWCCC.','....W....','WWWWWWWWW','.WWWWWWW.'],
+    intro:[['Pepper',"{n}! Look what the tide brought in. Bottles. Dozens of them, and every one has a letter inside."],
+      ['Pepper',"Listen: 'To the builder across the sea. The Great Gust came here too. Please come.' They are from islands I sailed to when I was a ship's dog."],
+      ['Pepper',"Build me a ship and I will take you anywhere. Wood for the hull and the mast, and thatch woven into sailcloth."]],
+    done:[['Pepper',"She floats! I name her the Wagtail. Captain Pepper, at your service."],
+      ['Pepper',"Tap the ship whenever you want to sail. The more neighbours you house, the further the charts will take us."]]},
 ];
-const ZONES = {city:{n:'Barkopolis', g:'#C9CED8'}, meadow:{n:'Sunny Meadow', g:'#86D67A'}, maple:{n:'Maple Hollow', g:'#C7D56C'}, snow:{n:'Frostbite Peak', g:'#EAF4FB'}, shroom:{n:'Mushroom Glade', g:'#79CDA6'}, beach:{n:'Sandy Paws Beach', g:'#F4E3B1'}};
-const zoneAt = (x,y) => x >= 59 ? 'city' : x < 28 ? (y < 19 ? 'meadow' : 'maple') : y >= 29 ? 'beach' : y < 16 ? 'snow' : 'shroom';
+const ZONES = {tropic:{n:'Coconut Cove', g:'#B5E8A0'}, dune:{n:'Dune Harbour', g:'#F2DBA6'}, city:{n:'Barkopolis', g:'#C9CED8'}, meadow:{n:'Sunny Meadow', g:'#86D67A'}, maple:{n:'Maple Hollow', g:'#C7D56C'}, snow:{n:'Frostbite Peak', g:'#EAF4FB'}, shroom:{n:'Mushroom Glade', g:'#79CDA6'}, beach:{n:'Sandy Paws Beach', g:'#F4E3B1'}};
+const homeZone = (x,y) => x >= 59 ? 'city' : x < 28 ? (y < 19 ? 'meadow' : 'maple') : y >= 29 ? 'beach' : y < 16 ? 'snow' : 'shroom';
 const isBr = c => c >= '0' && c <= '9' && !!CH[+c].bridge;      // a bridge site: water until its bridge is built
-const MAP = (() => {
+let zoneAt = homeZone;
+const HOME_MAP = (() => {
   const m = [], bx = CH[1].at[0], by = CH[1].at[1], cx2 = CH[5].at[0];
   for (let y = 0; y < MH; y++){ const r = []; for (let x = 0; x < MW; x++){ let c = '.';
     if (x > bx+1 && x < cx2 && y >= 29) c = ':'; if (x === bx || x === bx+1 || x === cx2 || x === cx2+1) c = '~'; if (x >= bx && y >= 34) c = '~';
@@ -1505,10 +1773,89 @@ const MAP = (() => {
   scatter('m', 14, 62, 2, 75, 32, '.'); scatter('s', 7, 62, 2, 75, 32, '.'); scatter('o', 5, 62, 2, 75, 32, '.'); scatter('t', 6, 62, 2, 75, 32, '.');
   return m;
 })();
+let MAP = HOME_MAP;
+const HOME = {w:MW, h:MH, map:HOME_MAP, free:FREE_AT, home:HOME_AT, extra:EXTRA, stalls:STALLS, beds:BEDS, zone:homeZone};
+// ----- the wider world: lands across the sea, each one a new city to found, two neighbourhoods at a time -----
+const LANDS = [
+  {id:'cove', name:'Coconut Cove', theme:'tropic', need:0, wall:'W', roof:'T', hoods:['Palm Row','Shell Street'], seed:11},
+  {id:'dune', name:'Dune Harbour', theme:'dune', need:120, wall:'B', roof:'W', hoods:['Oasis Lane','Camel Court'], seed:23},
+  {id:'frost', name:'Glacier Bay', theme:'snow', need:260, wall:'S', roof:'T', hoods:['Icicle Road','Aurora Avenue'], seed:37},
+  {id:'lantern', name:'Lantern Coast', theme:'shroom', need:450, wall:'B', roof:'T', hoods:['Moonlit Mews','Firefly Lane'], seed:41},
+  {id:'sky', name:'New Barkopolis', theme:'city', need:700, wall:'M', roof:null, hoods:['Uptown','The Docks'], seed:59},
+];
+let land = 'home', pendLand = null; const ISLES = {};
+const landDef = id => LANDS.find(l => l.id === id), landName = () => land === 'home' ? 'Woofwood Valley' : landDef(land).name;
+function isle(id){
+  if (ISLES[id]) return ISLES[id];
+  const L = landDef(id), w = 36, h = 28, cx = 18, cy = 14, m = [], lots = [[10,10],[14,10],[22,10],[26,10],[10,21],[14,21],[22,21],[26,21]], stall = [16,16], bed = [20,16];
+  let seed = L.seed*7919; const rand = () => { seed = (seed*1664525 + 1013904223) >>> 0; return seed/4294967296; };
+  for (let y = 0; y < h; y++){ const r = []; for (let x = 0; x < w; x++){ const dx = (x-cx)/14.5, dy = (y-cy)/10.5; r.push(dx*dx + dy*dy + ((((x*73856093) ^ (y*19349663) ^ L.seed) >>> 0) % 100)/100*.14 < 1 ? '.' : '~'); } m.push(r); }
+  for (const e of lots.concat([stall, bed])) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) m[e[1]+dy][e[0]+dx] = '.';
+  let ly = cy; while (m[ly+1][cx] === '.') ly++;                                                    // the dock sits where the land ends, straight south of the middle
+  const dock = [cx, ly+1]; m[dock[1]][dock[0]] = 'H';
+  for (let y = cy; y <= ly; y++) m[y][cx] = ','; for (let x = 6; x <= 30; x++) if (m[cy][x] === '.') m[cy][x] = ',';
+  lots.forEach(e => { m[e[1]][e[0]] = 'P'; }); m[stall[1]][stall[0]] = 'f'; m[bed[1]][bed[0]] = 'b';
+  const keep = new Set(), room = (x, y, rx, up) => { for (let dy = -up; dy <= 1; dy++) for (let dx = -rx; dx <= rx; dx++) keep.add((y+dy)*w + x+dx); };
+  lots.forEach(e => room(e[0], e[1], 2, 4)); room(stall[0], stall[1], 1, 2); room(bed[0], bed[1], 1, 2); room(dock[0], dock[1]-1, 1, 1);
+  const scatter = (ch, n) => { for (let k = 0, tries = 0; k < n && tries < 4000; tries++){ const x = 2 + Math.floor(rand()*(w-4)), y = 2 + Math.floor(rand()*(h-4)); if (m[y][x] !== '.' || keep.has(y*w+x)) continue;
+    let near = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (NODE[m[y+dy][x+dx]]) near = true; if (!near){ m[y][x] = ch; k++; } } };
+  scatter('t', 9); scatter('r', 5); scatter('o', 7); scatter('c', 5); scatter('s', 5); scatter('m', L.theme === 'city' ? 9 : 4);      // every material is on every island, so no sailing back for supplies
+  return ISLES[id] = {w, h, map:m, free:null, home:dock, extra:lots, stalls:[[stall[0], stall[1], L.name.toUpperCase()]], beds:[bed], zone:() => L.theme};
+}
+function setLand(id){
+  land = id; const L = id === 'home' ? HOME : isle(id);
+  MW = L.w; MH = L.h; MAP = L.map; FREE_AT = L.free; HOME_AT = L.home; EXTRA = L.extra; STALLS = L.stalls; BEDS = L.beds; zoneAt = L.zone; qr.cool = {}; qr.zone = null; qr.path = null;
+}
+// each land keeps its own list of jobs
+function JL(){ const q = QS(); if (land === 'home') return q.jobs; q.lands = q.lands || {}; return q.lands[land] || (q.lands[land] = {n:0, cur:null, plots:{}, order:[]}); }
+const jobsDone = () => { const q = QS(); return q.jobs.n + Object.keys(q.lands || {}).reduce((t,k) => t + q.lands[k].n, 0); };
+// ----- population: every finished building houses neighbours, and the settlement levels up as it grows -----
+const blocksOf = rows => rows.join('').replace(/\./g, '').length;
+function population(){
+  const q = QS(); let n = 0; CH.forEach((c,i) => { if (i < q.ch && !c.bridge && c.id !== 'ship') n += Math.round(blocksOf(c.bp)/3); });
+  const add = J => { for (const k in J.plots) if (J.plots[k].done) n += Math.round(blocksOf(J.plots[k].bp)/3); };
+  add(q.jobs); for (const id in (q.lands || {})) add(q.lands[id]); if (q.free) n += Math.floor(blocksOf(q.free)/4); return n;
+}
+const LEVELS = [[0,'Hamlet'],[40,'Village'],[100,'Town'],[200,'City'],[350,'Metropolis'],[550,'Megacity'],[800,'World Capital']];
+const levelIdx = () => { const pop = population(); let r = 0; LEVELS.forEach((x,i) => { if (pop >= x[0]) r = i; }); return pop < 1200 ? r : 6 + Math.floor((pop-800)/400); };
+const levelName = () => { const l = levelIdx(); return l <= 6 ? LEVELS[l][1] : 'World Capital ★' + (l-5); };
+const levelPrize = l => 30*l*l + 20*l;                                                               // bigger levels, bigger prizes: 50, 160, 330, 560, 850, 1200 ...
+let lvlPend = false;
+function levelCheck(){ if (S.adopted && levelIdx() > (S.lvl || 0)) lvlPend = true; }
+// the crew: pals you have hatched come to work. A higher rank leads a bigger crew, and each member carries one extra block per right answer.
+const crewList = () => CRITS.filter(c => S.crit[c.id] && c.id !== S.buddy).slice(0, Math.min(6, rankIdx()));
+function drawCrew(g){
+  const cr = crewList(), u = U, w = g.x1-g.x0; cr.forEach((c,i) => { const x = g.x0 - 14*u + (w + 28*u)*(cr.length > 1 ? i/(cr.length-1) : .5);
+    drawCritter(ctx, c, x, g.by + 9*u - Math.abs(Math.sin(time*6 + i*1.7))*6*u, 9*u, time + i, false); });
+}
+function drawDock(x, y){
+  const t = TS(), u = U, cx = (x+.5)*t, top = y*t, ship = CH.find(c => c.id === 'ship').bp, cs = t*.27, w = ship[0].length*cs, x0 = cx + t*.55, y0 = top + t*2.1 - ship.length*cs + Math.sin(time*2)*3*u;
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.rect(cx-t*.32, top-t*.12, t*.64, t*.85); fs('#B9895A'); ctx.beginPath(); for (const k of [.14,.38,.6]){ ctx.moveTo(cx-t*.32, top+t*k); ctx.lineTo(cx+t*.32, top+t*k); } ctx.stroke();
+  ship.forEach((r,yy) => { for (let xx = 0; xx < r.length; xx++) if (r[xx] !== '.') drawBlock(r[xx], x0+xx*cs, y0+yy*cs, cs); });
+  ctx.font = 11*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.lineWidth = 4*u; ctx.strokeStyle = PAPER; ctx.strokeText('SET SAIL', cx, top-t*.22); ctx.fillStyle = INK; ctx.fillText('SET SAIL', cx, top-t*.22);
+}
+function openWorld(){ if (QS().ch <= CH.findIndex(c => c.id === 'ship')){ toast('You need a ship to cross the sea.'); return; } dq = []; $('dlg').hidden = true; renderWorld(); $('world').hidden = false; ui(); }
+function renderWorld(){
+  const q = QS(), pop = population(), box = $('w-list'); box.textContent = ''; $('w-pop').textContent = 'World population ' + pop;
+  box.appendChild(shopRow('Woofwood Valley', 'Home. Where it all began.', land === 'home' ? 'You are here' : 'Sail', 'sail-home', land !== 'home', () => sail('home')));
+  for (const L of LANDS){ const J = (q.lands || {})[L.id], done = J ? Object.keys(J.plots).filter(k => J.plots[k].done).length : 0, open = pop >= L.need;
+    box.appendChild(shopRow(L.name, open ? (done ? done + ' homes built. ' : 'A new shore, flattened by the Gust. ') + 'Neighbourhoods: ' + L.hoods.join(' and ') + '.' : 'The charts open when the world population reaches ' + L.need + '.', land === L.id ? 'You are here' : open ? 'Sail' : 'Locked', 'sail-' + L.id, open && land !== L.id, () => sail(L.id))); }
+}
+function sail(id){ $('world').hidden = true; if (id === land || trans) return; pendLand = id; travel('quest', id === 'home' ? 'Woofwood Valley' : landDef(id).name); }
+function levelCard(l, prize){
+  const pop = population();
+  return {who:'Mayor Rusty', text:"The count is in: " + pop + " neighbours! We are officially a " + levelName() + ". Here is " + prize + " bones from the treasury, {n}, and a cup for your dog house.", go:'Keep building',
+    draw(){ const y = H*.56, have = CRITS.filter(c => S.crit[c.id]).slice(0, 7); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); cSun(W*.86, H*.14);
+      cHouse(CH[0].bp, W*.14, y+16*U, 16*U); cHouse(CH[4].bp, W*.5, y+16*U, 15*U); cHouse(CH[6].bp, W*.86, y+16*U, 13*U);
+      have.forEach((c,i) => drawCritter(ctx, c, W*(.12 + .76*(have.length > 1 ? i/(have.length-1) : .5)), y+118*U - Math.abs(Math.sin(time*6+i))*8*U, 17*U, time+i, false));
+      cDog('rusty', W*.3, y+78*U, 1.1, {sit:1, joy:1}); cDog('hero', W*.66, y+80*U, 1.4, {dir:-1, joy:1, hop:Math.abs(Math.sin(time*5))*8}); drawCup(W*.48, y+78*U, 30*U, Math.min(2, Math.floor(l/2))); cConfetti(); cTitle('POPULATION ' + pop, levelName()); }};
+}
 let QN = [], cam = {x:0, y:0}, qr = {path:null, then:null, cool:{}}, dq = [], dthen = null, oneShot = null, bMode = null, bSel = 'W', bPop = '';
 function QS(){ if (S.q && !S.q.jobs) S.q.jobs = {n:0, cur:null, plots:{}, order:[]};
-  if (S.q && S.q.v !== 4){ S.q.v = 4; S.q.pos = null; S.q.inv.steel = S.q.inv.steel || 0; }
-  if (S.q && !S.q.got){ S.q.got = {}; for (const r in S.q.inv) if (S.q.inv[r] > 0) S.q.got[r] = true; } return S.q || (S.q = {v:4, jobs:{n:0, cur:null, plots:{}, order:[]}, ch:0, st:0, inv:{wood:0, thatch:0, stone:0, brick:0, glass:0, steel:0}, built:{}, got:{}, free:null, pos:null, seen:false}); }
+  if (S.q && S.q.v !== 5){ S.q.v = 5; S.q.posBy = {}; S.q.lands = S.q.lands || {}; S.q.land = 'home'; }
+  if (S.q && !S.q.inv){ S.q.inv = {}; S.q.inv.steel = S.q.inv.steel || 0; }
+  if (S.q && !S.q.got){ S.q.got = {}; for (const r in S.q.inv) if (S.q.inv[r] > 0) S.q.got[r] = true; } return S.q || (S.q = {v:5, posBy:{}, lands:{}, land:'home', jobs:{n:0, cur:null, plots:{}, order:[]}, ch:0, st:0, inv:{wood:0, thatch:0, stone:0, brick:0, glass:0, steel:0}, built:{}, got:{}, free:null, pos:null, seen:false}); }
 const grid = i => { const q = QS(), c = CH[i]; return q.built[c.id] || (q.built[c.id] = c.bp.map(r => '.'.repeat(r.length))); };
 const freeGrid = () => { const q = QS(); return q.free || (q.free = Array(8).fill('.'.repeat(9))); };
 const setCell = (rows, x, y, ch) => { rows[y] = rows[y].slice(0,x) + ch + rows[y].slice(x+1); };
@@ -1516,7 +1863,7 @@ const isJob = i => typeof i === 'string' && i[0] === 'j';                // 'j3'
 // one description for anything you can build on: a story chapter, a job, or your free plot
 function spec(i){
   if (i === 'free') return {bp:null, rows:freeGrid(), title:'Your plot', at:FREE_AT, cs:.34};
-  if (isJob(i)){ const k = +i.slice(1), j = QS().jobs.plots[k]; return {bp:j.bp, rows:j.rows, title:j.title, at:EXTRA[k], cs:.32, job:j}; }
+  if (isJob(i)){ const k = +i.slice(1), j = JL().plots[k]; return {bp:j.bp, rows:j.rows, title:j.title, at:EXTRA[k], cs:.32, job:j}; }
   const c = CH[i]; return {bp:c.bp, rows:grid(i), title:c.title, at:c.at, cs:c.cs, bridge:c.bridge};
 }
 function bNeeds(i){ const sp = spec(i), rows = sp.rows, n = {wood:0, thatch:0, stone:0, brick:0, glass:0, steel:0}; sp.bp.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] !== '.' && rows[y][x] === '.') n[BRES[r[x]]]++; }); return n; }
@@ -1543,12 +1890,14 @@ function questToggle(){
   if (scene === 'quest'){ dq = []; $('dlg').hidden = true; travel('yard', 'Home sweet home.'); return; }
   if (blocked() || unfit()) return;
   if (S.energy < 15){ toast(S.name + ' is too tired for a quest. Nap first.'); return; }
-  travel('quest', 'Woofwood Valley');
+  travel('quest', landName());
 }
 function questArrive(){
-  const q = QS(), t = TS(), p = q.pos || [HOME_AT[0]+1.5, HOME_AT[1]+.7];
-  dog.x = p[0]*t; dog.y = p[1]*t; dog.dir = 1; setState('qidle'); dog.cb = null; qr.path = null; qr.then = null;
-  QN = Object.keys(WHO).map(w => { const n = makeNpc(PALS.find(p => p.id === w), 0); n.who = w; n.state = 'sitidle'; n.dur = 1e9; n.t0 = 0; const at = CH[npcChapter(w)].npc; n.x = (at[0]+.5)*t; n.y = (at[1]+.7)*t; n.ds = .62; return n; });   // placed at once, so they are right even if a window opens before the first tick
+  const q = QS(); if (pendLand){ setLand(pendLand); pendLand = null; }
+  const t = TS(), by = q.posBy || (q.posBy = {}), p = by[land] || (land === 'home' ? [HOME_AT[0]+1.5, HOME_AT[1]+.7] : [HOME_AT[0]+.5, HOME_AT[1]-.3]);
+  dog.x = p[0]*t; dog.y = p[1]*t; dog.dir = 1; setState('qidle'); dog.cb = null; qr.path = null; qr.then = null; bud.on = false;
+  QN = land !== 'home' ? [] : Object.keys(WHO).map(w => { const n = makeNpc(PALS.find(p => p.id === w), 0); n.who = w; n.state = 'sitidle'; n.dur = 1e9; n.t0 = 0; const at = CH[npcChapter(w)].npc; n.x = (at[0]+.5)*t; n.y = (at[1]+.7)*t; n.ds = .62; return n; });   // placed at once, so they are right even if a window opens before the first tick
+  newJob();
   if (!q.seen){ q.seen = true; save(); storyPlay(openingPanels()); }
 }
 function qPath(sx, sy, goal){
@@ -1573,9 +1922,9 @@ function questTap(p){
   const t = TS(), wx = p.x+cam.x, wy = p.y+cam.y, tx = Math.floor(wx/t), ty = Math.floor(wy/t), c = (MAP[ty] || [])[tx];
   const inBox = g => wx > g.x0 && wx < g.x1 && wy > g.y0 && wy < g.by, tilesOf = i => CH[i].bridge ? [CH[i].at, [CH[i].at[0]+1, CH[i].at[1]]] : [CH[i].at];
   let tg = null;
-  CH.forEach((ch,i) => { if (inBox(plotGeom(i))) tg = {k:'plot', i, tiles:tilesOf(i)}; });
-  if (inBox(plotGeom('free'))) tg = {k:'free', tiles:[FREE_AT]};
-  EXTRA.forEach((e,k) => { if (QS().jobs.plots[k] && inBox(plotGeom('j' + k))) tg = {k:'job', i:k, tiles:[e]}; });
+  if (land === 'home') CH.forEach((ch,i) => { if (inBox(plotGeom(i))) tg = {k:'plot', i, tiles:tilesOf(i)}; });
+  if (FREE_AT && inBox(plotGeom('free'))) tg = {k:'free', tiles:[FREE_AT]};
+  EXTRA.forEach((e,k) => { if (JL().plots[k] && inBox(plotGeom('j' + k))) tg = {k:'job', i:k, tiles:[e]}; });
   for (const n of QN) if (Math.abs(wx-n.x) < t*.5 && wy > n.y-t*1.1 && wy < n.y+t*.2){ const i = npcChapter(n.who); tg = {k:'plot', i, tiles:tilesOf(i)}; }
   const below = (MAP[ty+1] || [])[tx];
   if (!tg && NODE[c]) tg = {k:'node', c, tiles:[[tx,ty]]};
@@ -1583,13 +1932,13 @@ function questTap(p){
   else if (!tg && (c === 'b' || below === 'b')) tg = {k:'bed', tiles:[[tx, c === 'b' ? ty : ty+1]]};
   else if (!tg && below === 't') tg = {k:'node', c:'t', tiles:[[tx,ty+1]]};          // tapping a tree's leaves or a stall's awning counts too
   else if (!tg && below === 'f') tg = {k:'stall', tiles:[[tx,ty+1]]};
-  if (!tg && tx === HOME_AT[0] && (ty === HOME_AT[1] || ty === HOME_AT[1]-1)) tg = {k:'home', tiles:[HOME_AT]};
+  if (!tg && tx === HOME_AT[0] && (ty === HOME_AT[1] || ty === HOME_AT[1] + (land === 'home' ? -1 : 1))) tg = {k:'home', tiles:[HOME_AT]};
   if (!tg && !qWalk(tx,ty)) return;
   const sx = clamp(Math.floor(dog.x/t),0,MW-1), sy = clamp(Math.floor(dog.y/t),0,MH-1);
   const path = qPath(sx, sy, tg ? (x,y) => tg.tiles.some(g => Math.abs(g[0]-x)+Math.abs(g[1]-y) === 1) : (x,y) => x === tx && y === ty);
   if (!path){ if (tg) toast("Can't get there yet."); return; }
   qr.path = path.slice(1).map(([x,y]) => [(x+.5)*t, (y+.7)*t]);
-  qr.then = tg ? () => { dog.dir = (tg.tiles[0][0]+.5)*t >= dog.x ? 1 : -1; if (tg.k === 'node') gather(tg); else if (tg.k === 'plot') plotTap(tg.i); else if (tg.k === 'free') freeTap(); else if (tg.k === 'stall') eatAt(tg); else if (tg.k === 'bed') setState('qsleep'); else if (tg.k === 'job') jobTap(tg.i); else questToggle(); } : null;
+  qr.then = tg ? () => { dog.dir = (tg.tiles[0][0]+.5)*t >= dog.x ? 1 : -1; if (tg.k === 'node') gather(tg); else if (tg.k === 'plot') plotTap(tg.i); else if (tg.k === 'free') freeTap(); else if (tg.k === 'stall') eatAt(tg); else if (tg.k === 'bed') setState('qsleep'); else if (tg.k === 'job') jobTap(tg.i); else if (land === 'home') questToggle(); else openWorld(); } : null;
   setState('qwalk');
 }
 function questTick(dt){
@@ -1601,13 +1950,13 @@ function questTick(dt){
 }
 
 // gathering: every chop, cut and dig is one math question
-function askOne(label, fn){ openMath(); oneShot = {label, fn}; if (curGrade()) $('fb').textContent = label; }
+function askOne(label, fn){ openMath(); oneShot = {label, fn}; if (curGrade() && !S.math.fix) $('fb').textContent = label; }
 function gather(g){
   const [x,y] = g.tiles[0], key = x + ',' + y, [res, verb] = NODE[g.c], q = QS();
   if (qr.cool[key] > 0){ toast('Nothing left here yet. It grows back soon.'); return; }
   if (unfit()) return;
   if (S.energy < 12){ toast(S.name + ' is worn out. Head home for a nap.'); return; }
-  const base = 3 + (own(TOOL[res]) ? 2 : 0) + (own('barrow') ? 1 : 0) + Math.floor(Math.min(rankIdx(), 6)/2);   // higher ranks carry more
+  const base = 3 + (own(TOOL[res]) ? 2 : 0) + (own('barrow') ? 1 : 0) + Math.floor(Math.min(rankIdx(), 6)/2) + crewList().length;   // higher ranks carry more
   askOne(verb + ': answer to get ' + base + ' ' + res, ok => {
     if (!ok){ toast('Not this time. Tap it to try again.'); return; }
     const hot = S.math.streak >= 3, n = base + (hot ? 1 : 0);   // three right in a row earns a bonus block
@@ -1650,38 +1999,57 @@ function drawStall(x, y, name){
 // quests and building
 function plotTap(i){
   const q = QS(), c = CH[i];
+  if (c.id === 'ship' && i < q.ch){ openWorld(); return; }
   if (i < q.ch){ say([[WHO[c.who], pickOf(["I love it. Thank you, {n}!", "Best builder in the valley, that is what you are.", "Come round for tea any time, {n}."])]]); return; }
   if (i > q.ch){ say([[WHO[c.who], "Hello, {n}! I hear you are helping " + WHO[CH[q.ch].who] + " first. Come back after."]]); return; }
   if (!q.st){ q.st = 1; save(); storyPlay([chapterCard(i)], () => say(c.intro, () => toast('New quest: ' + c.title, 3200))); return; }
   openBuild(i);
 }
 // ----- jobs: an endless stream of new families who want homes, on the empty lots around the valley -----
-function newJob(){
-  const q = QS(), J = q.jobs; if (q.ch < 1 || J.cur != null) return;
-  const okZone = z => z === 'city' ? q.ch >= 6 : (z === 'meadow' || z === 'maple') ? true : q.ch >= 2;       // only lots you can already reach
-  const ks = EXTRA.map((e,k) => k).filter(k => okZone(zoneAt(EXTRA[k][0], EXTRA[k][1]))), open = ks.filter(k => !J.plots[k]);
-  let k; if (open.length) k = pickOf(open); else { const old = J.order.filter(x => ks.includes(x)); k = old.length ? old[0] : pickOf(ks); J.order = J.order.filter(x => x !== k); }   // when every lot is full, the oldest house makes way
-  const z = zoneAt(EXTRA[k][0], EXTRA[k][1]), rk = rankIdx(), east = q.ch >= 2, city = z === 'city', pad = n => '.'.repeat(n);
-  const wide = city ? 5 : (Math.random() < .2 + rk*.08 ? 7 : 5), floors = city ? 4 + ri(0, Math.min(5, 1+rk)) : 2 + ri(0, Math.min(2, Math.floor(rk/2)));   // bigger builds as your rank rises
-  const wall = city ? 'M' : z === 'snow' ? 'S' : (east && z !== 'meadow' && Math.random() < .6) ? 'B' : 'W', roof = city ? null : wall === 'W' ? 'T' : pickOf(['T','W']), rows = [];
+function jobRows(wide, floors, wall, roof, win, city){
+  const pad = n => '.'.repeat(n), rows = [];
   if (roof) for (let w2 = 1; w2 <= wide; w2 += 2) rows.push(pad((wide-w2)/2) + roof.repeat(w2) + pad((wide-w2)/2)); else rows.push(pad((wide-1)/2) + 'M' + pad((wide-1)/2));
-  for (let f = 0; f < floors; f++){ const ground = f === floors-1; let r = ''; for (let x = 0; x < wide; x++) r += ground && x === (wide-1)/2 ? 'D' : (!ground && east && x % 2 === 1 && (city || f % 2 === 0)) ? 'G' : (city && ground) ? 'S' : wall; rows.push(r); }
-  const c = pickOf(CRITS), blocks = rows.join('').replace(/\./g, '').length, kind = pickOf(city ? ['tower','flats','office'] : ['cottage','cabin','house','hideaway','den']);
-  J.plots[k] = {bp:rows, rows:rows.map(r => pad(r.length)), title:c.name.split(' ')[0] + "'s " + kind, kind, client:c.id, st:0, done:false, pay:8 + Math.round(blocks*.6)}; J.cur = k; save();
+  for (let f = 0; f < floors; f++){ const ground = f === floors-1; let r = ''; for (let x = 0; x < wide; x++) r += ground && x === (wide-1)/2 ? 'D' : (!ground && win && x % 2 === 1 && (city || f % 2 === 0)) ? 'G' : (city && ground) ? 'S' : wall; rows.push(r); }
+  return rows;
+}
+function newJob(){
+  const q = QS(), J = JL(); if (q.ch < 1 || J.cur != null) return;
+  const rk = rankIdx(), lv = levelIdx(); let k, rows, city, mul = 1;
+  if (land === 'home'){
+    const okZone = z => z === 'city' ? q.ch >= 6 : (z === 'meadow' || z === 'maple') ? true : q.ch >= 2;       // only lots you can already reach
+    const ks = EXTRA.map((e,i) => i).filter(i => okZone(zoneAt(EXTRA[i][0], EXTRA[i][1]))), open = ks.filter(i => !J.plots[i]);
+    if (open.length) k = pickOf(open); else { const old = J.order.filter(x => ks.includes(x)); k = old.length ? old[0] : pickOf(ks); J.order = J.order.filter(x => x !== k); }   // when every lot is full, the oldest house makes way
+    const z = zoneAt(EXTRA[k][0], EXTRA[k][1]), east = q.ch >= 2; city = z === 'city';
+    const wide = city ? 5 : (Math.random() < .2 + rk*.08 ? 7 : 5), floors = city ? 4 + ri(0, Math.min(5, 1+rk)) : 2 + ri(0, Math.min(2, Math.floor(rk/2)));   // bigger builds as your rank rises
+    const wall = city ? 'M' : z === 'snow' ? 'S' : (east && z !== 'meadow' && Math.random() < .6) ? 'B' : 'W';
+    rows = jobRows(wide, floors, wall, city ? null : wall === 'W' ? 'T' : pickOf(['T','W']), east, city);
+  } else {
+    const L = landDef(land), open = EXTRA.map((e,i) => i).filter(i => !J.plots[i]);
+    if (open.length) k = open[0]; else { k = J.order.length ? J.order[0] : 0; J.order = J.order.filter(x => x !== k); }     // one neighbourhood, then the next; after that the oldest home is rebuilt bigger
+    city = L.theme === 'city'; rows = jobRows(Math.random() < .3 + lv*.07 ? 7 : 5, (city ? 5 : 2) + ri(0, Math.min(5, 1 + Math.floor(lv/2))), L.wall, L.roof, true, city); mul = 1.4 + .3*LANDS.indexOf(L);
+  }
+  const c = pickOf(CRITS), kind = pickOf(city ? ['tower','flats','office'] : ['cottage','cabin','house','hideaway','den']);
+  J.plots[k] = {bp:rows, rows:rows.map(r => '.'.repeat(r.length)), title:c.name.split(' ')[0] + "'s " + kind, kind, client:c.id, st:0, done:false, pay:Math.round((8 + blocksOf(rows)*.6)*mul)}; J.cur = k; save();
 }
 function jobTap(k){
-  const j = QS().jobs.plots[k], who = j.title.split("'")[0];
+  const j = JL().plots[k], who = j.title.split("'")[0];
   if (j.done){ say([[who, pickOf(["I love my " + j.kind + ". Thank you, {n}!", "Come round for tea any time, {n}.", "Best builder in the valley, that is what you are."])]]); return; }
   if (!j.st){ j.st = 1; save(); say([[who, "Are you {n}, the builder everyone is talking about? I am new to the valley and I need a " + j.kind + " of my own. I can pay " + j.pay + " bones."], [who, "Tap my lot when you have the blocks."]], () => toast('New job: ' + j.title, 3200)); return; }
   openBuild('j' + k);
 }
 function finishJob(k){
-  const J = QS().jobs, j = J.plots[k], who = j.title.split("'")[0]; j.done = true; J.n++; J.cur = null; J.order.push(k); S.bones += j.pay; chime(); save();
-  setTimeout(() => { $('build').hidden = true; gainXp(8); dog.joy = 3; puff('star', W/2, H/2, 12, {spread:110});
-    say([[who, pickOf(["It is perfect! I am moving in right now.", "A roof of my very own. Thank you, {n}!", "Wait until the others see this."])], ['Storyteller', j.title + ' is built! +' + j.pay + ' bones. The valley has grown. ' + (J.n % 3 ? (3 - J.n % 3) + ' more for a star.' : 'That earns a star!')]], () => { newJob(); rankCheck(); }); }, 1100);
+  const J = JL(), j = J.plots[k], who = j.title.split("'")[0]; j.done = true; J.n++; J.cur = null; J.order.push(k); S.bones += j.pay; chime();
+  const lines = [[who, pickOf(["It is perfect! I am moving in right now.", "A roof of my very own. Thank you, {n}!", "Wait until the others see this."])], ['Storyteller', j.title + ' is built! +' + j.pay + ' bones, and ' + Math.round(blocksOf(j.bp)/3) + ' new neighbours move in.']];
+  const won = id => (S.trophies || []).some(t => t[0] === id);
+  if (land !== 'home'){ const L = landDef(land), li = LANDS.indexOf(L), h = k < 4 ? 0 : 1, full = [0,1,2,3].every(i => { const pl = J.plots[h*4+i]; return pl && pl.done; }), all = EXTRA.every((e,i) => J.plots[i] && J.plots[i].done);
+    if (full && !won('hood' + land + h)){ const prize = 60*(li+1); S.bones += prize; award('hood' + land + h, L.hoods[h] + ', ' + L.name, 1, true); lines.push(['Storyteller', L.hoods[h] + ' is complete: a whole neighbourhood! +' + prize + ' bones and a silver trophy.']); }
+    if (all && !won('city' + land)){ const prize = 200*(li+1); S.bones += prize; award('city' + land, 'Founder of ' + L.name, 2, true); lines.push(['Storyteller', L.name + ' is a real city now. +' + prize + ' bones and a gold trophy.']); } }
+  const total = jobsDone(); if (total % 5 === 0) award('jobs' + total, total + ' homes built', total >= 20 ? 2 : total >= 10 ? 1 : 0, true);
+  save();
+  setTimeout(() => { $('build').hidden = true; gainXp(8); dog.joy = 3; puff('star', W/2, H/2, 12, {spread:110}); say(lines, () => { newJob(); rankCheck(); levelCheck(); }); }, 1100);
 }
 function drawJob(k){
-  const j = QS().jobs.plots[k], g = plotGeom('j' + k), u = U, w = g.x1-g.x0;
+  const j = JL().plots[k], g = plotGeom('j' + k), u = U, w = g.x1-g.x0;
   ctx.fillStyle = 'rgba(20,15,50,.16)'; ctx.beginPath(); ctx.ellipse(g.cx, g.by+3*u, w*.58, 10*u, 0, 0, 7); ctx.fill();
   ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.lineJoin = 'round'; rr(g.x0-5*u, g.by-7*u, w+10*u, 11*u, 4*u); fs('#C9B48A');
   if (!j.done){ ctx.setLineDash([7*u,6*u]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeRect(g.x0, g.y0, w, g.by-g.y0); ctx.setLineDash([]); ctx.strokeStyle = INK; }
@@ -1689,7 +2057,7 @@ function drawJob(k){
   ctx.fillStyle = 'rgba(20,15,50,.16)'; g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] !== '.') ctx.fillRect(g.x0+x*g.cs+5*u, g.y0+y*g.cs+5*u, g.cs, g.cs); });
   g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] !== '.') drawBlock(r[x], g.x0+x*g.cs, g.y0+y*g.cs, g.cs, lit); });
   if (j.done) drawCritter(ctx, critOf(j.client), g.x1 + 16*u, g.by + 2*u, 13*u, time + k, false);                       // the new neighbour, at home
-  else { const y = g.y0 - 16*u + Math.sin(time*4 + k)*4*u; ctx.font = 13*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.lineWidth = 2.500*u; rr(g.cx-22*u, y-12*u, 44*u, 24*u, 12*u); fs(SKY); ctx.fillStyle = INK; ctx.fillText('JOB', g.cx, y+5*u); }
+  else { if (j.st) drawCrew(g); const y = g.y0 - 16*u + Math.sin(time*4 + k)*4*u; ctx.font = 13*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.lineWidth = 2.500*u; rr(g.cx-22*u, y-12*u, 44*u, 24*u, 12*u); fs(SKY); ctx.fillStyle = INK; ctx.fillText('JOB', g.cx, y+5*u); }
 }
 function freeTap(){ if (QS().ch < 1){ toast("Mochi is saving this plot for you. Build her hut first."); return; } openBuild('free'); }
 function openBuild(m){ bMode = m; bPop = ''; $('bd-fb').textContent = ''; renderBuild(); $('build').hidden = false; }
@@ -1715,6 +2083,7 @@ function renderBuild(){
     pal.appendChild(chip);
   }
   $('bd-left').textContent = free ? 'Free build' : left ? left + ' blocks to go' : 'Finished!';
+  const cr = crewList().length; $('bd-crew').hidden = free || !left || !cr || rankIdx() < 5; $('bd-crew').textContent = 'Crew build (' + cr + ' pals)';
   $('bd-hint').textContent = free ? 'Pick a block, then tap to place it. Tap a block to take it back.' : 'Tap an outlined spot to place its block.';
 }
 function cellTap(x, y){
@@ -1726,18 +2095,19 @@ function cellTap(x, y){
   if (!free && !Object.values(bNeeds(bMode)).some(v => v)){ if (isJob(bMode)) finishJob(+bMode.slice(1)); else finishChapter(bMode); }
 }
 function finishChapter(i){
-  const q = QS(), c = CH[i]; q.ch = i+1; q.st = 0; S.bones += c.reward; chime(); newJob(); rankCheck(); save();
+  const q = QS(), c = CH[i]; q.ch = i+1; q.st = 0; S.bones += c.reward; chime(); newJob(); rankCheck(); award('ch' + c.id, c.title, i < 2 ? 0 : i < 5 ? 1 : 2, true); levelCheck(); save();
   setTimeout(() => { $('build').hidden = true; gainXp(15); dog.joy = 3; puff('star', W/2, H/2, 14, {spread:120});
-    say(c.done.concat([['Storyteller', c.title + ' is built! +' + c.reward + ' bones.' + (i === CH.length-1 ? ' The skyline is finished, and {n} is the greatest builder the valley has ever known.' : '')]]), i === CH.length-1 ? () => storyPlay(finalePanels()) : null); }, 1100);
+    say(c.done.concat([['Storyteller', c.title + ' is built! +' + c.reward + ' bones.' + (c.id === 'spire' ? ' The skyline is finished, and {n} is the greatest builder the valley has ever known.' : c.id === 'ship' ? ' The whole world is waiting.' : '')]]), c.id === 'spire' ? () => storyPlay(finalePanels()) : c.id === 'ship' ? () => openWorld() : null); }, 1100);
 }
 function trackText(){
+  if (land !== 'home'){ const J = JL(), done = Object.keys(J.plots).filter(k => J.plots[k].done).length; return landDef(land).name + ': ' + done + ' homes built. Population ' + population() + '.'; }
   const q = QS(); if (q.ch >= CH.length) return 'The story is told, but the valley keeps growing. Take a job, or build on your own plot.';
   const c = CH[q.ch]; if (!q.st) return 'Find ' + WHO[c.who] + ' at the !';
   const need = bNeeds(q.ch), short = RESN.filter(r => need[r] > q.inv[r]).map(r => (need[r]-q.inv[r]) + ' ' + r);
   return c.title + ': ' + (short.length ? 'gather ' + short.join(', ') : 'ready to build. Tap the plot!');
 }
 function renderQhud(){
-  const q = QS(), box = $('qchips'), J = q.jobs, j = J.cur != null ? J.plots[J.cur] : null; $('qtrack').textContent = trackText(); box.textContent = '';
+  const q = QS(), box = $('qchips'), J = JL(), j = J.cur != null ? J.plots[J.cur] : null; $('qtrack').textContent = trackText(); box.textContent = '';
   $('qjob').hidden = !j; if (j){ const need = bNeeds('j' + J.cur), short = RESN.filter(r => need[r] > q.inv[r]).map(r => (need[r]-q.inv[r]) + ' ' + r);
     $('qjob').textContent = !j.st ? 'Job: someone new wants a home. Look for the JOB sign.' : 'Job, ' + j.title + ': ' + (short.length ? 'gather ' + short.join(', ') : 'ready to build!'); }
   for (const r of RESN){ if (!q.inv[r]) continue; const chip = el('div','chip'); chip.appendChild(el('i','b' + RESB[r])); chip.appendChild(document.createTextNode(r + ' ' + q.inv[r])); box.appendChild(chip); }
@@ -1745,6 +2115,14 @@ function renderQhud(){
 $('a-quest').onclick = questToggle;
 $('a-log').onclick = () => { const q = QS(); say(q.ch < CH.length && q.st ? CH[q.ch].intro : [['Storyteller', trackText()]]); };
 $('bd-done').onclick = () => { $('build').hidden = true; ui(); };
+// a Chief Architect's crew places every block you have the materials for, in one go
+$('bd-crew').onclick = () => {
+  const q = QS(), sp = spec(bMode); let n = 0;
+  sp.bp.forEach((r,y) => { for (let x = 0; x < r.length; x++){ const k = r[x], res = BRES[k]; if (k !== '.' && sp.rows[y][x] === '.' && q.inv[res] > 0){ q.inv[res]--; setCell(sp.rows, x, y, k); n++; } } });
+  if (!n){ $('bd-fb').textContent = 'The crew needs more blocks first.'; return; }
+  pop(); chime(); bPop = ''; $('bd-fb').textContent = 'The crew placed ' + n + ' blocks!'; renderBuild(); save();
+  if (!Object.values(bNeeds(bMode)).some(v => v)){ if (isJob(bMode)) finishJob(+bMode.slice(1)); else finishChapter(bMode); }
+};
 
 // drawing the valley
 function drawBlock(ch, x, y, cs, lit){
@@ -1754,6 +2132,7 @@ function drawBlock(ch, x, y, cs, lit){
   else if (ch === 'T'){ ctx.strokeStyle = 'rgba(170,110,20,.55)'; ctx.beginPath(); for (const k of [.3,.62,.94]){ ctx.moveTo(x+cs*k, y); ctx.lineTo(x+cs*(k-.24), y+cs); } ctx.stroke(); }
   else if (ch === 'S'){ ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x+cs*.12, y+cs*.14, cs*.32, cs*.22); ctx.fillStyle = 'rgba(60,70,90,.25)'; ctx.fillRect(x+cs*.55, y+cs*.58, cs*.3, cs*.24); }
   else if (ch === 'G'){ ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(x+cs*.2, y+cs*.72); ctx.lineTo(x+cs*.62, y+cs*.2); ctx.moveTo(x+cs*.5, y+cs*.78); ctx.lineTo(x+cs*.76, y+cs*.46); ctx.stroke(); }
+  else if (ch === 'C'){ ctx.strokeStyle = 'rgba(120,110,80,.35)'; ctx.beginPath(); ctx.moveTo(x+cs*.5, y); ctx.lineTo(x+cs*.5, y+cs); ctx.stroke(); }
   else if (ch === 'M'){ ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.moveTo(x+cs*.12, y+cs*.88); ctx.lineTo(x+cs*.88, y+cs*.12); ctx.stroke(); ctx.fillStyle = '#4A5568'; for (const [dx,dy] of [[.2,.2],[.8,.8]]){ ctx.beginPath(); ctx.arc(x+cs*dx, y+cs*dy, cs*.07, 0, 7); ctx.fill(); } }
   else { ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x+cs*.16, y+cs*.14, cs*.68, cs*.3); ctx.fillStyle = SUN; ctx.beginPath(); ctx.arc(x+cs*.74, y+cs*.6, cs*.09, 0, 7); ctx.fill(); }
   ctx.fillStyle = 'rgba(255,255,255,.24)'; ctx.fillRect(x, y, cs, cs*.1); ctx.fillStyle = 'rgba(0,0,0,.13)'; ctx.fillRect(x, y+cs*.9, cs, cs*.1);
@@ -1788,7 +2167,7 @@ function drawTile(c, x, y, px, py, t, zk){
     ctx.beginPath(); ctx.moveTo(gx, gy); ctx.quadraticCurveTo(gx+t*.14, gy-t*.09, gx+t*.3, gy); ctx.stroke();                                                         // a drift line and two glints
     ctx.fillStyle = '#fff'; for (const k of [0,1]){ starPath(px+t*(.15+((h >> (k*5+3)) % 70)/100), py+t*(.15+((h >> (k*4+9)) % 70)/100), 2.600*u*(1+.4*Math.sin(time*3+x+y+k*2)), 0); ctx.fill(); } return; }
   if (zk === 'city'){ ctx.strokeStyle = 'rgba(90,100,120,.28)'; ctx.lineWidth = 1.500*u; ctx.strokeRect(px+.5, py+.5, t, t); ctx.beginPath(); ctx.moveTo(px+t*.5, py); ctx.lineTo(px+t*.5, py+t); ctx.stroke(); return; }   // paving slabs
-  if (zk === 'beach'){ ctx.fillStyle = 'rgba(190,150,90,.3)'; for (const k of [0,1,2]){ ctx.beginPath(); ctx.arc(px+t*(.15+((h >> (k*6)) % 70)/100), py+t*(.15+((h >> (k*5+4)) % 70)/100), 1.600*u, 0, 7); ctx.fill(); }
+  if (zk === 'beach' || zk === 'dune'){ ctx.fillStyle = 'rgba(190,150,90,.3)'; for (const k of [0,1,2]){ ctx.beginPath(); ctx.arc(px+t*(.15+((h >> (k*6)) % 70)/100), py+t*(.15+((h >> (k*5+4)) % 70)/100), 1.600*u, 0, 7); ctx.fill(); }
     if (h % 3 === 0){ ctx.strokeStyle = 'rgba(190,150,90,.4)'; ctx.lineWidth = 2*u; ctx.lineCap = 'round'; const gx = px+t*.2, gy = py+t*(.3+(h % 40)/100); ctx.beginPath(); ctx.moveTo(gx, gy); ctx.quadraticCurveTo(gx+t*.15, gy-t*.07, gx+t*.3, gy); ctx.quadraticCurveTo(gx+t*.45, gy+t*.07, gx+t*.6, gy); ctx.stroke(); }   // wind ripples
     return; }
   ctx.strokeStyle = zk === 'snow' ? 'rgba(140,180,215,.55)' : zk === 'maple' ? 'rgba(120,130,40,.4)' : 'rgba(35,110,60,.3)'; ctx.lineWidth = 2*u; ctx.lineCap = 'round'; ctx.beginPath();
@@ -1801,7 +2180,7 @@ function drawAmbient(zk){
     if (zk === 'snow'){ ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.arc(fx(a + Math.sin(time*.5+n)*.02)*W, fx(b + time*(.05+(n % 5)*.012))*H, (1.500+n % 3)*u, 0, 7); ctx.fill(); }
     else if (zk === 'maple'){ if (n > 15) continue; ctx.save(); ctx.translate(fx(a - time*.03)*W, fx(b + time*(.04+(n % 4)*.01))*H); ctx.rotate(time*2+n); ctx.fillStyle = ['#F08A3C','#E0522F','#F2C14E'][n % 3]; ctx.beginPath(); ctx.ellipse(0, 0, 6*u, 3*u, 0, 0, 7); ctx.fill(); ctx.restore(); }
     else if (zk === 'shroom'){ if (n > 21) continue; const x = fx(a + Math.sin(time*.3+n)*.03)*W, y = fx(b - time*(.02+(n % 4)*.006))*H, al = .4+.3*Math.sin(time*2+n); ctx.fillStyle = 'rgba(225,200,255,' + al*.35 + ')'; ctx.beginPath(); ctx.arc(x, y, 8*u, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(245,235,255,' + al + ')'; ctx.beginPath(); ctx.arc(x, y, 2.600*u, 0, 7); ctx.fill(); }
-    else if (zk === 'meadow'){ if (n > 5) continue; const x = fx(a + time*.012 + Math.sin(time*.7+n)*.03)*W, y = fx(b + Math.cos(time*.5+n*2)*.05)*H, f = Math.abs(Math.sin(time*11+n)); ctx.fillStyle = [BERRY,'#B58CFF',SUN,'#FFFFFF'][n % 4]; ctx.strokeStyle = INK; ctx.lineWidth = 1.500*u;
+    else if (zk === 'meadow' || zk === 'tropic'){ if (n > 5) continue; const x = fx(a + time*.012 + Math.sin(time*.7+n)*.03)*W, y = fx(b + Math.cos(time*.5+n*2)*.05)*H, f = Math.abs(Math.sin(time*11+n)); ctx.fillStyle = [BERRY,'#B58CFF',SUN,'#FFFFFF'][n % 4]; ctx.strokeStyle = INK; ctx.lineWidth = 1.500*u;
       for (const k of [-1,1]){ ctx.beginPath(); ctx.ellipse(x+k*(1+4*f)*u, y, (1+4.500*f)*u, 6*u, k*.3, 0, 7); ctx.fill(); ctx.stroke(); } }
     else { if (n > 11) continue; const al = Math.max(0, Math.sin(time*2.5+n*2)); ctx.fillStyle = 'rgba(255,255,255,' + al*.85 + ')'; starPath(fx(a)*W, fx(b)*H, 5*u, 0); ctx.fill(); }
   }
@@ -1812,7 +2191,7 @@ function questLights(n){
   for (const st of STALLS) glow((st[0]+.5)*t, (st[1]+.3)*t, 95*u, .5);
   for (const b of BEDS) glow((b[0]+.5)*t, (b[1]+.5)*t, 70*u, .4);
   glow((HOME_AT[0]+.5)*t, (HOME_AT[1]+.6)*t, 80*u, .45);
-  CH.forEach((c,i) => { const g = plotGeom(i); g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] === 'G') glow(g.x0+(x+.5)*g.cs, g.y0+(y+.5)*g.cs, 48*u, .5); }); });
+  if (land === 'home') CH.forEach((c,i) => { const g = plotGeom(i); g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] === 'G') glow(g.x0+(x+.5)*g.cs, g.y0+(y+.5)*g.cs, 48*u, .5); }); });
   for (let k = 0; k < 12; k++){ const x = dog.x + Math.sin(time*.4+k*2.1)*W*.42, y = dog.y - 60*u + Math.cos(time*.33+k*1.7)*H*.32, a = n*(.5+.5*Math.sin(time*3+k)); ctx.fillStyle = 'rgba(220,255,120,' + .25*a + ')'; ctx.beginPath(); ctx.arc(x, y, 7*u, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(235,255,160,' + a + ')'; ctx.beginPath(); ctx.arc(x, y, 2.200*u, 0, 7); ctx.fill(); }
   ctx.restore();
 }
@@ -1827,6 +2206,7 @@ function drawPlot(i){
   ctx.fillStyle = 'rgba(20,15,50,.16)'; g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] !== '.') ctx.fillRect(g.x0+x*g.cs+5*u, g.y0+y*g.cs+5*u, g.cs, g.cs); });
   g.rows.forEach((r,y) => { for (let x = 0; x < r.length; x++) if (r[x] !== '.') drawBlock(r[x], g.x0+x*g.cs, g.y0+y*g.cs, g.cs, lit); });
   if (i !== 'free' && !br && i < 5 && i < q.ch) for (let k = 0; k < 3; k++){ const ph = (time*.3 + k/3) % 1; ctx.fillStyle = 'rgba(255,255,255,' + .6*(1-ph) + ')'; ctx.beginPath(); ctx.arc(g.cx + g.cs + Math.sin(ph*6+k)*6*u + ph*16*u, g.y0 - 6*u - ph*50*u, (5+9*ph)*u, 0, 7); ctx.fill(); }   // chimney smoke once someone lives there
+  if (i === q.ch && q.st) drawCrew(g);
   if (i === q.ch || (i === 'free' && open && g.rows.every(r => r === '.'.repeat(r.length)))){
     const y = g.y0 - 18*u + Math.sin(time*4)*4*u; ctx.lineWidth = 2.500*u; ctx.beginPath(); ctx.arc(g.cx, y, 13*u, 0, 7); fs(i === 'free' ? PAPER : SUN);
     ctx.fillStyle = INK; ctx.font = 19*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.fillText(i === 'free' ? '+' : '!', g.cx, y+7*u); }
@@ -1843,7 +2223,12 @@ function drawNode(c, x, y){
     ctx.strokeStyle = 'rgba(70,40,15,.55)'; ctx.lineWidth = 1.500*u; ctx.beginPath(); ctx.moveTo(cx-1.500*u, by-t*.38); ctx.lineTo(cx-1.500*u, by-t*.2); ctx.moveTo(cx+2*u, by-t*.27); ctx.lineTo(cx+2*u, by-t*.08); ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u;   // bark
     if (out){ ctx.beginPath(); ctx.ellipse(cx, by-t*.45, 5*u, 2.200*u, 0, 0, 7); fs('#D9B48F'); return; }
     const zk = zoneAt(x,y);
-    if (zk === 'snow'){
+    if (zk === 'tropic'){ const sx = cx + Math.sin(time*1.2 + x)*2*u; rr(cx-4*u, by-t*.95, 8*u, t*.55, 3*u); fs('#8A5A3C');
+      for (const a of [-2.75,-2.1,-1.57,-1.04,-.4]){ ctx.save(); ctx.translate(sx, by-t*.95); ctx.rotate(a); ctx.beginPath(); ctx.ellipse(t*.26, 0, t*.3, t*.09, 0, 0, 7); fs('#3F9D5A'); ctx.restore(); }
+      for (const dx of [-5,5]){ ctx.beginPath(); ctx.arc(sx+dx*u, by-t*.88, 4.500*u, 0, 7); fs('#6E4426'); }
+    } else if (zk === 'dune'){ rr(cx-t*.13, by-t*.95, t*.26, t*.95, t*.13); fs('#57B872'); rr(cx-t*.34, by-t*.62, t*.14, t*.34, t*.07); fs('#57B872'); rr(cx+t*.2, by-t*.76, t*.14, t*.4, t*.07); fs('#57B872');
+      ctx.strokeStyle = 'rgba(20,70,45,.5)'; ctx.lineWidth = 1.500*u; ctx.beginPath(); ctx.moveTo(cx, by-t*.85); ctx.lineTo(cx, by-t*.1); ctx.stroke(); ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.beginPath(); ctx.arc(cx, by-t*.98, 4*u, 0, 7); fs('#FF8FB8');
+    } else if (zk === 'snow'){
       for (const k of [0,1,2]){ const w = .42-.09*k, base = by-t*(.26+.27*k), top = by-t*(.78+.25*k);
         ctx.beginPath(); ctx.moveTo(cx-t*w, base); ctx.lineTo(cx, top); ctx.lineTo(cx+t*w, base); ctx.closePath(); fs('#2F7D4F'); needles(k*.75+.1, w*.8);
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(cx, top+2*u); ctx.lineTo(cx+t*w*.42, top+(base-top)*.42); ctx.quadraticCurveTo(cx+t*w*.2, top+(base-top)*.3, cx, top+(base-top)*.46); ctx.quadraticCurveTo(cx-t*w*.2, top+(base-top)*.3, cx-t*w*.42, top+(base-top)*.42); ctx.closePath(); ctx.fill(); }     // snow sitting on each bough
@@ -1889,6 +2274,8 @@ function drawDecor(zk, x, y, px, py, t){
   const h = ((x*73856093) ^ (y*19349663)) >>> 0, k = h % 100; if (k >= 11) return;
   const u = U, cx = px + t*(.3 + ((h >> 8) % 40)/100), cy = py + t*(.5 + ((h >> 16) % 30)/100);
   ctx.strokeStyle = INK; ctx.lineWidth = 2*u; ctx.lineJoin = 'round';
+  if (zk === 'tropic') zk = k % 2 ? 'meadow' : 'beach';
+  if (zk === 'dune'){ rr(cx-4*u, cy-16*u, 8*u, 18*u, 4*u); fs('#57B872'); rr(cx+3*u, cy-11*u, 7*u, 4*u, 2*u); fs('#57B872'); return; }
   if (zk === 'city'){ if (k % 3 === 0){ ctx.beginPath(); ctx.rect(cx-1.500*u, cy-26*u, 3*u, 28*u); fs(INK); ctx.beginPath(); ctx.arc(cx, cy-28*u, 5*u, 0, 7); fs(nightAmt(S.clock) > .3 ? SUN : PAPER); }
     else if (k % 3 === 1){ ctx.beginPath(); ctx.moveTo(cx-6*u, cy); ctx.lineTo(cx, cy-15*u); ctx.lineTo(cx+6*u, cy); ctx.closePath(); fs('#FF8A3C'); ctx.fillStyle = '#fff'; ctx.fillRect(cx-3*u, cy-8*u, 6*u, 2.500*u); }
     else { rr(cx-7*u, cy-9*u, 14*u, 10*u, 2*u); fs('#4FB06A'); }
@@ -1922,14 +2309,14 @@ function renderQuest(){
     if (NODE[c] && !got[NODE[c][0]] && Math.hypot(x+.5-dtx, y+.5-dty) < 6) labels.push([c, x, y]);       // name a material until you have gathered it once
     else if (c === 'b') items.push({y:(y+.95)*t, f:() => drawRest(x, y)});
     else if (c === 'f') items.push({y:(y+.95)*t, f:() => drawStall(x, y, (STALLS.find(st => st[0] === x && st[1] === y) || [])[2] || '')});
-    else if (c === 'H') items.push({y:(y+1)*t, f:() => { const cx = px+t*.5, by = py+t*.95; ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.lineJoin = 'round';
+    else if (c === 'H') items.push({y:(y+1)*t, f:() => { if (land !== 'home'){ drawDock(x, y); return; } const cx = px+t*.5, by = py+t*.95; ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.rect(cx-t*.42, by-t*.6, t*.84, t*.6); fs('#FFD9A0'); ctx.beginPath(); ctx.moveTo(cx-t*.55, by-t*.58); ctx.lineTo(cx, by-t*1.05); ctx.lineTo(cx+t*.55, by-t*.58); ctx.closePath(); fs(SKY);
       ctx.beginPath(); ctx.moveTo(cx-t*.18, by); ctx.lineTo(cx-t*.18, by-t*.25); ctx.arc(cx, by-t*.25, t*.18, Math.PI, 0); ctx.lineTo(cx+t*.18, by); ctx.closePath(); fs(INK);
       ctx.fillStyle = INK; ctx.font = 11*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.fillText('HOME', cx, by-t*1.12); }});
   }
-  CH.forEach((c,i) => { const g = plotGeom(i); items.push({y:g.by - (c.bridge ? t : 0), f:() => drawPlot(i)}); });
-  items.push({y:plotGeom('free').by, f:() => drawPlot('free')});
-  EXTRA.forEach((e,k) => { if (QS().jobs.plots[k]) items.push({y:(e[1]+1)*t, f:() => drawJob(k)}); });
+  if (land === 'home') CH.forEach((c,i) => { const g = plotGeom(i); items.push({y:g.by - (c.bridge ? t : 0), f:() => drawPlot(i)}); });
+  if (FREE_AT) items.push({y:plotGeom('free').by, f:() => drawPlot('free')});
+  EXTRA.forEach((e,k) => { if (JL().plots[k]) items.push({y:(e[1]+1)*t, f:() => drawJob(k)}); });
   for (const n of QN) items.push({y:n.y, f:() => drawDog(n)});
   if (S.buddy) items.push({y:bud.y-1, f:drawBud});
   items.sort((a,b) => a.y-b.y).forEach(i => i.f());
@@ -1941,11 +2328,35 @@ function renderQuest(){
   ctx.fillStyle = 'rgba(20,15,50,.07)'; for (let k = 0; k < 4; k++){ const cx = ((time*16*u + k*780*u) % (mw + 700*u)) - 350*u, cy = ((k*.37) % 1)*mh; if (cx > cam.x-300*u && cx < cam.x+W+300*u && cy > cam.y-160*u && cy < cam.y+H+160*u){ ctx.beginPath(); ctx.ellipse(cx, cy, 260*u, 120*u, 0, 0, 7); ctx.fill(); } }   // drifting cloud shadows
   ctx.restore();
   drawAmbient(zoneAt(Math.floor(dog.x/t), Math.floor(dog.y/t)));
-  const q = QS(), goal = q.ch < CH.length ? q.ch : q.jobs.cur != null ? 'j' + q.jobs.cur : null; if (goal != null && !cine){ const g = plotGeom(goal), sx = g.cx-cam.x, sy = g.y0-cam.y;
+  const q = QS(), goal = land === 'home' && q.ch < CH.length ? q.ch : JL().cur != null ? 'j' + JL().cur : null; if (goal != null && !cine){ const g = plotGeom(goal), sx = g.cx-cam.x, sy = g.y0-cam.y;
     if (sx < 20 || sx > W-20 || sy < 20 || sy > H-20){ const px = clamp(sx, 34*u, W-34*u), py = clamp(sy, 150*u, H-190*u), a = Math.atan2(sy-py, sx-px);
       ctx.strokeStyle = INK; ctx.lineWidth = 2.500*u; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(px+Math.cos(a)*30*u, py+Math.sin(a)*30*u); ctx.lineTo(px+Math.cos(a+2.2)*18*u, py+Math.sin(a+2.2)*18*u); ctx.lineTo(px+Math.cos(a-2.2)*18*u, py+Math.sin(a-2.2)*18*u); ctx.closePath(); fs(SUN);
       ctx.beginPath(); ctx.arc(px, py, 15*u, 0, 7); fs(SUN); ctx.fillStyle = INK; ctx.font = 20*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.fillText('!', px, py+7*u); } }
+}
+
+/* ---------- trophies: every milestone puts a cup beside the dog house ---------- */
+const CUPCOL = ['#CD8B4A', '#C9D2E0', '#FFC53D'], CUPNAME = ['Bronze', 'Silver', 'Gold'];
+function award(id, name, tier, quiet){
+  S.trophies = S.trophies || []; if (S.trophies.some(t => t[0] === id)) return;
+  S.trophies.push([id, name, tier]); save(); if (!quiet){ toast(CUPNAME[tier] + ' trophy: ' + name + '!', 3800); chime(); }
+}
+function drawCup(x, y, s, tier){          // x,y is the middle of the base
+  ctx.strokeStyle = INK; ctx.lineWidth = Math.max(1.500, s*.09); ctx.lineJoin = 'round'; const col = CUPCOL[tier];
+  for (const k of [-1,1]){ ctx.beginPath(); ctx.arc(x+k*s*.5, y-s*.95, s*.24, 0, 7); ctx.stroke(); }
+  ctx.beginPath(); ctx.rect(x-s*.36, y-s*.14, s*.72, s*.14); fs('#8A5A3C'); ctx.beginPath(); ctx.rect(x-s*.09, y-s*.5, s*.18, s*.38); fs(col);
+  ctx.beginPath(); ctx.moveTo(x-s*.5, y-s*1.25); ctx.lineTo(x+s*.5, y-s*1.25); ctx.quadraticCurveTo(x+s*.5, y-s*.48, x, y-s*.46); ctx.quadraticCurveTo(x-s*.5, y-s*.48, x-s*.5, y-s*1.25); ctx.closePath(); fs(col);
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(x-s*.24, y-s*.95, s*.07, s*.2, .2, 0, 7); ctx.fill();
+}
+const shelfBox = () => { const hp = housePos(), u = U; return {x0:hp.x-176*u, x1:hp.x-58*u, y0:hp.y-84*u, y1:hp.y+4*u}; };
+function drawTrophies(){
+  const T = S.trophies || []; if (!T.length) return; const b = shelfBox(), u = U, w = b.x1-b.x0;
+  ctx.strokeStyle = INK; ctx.lineWidth = 3*u; ctx.lineJoin = 'round';
+  for (const dx of [6,w-14]){ ctx.beginPath(); ctx.rect(b.x0+dx*1, b.y0+34*u, 8*u, b.y1-b.y0-34*u); fs('#8A5A3C'); }
+  for (const yy of [b.y1-44*u, b.y1-4*u]){ rr(b.x0, yy, w, 8*u, 3*u); fs('#B9895A'); }
+  const show = T.slice().sort((p,q) => q[2]-p[2]).slice(0,8);           // the best eight, gold first
+  show.forEach((t,i) => drawCup(b.x0 + (i % 4 + .5)*w/4, (i < 4 ? b.y1-44*u : b.y1-4*u), 15*u, t[2]));
+  if (T.length > 8){ ctx.fillStyle = INK; ctx.font = 12*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.fillText('+' + (T.length-8) + ' more', (b.x0+b.x1)/2, b.y1+18*u); }
 }
 
 /* ---------- builder ranks: the pup grows as skills are mastered ---------- */
@@ -1953,16 +2364,16 @@ function renderQuest(){
 const RANKS = [[0,'Apprentice','#FFC53D'],[3,'Junior Builder','#FF8A3C'],[7,'Builder','#5BC0EB'],[12,'Master Builder','#4FB06A'],[18,'Architect','#B58CFF'],[26,'Chief Architect','#FF5D73'],[36,'Grand Architect','#E8EDF5'],[50,'Legend of Woofwood','#FFD700']];
 const TOPSTAR = RANKS[RANKS.length-1][0];
 const masteredN = () => Object.keys(S.math.sk).filter(k => isMastered(S.math.sk[k])).length;
-const starCount = () => masteredN() + Math.min(QS().ch, CH.length) + Math.floor(QS().jobs.n/3);
+const starCount = () => masteredN() + Math.min(QS().ch, CH.length) + Math.floor(jobsDone()/3);
 const rankIdx = () => { const st = starCount(); let r = 0; RANKS.forEach((x,i) => { if (st >= x[0]) r = i; }); return r; };
 const rankLevel = () => { const st = starCount(); return st < TOPSTAR ? rankIdx() : RANKS.length-1 + Math.floor((st-TOPSTAR)/12); };
 const rankTitle = () => { const l = rankLevel(), i = Math.min(l, RANKS.length-1); return RANKS[i][1] + (l > i ? ' ★' + (l-i+1) : ''); };
 const nextRank = () => { const st = starCount(), i = rankIdx(); return i < RANKS.length-1 ? RANKS[i+1][0] - st : 12 - ((st-TOPSTAR) % 12); };
-const DOT = {id:'dot', g:.7, collar:'#B58CFF', c:{base:'#C9B8A6', dark:'#9A8773', light:'#F4EFE6', mask:true}};
+const DOT = {id:'dot', breed:'dachs', sex:'girl', g:.7, collar:'#B58CFF', c:{base:'#C9B8A6', dark:'#9A8773', light:'#F4EFE6', mask:true}};
 const DOTSAYS = ["",
-  "Three stars already! When I was your age I could barely count my own paws. You are no apprentice now, {n}. Junior Builder. Orange hat. Wear it straight.",
+  "Three stars already! When I was your age I could barely count my own paws. You are no apprentice now, {n}. Junior Builder. Here is a trophy for your dog house. Keep it polished.",
   "Seven stars. You measure twice and cut once, just as I taught you. You are a proper Builder now, and stronger too: one extra block from everything you gather.",
-  "Twelve stars! Master Builder {n}. I did not earn that hat until I was grey around the muzzle.",
+  "Twelve stars! Master Builder {n}. I did not earn that cup until I was grey around the muzzle.",
   "Eighteen stars. You do not just build what you are shown any more. You can see how the numbers hold a roof up. That makes you an Architect. Another block in every load.",
   "Twenty-six stars. Chief Architect. The valley asks for you by name now, did you know?",
   "Thirty-six stars. Grand Architect {n}. Another block in every load, and my old drawing table is yours.",
@@ -1972,12 +2383,12 @@ function rankCheck(){ if (S.adopted && rankLevel() > (S.rank || 0)) rankPend = t
 function rankCard(l){
   return {who:'Granny Dot', text:(DOTSAYS[l] || "Another twelve stars. Legends keep learning, {n}. That is exactly what makes them legends.") + " (Stars come from skills you master, chapters you build and jobs you finish.)", go:'Thank you, Granny Dot!',
     draw(){ const y = H*.56; cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); ctx.fillStyle = 'rgba(255,220,120,.5)'; ctx.beginPath(); ctx.arc(W*.58, y-10*U, 140*U, 0, 7); ctx.fill();
-      cDog('dot', W*.3, y+78*U, 1.25, {sit:1, joy:1}); cDog('hero', W*.6, y+78*U, 1.7, {dir:-1, joy:1, hop:Math.abs(Math.sin(time*5))*8}); cConfetti(); cTitle('NEW RANK', rankTitle()); }};
+      cDog('dot', W*.3, y+78*U, 1.25, {sit:1, joy:1}); cDog('hero', W*.64, y+78*U, 1.7, {dir:-1, joy:1, hop:Math.abs(Math.sin(time*5))*8}); drawCup(W*.46, y+74*U, 34*U, Math.min(2, Math.floor((S.rank || 0)/3))); cConfetti(); cTitle('NEW RANK', rankTitle()); }};
 }
 
 /* ---------- story scenes ---------- */
 let cine = null; const cdogs = {};
-const CARDS = ["A hut of wood and thatch for one very chilly Mochi.", "Bone Brook is far too wide to jump. Time for a bridge.", "Duke wants walls that no wind can move.", "Bricks and glass by the sea, for Pepper.", "The biggest build of all, in the heart of the valley.", "A steel bridge to the city of Barkopolis.", "The first skyscraper: twelve floors of steel and glass.", "Fourteen floors and a needle on top. The tallest build of all."];
+const CARDS = ["A hut of wood and thatch for one very chilly Mochi.", "Bone Brook is far too wide to jump. Time for a bridge.", "Duke wants walls that no wind can move.", "Bricks and glass by the sea, for Pepper.", "The biggest build of all, in the heart of the valley.", "A steel bridge to the city of Barkopolis.", "The first skyscraper: twelve floors of steel and glass.", "Fourteen floors and a needle on top. The tallest build of all.", "Letters in bottles, and a ship to answer them."];
 function storyPlay(list, then){ cine = {list, i:0, then:then || null}; $('game').classList.add('cine'); cineShow(); }
 function cineShow(){
   const p = cine.list[cine.i], last = cine.i === cine.list.length-1;
@@ -1988,7 +2399,7 @@ function cineEnd(){ const f = cine && cine.then; cine = null; $('game').classLis
 function cDog(id, x, y, s, o){
   o = o || {}; const hero = id === 'hero', p = hero ? null : (PALS.find(q => q.id === id) || DOT), d = cdogs[id] || (cdogs[id] = Object.assign({}, dog, {cb:null}));
   Object.assign(d, {x, y, ds:s, dir:o.dir || 1, sit:o.sit || 0, lie:o.lie || 0, hd:o.lie ? .9 : 0, hop:o.hop || 0, flip:1, roll:0, tilt:0, shake:0, mouth:o.joy ? 1 : 0, joy:o.joy || 0, wag:o.joy ? 1 : .3, mood:o.sad ? 0 : .8,
-    mv:0, phase:0, t:time, blink:-1, asleep:!!o.lie, holding:false, ear:0, wearSet:{}, hard:hero, c:hero ? coat() : p.c, g:hero ? Math.max(.4, growth()) : p.g, collar:hero ? BERRY : p.collar});
+    mv:0, phase:0, t:time, blink:-1, asleep:!!o.lie, holding:false, ear:0, wearSet:hero ? (S.wear || {}) : {}, breed:hero ? S.breed : p.breed, sex:hero ? S.sex : (p.sex || 'boy'), c:hero ? coat() : p.c, g:hero ? Math.max(.4, growth()) : p.g, collar:hero ? BERRY : p.collar});
   drawDog(d);
 }
 function cSky(a, b, gy, h1, g1){
@@ -2042,7 +2453,7 @@ function openingPanels(){
       draw(){ const y = gy(); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); ctx.fillStyle = 'rgba(255,220,120,.5)'; ctx.beginPath(); ctx.arc(W/2, y-10*U, 150*U, 0, 7); ctx.fill();
         ctx.fillStyle = SUN; ctx.strokeStyle = INK; ctx.lineWidth = 2*U; for (let k = 0; k < 7; k++){ const a = time*.7 + k*.9; starPath(W/2+Math.cos(a)*170*U, y-30*U+Math.sin(a)*110*U, 12*U, a*2); ctx.fill(); ctx.stroke(); }
         cDog('hero', W/2, y+70*U, 1.9, {joy:1, hop:Math.abs(Math.sin(time*5))*8}); }},
-    {who:'Granny Dot', text:"My paws are too creaky for ladders now, {n}, so you will be my paws. Every skill you master makes you a better builder, and I will give you a new hat each time you rise a rank. If a puzzle ever stumps you, tap How to and I will show you the trick.",
+    {who:'Granny Dot', text:"My paws are too creaky for ladders now, {n}, so you will be my paws. Every skill you master makes you a better builder, and I will give you a trophy for your dog house each time you rise a rank. If a puzzle ever stumps you, tap How to and I will show you the trick.",
       draw(){ const y = gy(); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); cSun(W*.84, H*.14); cDog('dot', W*.34, y+80*U, 1.5, {sit:1, joy:1}); cDog('hero', W*.66, y+82*U, 1.3, {dir:-1, sit:1}); }},
     {text:"Every tree, reed and rock hides blocks for a clever pup. Solve the puzzle, gather the blocks, and build Woofwood back, one house at a time.", go:"Let's build!",
       draw(){ const y = gy(); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); cSun(W*.15, H*.14); cHouse(CH[0].bp, W*.5, y+30*U, cs()*1.3, {alpha:.35, dash:1}); cRubble(y+40*U);
@@ -2064,7 +2475,7 @@ function finalePanels(){
   return [
     {text:"Four houses, two bridges, two skyscrapers and a great many sums later, Woofwood Valley was home again.", draw(){ scene(Math.abs(Math.sin(time*5))*14); }},
     {text:"And every dog agreed: no Gust would dare huff at a valley with {n} living in it.", draw(){ scene(Math.abs(Math.sin(time*5))*14); cTitle('THE END ... FOR NOW', rankTitle() + ' ' + S.name); }},
-    {who:'Granny Dot', text:"A builder's work is never finished, {n}. New families arrive every week, and each one needs a roof. Keep mastering your skills and there is no telling how high you will build.", go:'Keep building',
+    {who:'Granny Dot', text:"A builder's work is never finished, {n}. New families arrive every week, and each one needs a roof. And I hear Pepper has found something strange washed up on the beach...", go:'Keep building',
       draw(){ const y = H*.56; cSky('#6C7BD9','#FFB88A',y,'#8FC79A','#7CC987'); cHouse(CH[6].bp, W*.2, y+20*U, Math.min(W/70, 15*U)); cHouse(CH[7].bp, W*.82, y+20*U, Math.min(W/70, 15*U)); cDog('dot', W*.4, y+80*U, 1.3, {sit:1}); cDog('hero', W*.62, y+82*U, 1.4, {dir:-1, sit:1, joy:1}); }},
   ];
 }
@@ -2191,11 +2602,11 @@ function renderPals(box){
 // your chosen pal trots along behind the pup, at home and in the valley
 const bud = {x:0, y:0, on:false, mv:false};
 function budTick(dt){
-  if (!S.buddy) return; const tx = dog.x - dog.dir*92*dogScale(), ty = dog.y + 2;
+  if (!S.buddy) return; const tx = dog.x - dog.dir*78*dogScale(), ty = dog.y + 2;
   if (!bud.on || Math.hypot(tx-bud.x, ty-bud.y) > 420*U){ bud.x = tx; bud.y = ty; bud.on = true; }
   bud.mv = Math.hypot(tx-bud.x, ty-bud.y) > 5*U; const k = 1 - Math.exp(-dt*5); bud.x += (tx-bud.x)*k; bud.y += (ty-bud.y)*k;
 }
-function drawBud(){ const c = critOf(S.buddy); if (!c) return; const r = 38*dogScale(); drawCritter(ctx, c, bud.x, bud.y - (bud.mv ? Math.abs(Math.sin(time*9))*r*.5 : 0), r, time, c.r > 0); }
+function drawBud(){ const c = critOf(S.buddy); if (!c) return; const r = 25*dogScale(); drawCritter(ctx, c, bud.x, bud.y - (bud.mv ? Math.abs(Math.sin(time*9))*r*.5 : 0), r, time, c.r > 0); }
 
 /* ---------- music: Bach for the valley and home, light jazz for the city ---------- */
 const SEMI = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
@@ -2271,8 +2682,9 @@ function ui(){
   $('bones').textContent = S.bones; $('a-dig').hidden = quest || !own('map');
   $('eggn').textContent = S.egg.w + '/' + EGG_N; $('b-egg').classList.toggle('warm', S.egg.w >= EGG_N-1);
   $('a-quest').hidden = scene === 'park'; $('game').classList.toggle('questmode', S.mode === 'quest');
-  if (quest) $('sub').textContent = rankTitle() + ' \u00b7 \u2605 ' + starCount() + ' \u00b7 ' + nextRank() + ' to next rank';
-  if (rankPend && !cine && !trans && !paused() && $('math').hidden && $('shop').hidden && $('dlg').hidden && $('splash').hidden){ rankPend = false; S.rank = rankLevel(); save(); storyPlay([rankCard(S.rank)]); }
+  if (quest) $('sub').textContent = rankTitle() + ' \u2605' + starCount() + ' \u00b7 ' + levelName() + ', pop. ' + population();
+  if (lvlPend && !rankPend && !cine && !trans && !paused() && $('math').hidden && $('shop').hidden && $('dlg').hidden && $('splash').hidden){ lvlPend = false; S.lvl = levelIdx(); const prize = levelPrize(S.lvl); S.bones += prize; award('lvl' + S.lvl, levelName() + ', population ' + population(), Math.min(2, Math.floor(S.lvl/2)), true); save(); storyPlay([levelCard(S.lvl, prize)]); }
+  if (rankPend && !cine && !trans && !paused() && $('math').hidden && $('shop').hidden && $('dlg').hidden && $('splash').hidden){ rankPend = false; S.rank = rankLevel(); award('rank' + S.rank, rankTitle(), Math.min(2, Math.floor(S.rank/3)), true); save(); storyPlay([rankCard(S.rank)]); }
   $('questlbl').textContent = quest ? 'Home' : 'Quest'; $('a-log').hidden = !quest;
   $('qhud').hidden = !quest || !$('dlg').hidden; if (quest) renderQhud();
   $('qhud').style.bottom = $('dlg').style.bottom = $('tricks').style.bottom = tb + 'px';
@@ -2287,7 +2699,14 @@ function ui(){
 }
 
 /* ---------- adopt / edit ---------- */
-let armed = false, mode = 'first', pick = 'honey';
+let armed = false, mode = 'first', pick = 'honey', pickBreed = 'lab', pickSex = 'girl';
+function renderLooks(){
+  const bb = $('breeds'), sb = $('sexes'); bb.textContent = ''; sb.textContent = '';
+  for (const b of BREEDS){ const e = el('button','',b.name); e.type = 'button'; e.id = 'breed-' + b.id; e.style.flex = '0 1 auto'; e.setAttribute('aria-pressed', String(pickBreed === b.id)); e.onclick = () => { pickBreed = b.id; if (mode !== 'new') S.breed = b.id; renderLooks(); }; bb.appendChild(e); }
+  for (const [id,label] of [['girl','Girl'],['boy','Boy']]){ const e = el('button','',label); e.type = 'button'; e.id = 'sex-' + id; e.setAttribute('aria-pressed', String(pickSex === id)); e.onclick = () => { pickSex = id; if (mode !== 'new') S.sex = id; renderLooks(); }; sb.appendChild(e); }
+}
+// a girl pup starts with a hair bow and a boy pup with a bow tie; every outfit is in the shop for either
+function dressFor(sex){ const it = sex === 'girl' ? 'bow' : 'bowtie'; S.items[it] = true; S.wear = S.wear || {}; if (!S.wear.bow && !S.wear.bowtie) S.wear[it] = true; }
 function renderCoats(){
   const box = $('coats'); box.textContent = '';
   for (const c of COATS){ const b = document.createElement('button'); b.type = 'button'; b.id = 'coat-' + c.id; b.setAttribute('aria-label', c.id + ' coat'); b.setAttribute('aria-pressed', String(pick === c.id));
@@ -2302,7 +2721,8 @@ function openAdopt(m){
   $('adopt-p').textContent = mode === 'new' ? 'Your other dogs stay in the yard. Tap one there to play with it.' : 'Feed, play, wash and train. A well cared-for puppy grows into a big dog.';
   $('adopt-go').textContent = mode === 'edit' ? 'Save' : mode === 'new' ? 'Adopt for ' + adoptPrice() + ' bones' : 'Adopt';
   $('reset').hidden = mode !== 'edit'; $('reset').textContent = 'Erase everything and start over'; $('cancel').hidden = mode !== 'new';
-  $('nm').value = mode === 'new' ? '' : S.name; renderCoats(); $('adopt').hidden = false;
+  pickBreed = mode === 'new' ? pickOf(BREEDS).id : (S.breed || 'lab'); pickSex = S.sex || 'girl';
+  $('nm').value = mode === 'new' ? '' : S.name; renderCoats(); renderLooks(); $('adopt').hidden = false;
 }
 $('adoptform').addEventListener('submit', e => {
   e.preventDefault();
@@ -2310,10 +2730,10 @@ $('adoptform').addEventListener('submit', e => {
   $('adopt').hidden = true;
   if (mode === 'new'){
     const price = adoptPrice(); if (price == null || S.bones < price) return;
-    S.bones -= price; S.kennel.push(packDog()); unpackDog(newDog(nm, pick));
+    S.bones -= price; S.kennel.push(packDog()); unpackDog(newDog(nm, pick, pickBreed, pickSex)); dressFor(pickSex);
     lastStage = -1; refreshYard(); idle(1); dog.joy = 2; bark(); chime(); toast('Welcome home, ' + nm + '!', 3600); renderTricks();
   } else {
-    const first = !S.adopted; S.name = nm; S.coat = pick; S.adopted = true;
+    const first = !S.adopted; S.name = nm; S.coat = pick; S.breed = pickBreed; S.sex = pickSex; S.adopted = true; if (first) dressFor(pickSex);
     if (first){ dog.joy = 2; bark(); QS().seen = true; storyPlay(openingPanels(), () => travel('quest', 'Woofwood Valley')); }
   }
   ui(); save();
@@ -2321,7 +2741,7 @@ $('adoptform').addEventListener('submit', e => {
 $('cancel').onclick = () => { $('adopt').hidden = true; };
 $('reset').onclick = () => {
   if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all dogs, bones and gear'; return; }
-  const snd = S.sound; S = fresh(); S.sound = snd; scene = 'yard'; npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
+  const snd = S.sound; S = fresh(); S.sound = snd; scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
 };
 
 /* ---------- main loop ---------- */
@@ -2397,7 +2817,8 @@ function frame(now){
 function start(data){
   load(data); resize();
   const Y = yard(); dog.x = W*.5; dog.y = (Y.y0+Y.y1)/2;
-  refreshYard(); renderTricks(); newJob(); rankCheck(); ui();
+  { const q0 = QS(); setLand(q0.land === 'home' || landDef(q0.land) ? q0.land : 'home'); }
+  refreshYard(); renderTricks(); newJob(); rankCheck(); levelCheck(); ui();
   showSplash();
   $('game').addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('resize', resize);

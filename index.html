@@ -84,6 +84,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 #mhow.pulse{animation:wiggle .5s 5}
 .lesson-ex{white-space:pre-line;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px 12px;font-size:15px}
 #ml-how{font-size:15px}
+.answers button.on{background:var(--sun)}
+.answers .part{grid-column:1/-1;font-weight:800;font-size:15px;text-align:left;margin-top:4px}
+.answers button.wide.check{background:var(--berry);color:#fff;font-family:var(--display);font-weight:400;font-size:18px}
+.answers button[disabled]{cursor:default}
+#mplay,#mfix{flex:none}
+.reading .answers button{padding:7px 8px;font-size:15px}
+#mpass,#fx-pass{flex:none;min-height:92px;max-height:34vh;overflow-y:auto;font-size:15px;line-height:1.5}
+/* reading questions use the test's own layout on a wide screen: passage on the left, questions on the right */
+@media (min-width:720px){
+  .modal .card.wide.reading{width:min(1000px,100%)}
+  .reading #mplay{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);column-gap:18px;row-gap:10px;align-items:start}
+  .reading #mplay > *{grid-column:2}
+  .reading #mplay > #mpass{grid-column:1;grid-row:1 / span 8;max-height:min(66vh,560px);min-height:200px}
+}
 .answers button.wide{grid-column:1/-1;font-size:17px;font-family:var(--body);font-weight:800}
 .answers.text button{font-size:17px;font-family:var(--body);font-weight:800;padding:9px 8px}
 .q.long{font-size:22px;line-height:1.25;text-wrap:balance}
@@ -1265,16 +1279,128 @@ const E_2 = [
   ['L.2.1', 'Past tense of irregular verbs', ePast],
   ['L.2.2', 'Contractions and possessives', () => { if (Math.random() < .6){ const it = pickOf(CONTR); return pk('Which contraction means "' + it[0] + '"?', it[1], it[2]); } const it = pickOf(POSS); return pk('Which phrase correctly shows ' + it[0] + '?', it[1], it[2]); }],
   ['L.2.2', 'Spelling', eSpell('A')], ['L.2.5', 'Words with similar meanings', eSyn('A')], ['L.2.4', 'Prefixes', eAffix(false)], ['RL.2.1', 'Read and understand a short text', eRead(EASY)]];
-const E_3 = [
-  ['L.3.1', 'Subject-verb agreement', eAgree], ['L.3.1', 'Parts of speech', ePos], ['L.3.2', 'Capital letters', eCaps], ['L.3.2', 'Quotation marks in dialogue', eQuote],
-  ['L.3.2', 'Spelling', eSpell('B')], ['L.3.4', 'Prefixes and suffixes', eAffix(true)], ['L.3.4', 'Context clues', eCtx('A')], ['RI.3.2', 'Reading: main idea and details', eRead(READS)]];
-const E_4 = [
-  ['L.4.1', 'Frequently confused words', eHomo], ['L.4.2', 'Commas and quotation marks', () => Math.random() < .5 ? eQuote() : eSeries()], ['L.4.2', 'Spelling', eSpell('C')], ['L.4.4', 'Context clues', eCtx('B')],
-  ['L.4.5', 'Synonyms and antonyms', () => Math.random() < .5 ? eSyn('B')() : eAnt()], ['L.4.5', 'Similes, metaphors and idioms', eFig], ['RI.4.2', 'Reading: main idea and inference', eRead(READS)]];
-const E_5 = [
-  ['L.5.1', 'Verb tense and agreement', () => Math.random() < .5 ? ePast() : eAgree()], ['L.5.2', 'Commas in a series', eSeries], ['L.5.2', 'Spelling', eSpell('D')],
-  ['L.5.4', 'Greek and Latin roots', () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }],
-  ['L.5.4', 'Context clues', eCtx('B')], ['L.5.5', 'Figurative language', eFig], ['RI.5.2', 'Reading: main idea and inference', eRead(READS)]];
+// ----- Grades 3 to 6: modelled on the Smarter Balanced / CAASPP English test. Original passages, each with several questions,
+// including two-part evidence questions and choose-two questions; plus revising a draft, editing, and research. -----
+const PASSAGES = {
+  fair:{t:"The Science Fair Surprise", p:["Nora had worked on her volcano for two weeks. She had shaped the clay, painted it brown and gray, and practiced her speech until she knew every word.", "On the morning of the science fair, she carried the volcano carefully down the hall. Then her shoe caught the edge of a rug. The volcano slid off the tray and cracked in two.", "Nora's eyes stung. \"It's ruined,\" she whispered.", "Her classmate Devi set down her own project. \"It's not ruined,\" Devi said. \"Real volcanoes crack open. That's how the lava gets out. You could show the inside.\"", "Nora looked at the broken halves. Devi was right. She could see the tube that carried the bubbling \"lava\" from the bottom to the top.", "That afternoon, a crowd gathered at Nora's table. She pointed to the open half and explained how melted rock rises through a volcano. When the judge pinned a ribbon to her table, Nora grinned at Devi. Sometimes, she thought, an accident is just a new idea in disguise."], items:[
+    {k:1, q:"What problem does Nora face in the passage?", a:"Her volcano breaks before the science fair.", w:["She forgets the words to her speech.", "Devi takes her project.", "The judge does not like volcanoes."], why:"Paragraph 2 says the volcano slid off the tray and cracked in two."},
+    {k:1, q:"Part A: How does Devi help Nora?", a:"She helps Nora see the broken volcano in a new way.", w:["She fixes the volcano with glue.", "She gives Nora her own project.", "She tells the judge what happened."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"You could show the inside.\"", w:["\"Nora had worked on her volcano for two weeks.\"", "\"Then her shoe caught the edge of a rug.\"", "\"That afternoon, a crowd gathered at Nora's table.\""]}, why:"In paragraph 4 Devi points out that real volcanoes crack open and suggests showing the inside. That suggestion is the evidence."},
+    {k:1, q:"Which sentence best states the theme of the passage?", a:"A mistake can lead to something good.", w:["Hard work always wins prizes.", "Friends should share their projects.", "Science fairs are stressful."], why:"The last sentence says an accident can be a new idea in disguise."},
+    {k:1, multi:1, q:"Choose two details that show Nora prepared carefully for the science fair.", a:["She practiced her speech until she knew every word.", "She worked on the volcano for two weeks."], w:["She carried the volcano down the hall.", "She grinned at Devi.", "A crowd gathered at her table."], why:"Paragraph 1 describes two weeks of work and a speech she knew by heart."},
+    {k:2, q:"Read this sentence from paragraph 3: \"Nora's eyes stung.\" What does the sentence show about Nora?", a:"She is about to cry.", w:["She has dust in her eyes.", "She is very tired.", "She is angry at Devi."], why:"Her project has just broken and she whispers that it is ruined, so the stinging is from holding back tears."},
+    {k:2, q:"What does the phrase \"a new idea in disguise\" mean as it is used in paragraph 6?", a:"a good idea that does not look like one at first", w:["an idea hidden under the table", "a costume for the science fair", "an idea that someone else had first"], why:"The crack looked like a disaster but turned into a better way to show the volcano."}]},
+  garden:{t:"Grandpa's Garden", p:["Every Saturday in spring, Mateo helped his grandfather in the garden. Mateo liked the digging. He did not like the waiting.", "\"Why can't the tomatoes just hurry up?\" he asked, poking at a small green plant.", "Grandpa chuckled. \"A garden keeps its own clock,\" he said. \"You can water it and weed it, but you cannot rush it.\"", "Mateo sighed. Every week he checked the plants. Every week they looked the same to him. He began to wonder whether anything was happening at all.", "Then one Saturday in July, Grandpa handed him a basket. Behind the leaves hung dozens of tomatoes, round and red as fire engines. Mateo picked one and bit into it. Warm juice ran down his chin. It was the best thing he had ever tasted.", "\"Worth the wait?\" Grandpa asked.", "Mateo wiped his chin and reached for another tomato. \"Next year,\" he said, \"let's plant twice as many.\""], items:[
+    {k:1, q:"How does Mateo feel about gardening at the beginning of the passage?", a:"He enjoys the work but is impatient for results.", w:["He thinks digging is boring.", "He is afraid the plants will die.", "He wants to garden alone."], why:"Paragraph 1 says he liked the digging but did not like the waiting."},
+    {k:1, q:"Part A: How does Mateo change by the end of the passage?", a:"He learns that some things are worth waiting for.", w:["He decides that gardening is too slow.", "He becomes angry with Grandpa.", "He stops eating tomatoes."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Next year,\" he said, \"let's plant twice as many.\"", w:["\"Why can't the tomatoes just hurry up?\" he asked.", "Every week they looked the same to him.", "Mateo liked the digging."]}, why:"Wanting to plant twice as many next year shows he now thinks the wait was worth it."},
+    {k:1, q:"Which sentence best states a theme of the passage?", a:"Patience is often rewarded.", w:["Family members should always work together.", "Vegetables are healthier than sweets.", "Summer is the best season."], why:"Mateo waits for months and is rewarded with the best tomato he has ever tasted."},
+    {k:1, multi:1, q:"Choose two sentences from the passage that show Mateo is impatient.", a:["\"Why can't the tomatoes just hurry up?\" he asked.", "He did not like the waiting."], w:["Grandpa chuckled.", "Warm juice ran down his chin.", "Grandpa handed him a basket."], why:"Both sentences show that Mateo wants the garden to move faster."},
+    {k:2, q:"What does Grandpa mean when he says, \"A garden keeps its own clock\"?", a:"Plants grow at their own pace.", w:["The garden has a clock in it.", "Gardening must be done at the same time each day.", "Tomatoes grow faster at night."], why:"He goes on to say you can water and weed a garden but cannot rush it."},
+    {k:2, q:"The author describes the tomatoes as \"round and red as fire engines\" to show that the tomatoes are", a:"bright and ripe", w:["loud and fast", "very large", "dangerous"], why:"The simile compares the color of the tomatoes to a bright red fire engine."}]},
+  lantern:{t:"The Lantern and the Moon", p:["A brass lantern hung outside an inn on a mountain road. Each evening the innkeeper lit its wick, and its yellow glow spilled across the doorstep.", "\"Look how the travelers hurry toward me,\" the lantern boasted to the moths. \"Without my light they would be lost. I am surely the brightest thing in the night.\"", "One evening the full moon rose over the peaks. Its silver light poured over the whole valley. The lantern scowled. \"Show-off,\" it muttered. \"You are too far away to be of any use.\"", "The moon said nothing. It simply went on shining.", "Near midnight, clouds rolled in and swallowed the moon. A lost shepherd stumbled along the road, unable to see his own feet. Then he spotted one small, steady glow. He followed it to the inn door and was saved from the cold.", "When the clouds parted, the lantern looked up. \"I could not have lit the valley,\" it admitted. \"But you could not have marked this door.\"", "\"Then it is good,\" said the moon, \"that the night has room for us both.\""], items:[
+    {k:1, q:"Which word best describes the lantern at the beginning of the passage?", a:"proud", w:["lonely", "fearful", "grateful"], why:"In paragraph 2 the lantern boasts that it is surely the brightest thing in the night."},
+    {k:1, q:"Part A: What does the lantern learn by the end of the passage?", a:"Different strengths are each valuable.", w:["The moon is not very bright.", "Travelers do not need light.", "It should try to shine more brightly."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"But you could not have marked this door.\"", w:["\"I am surely the brightest thing in the night.\"", "\"You are too far away to be of any use.\"", "The moon said nothing."]}, why:"The lantern admits it could not light the valley, but the moon could not mark the door. Each does something the other cannot."},
+    {k:1, q:"Which sentence best states the theme of the passage?", a:"Everyone has something different to offer.", w:["The biggest light is always the best.", "It is dangerous to travel at night.", "Boasting helps you make friends."], why:"The moon's last line says the night has room for them both."},
+    {k:1, multi:1, q:"Choose two details from paragraph 3 that show the lantern is jealous of the moon.", a:["The lantern scowled.", "\"Show-off,\" it muttered."], w:["Its silver light poured over the whole valley.", "The full moon rose over the peaks.", "The innkeeper lit its wick."], why:"Scowling and calling the moon a show-off both show jealousy."},
+    {k:2, q:"What does the word \"boasted\" mean as it is used in paragraph 2?", a:"bragged", w:["whispered", "complained", "asked"], why:"The lantern is praising itself: \"I am surely the brightest thing in the night.\""},
+    {k:2, q:"Why does the author most likely include paragraph 5?", a:"to show a time when the small lantern is needed", w:["to explain how clouds form", "to describe a shepherd's job", "to show that the moon is dangerous"], why:"When clouds hide the moon, only the lantern can guide the shepherd to the door."},
+    {k:2, q:"What does the author mean by \"clouds rolled in and swallowed the moon\"?", a:"The clouds covered the moon.", w:["The clouds ate the moon.", "The moon fell from the sky.", "The moon grew larger."], why:"It is figurative language: the moon disappears behind the clouds as if swallowed."}]},
+  tide:{t:"Tide Pool", poem:1, p:["The sea steps back at noon and leaves\na room of glass among the stones,\nits floor a rug of green and gold,\nits walls the color of old bones.", "A hermit crab in a borrowed shell\ndrags his small house across the sand.\nAn anemone opens like a hand\nthat waves but will not wave farewell.", "I kneel so still my shadow sleeps.\nThe whole wide ocean, shrunk and clear,\nholds its breath inside this bowl\nuntil the tide comes back to hear."], items:[
+    {k:1, q:"What is the speaker doing in stanza 3?", a:"watching the tide pool quietly", w:["swimming in the ocean", "collecting shells", "sleeping on the beach"], why:"The speaker says, \"I kneel so still my shadow sleeps.\""},
+    {k:1, q:"Part A: Which word best describes the speaker's feeling toward the tide pool?", a:"wonder", w:["boredom", "fear", "anger"], b:{q:"Part B: Which line from the poem best supports your answer in Part A?", a:"\"I kneel so still my shadow sleeps.\"", w:["\"drags his small house across the sand.\"", "\"its walls the color of old bones.\"", "\"The sea steps back at noon and leaves\""]}, why:"Kneeling perfectly still to watch shows how amazed and careful the speaker is."},
+    {k:2, q:"In stanza 1, what does \"a room of glass among the stones\" describe?", a:"the tide pool", w:["a house on the beach", "a broken window", "the sky"], why:"The sea steps back and leaves the pool; its clear water is the room of glass."},
+    {k:2, q:"The line \"An anemone opens like a hand\" is an example of", a:"a simile", w:["a metaphor", "a rhyme", "an idiom"], why:"A simile compares two things using like or as."},
+    {k:2, q:"What does the poet mean by \"the whole wide ocean, shrunk and clear\"?", a:"The tide pool is like a small version of the sea.", w:["The ocean is drying up.", "The water is very cold.", "The speaker is wearing glasses."], why:"The pool holds sea creatures and sea water in a space small enough to kneel beside."},
+    {k:2, q:"How is the poem organized?", a:"It moves from the pool, to its creatures, to the speaker watching.", w:["It tells events from morning until night.", "It compares two different beaches.", "It lists steps for finding a tide pool."], why:"Stanza 1 describes the pool, stanza 2 the crab and anemone, and stanza 3 the speaker."}]},
+  seeds:{t:"How Seeds Travel", p:["A plant cannot walk to a new home, but its seeds can travel surprisingly far. Seeds need to move away from the parent plant so that they have enough sunlight, water, and space to grow.", "Some seeds ride the wind. A dandelion seed hangs beneath a tuft of fine hairs that works like a tiny parachute. A single puff of air can carry it across a field.", "Other seeds hitch a ride. Burrs are covered with small hooks that cling to animal fur and to people's socks. When the burr finally falls off, the seed inside may be far from where it started.", "Some seeds travel by water. A coconut has a thick, light husk that lets it float. Ocean currents can carry a coconut from one island to another.", "Animals help, too. Squirrels bury acorns to eat later, but they do not find every one. A forgotten acorn can sprout into an oak tree."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"Seeds travel in different ways to reach new places to grow.", w:["Dandelions are found in fields.", "Squirrels forget where they bury acorns.", "Plants need sunlight and water."], why:"Each paragraph after the first describes a different way seeds travel."},
+    {k:1, q:"According to the passage, why do seeds need to move away from the parent plant?", a:"so they have enough sunlight, water, and space", w:["so animals cannot eat them", "so they can find wind", "so they stay dry"], why:"Paragraph 1 states this reason directly."},
+    {k:1, q:"Part A: How do burrs travel?", a:"by clinging to animals and people", w:["by floating on water", "by blowing in the wind", "by being buried in the ground"], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Burrs are covered with small hooks that cling to animal fur and to people's socks.\"", w:["\"A single puff of air can carry it across a field.\"", "\"A coconut has a thick, light husk that lets it float.\"", "\"Squirrels bury acorns to eat later, but they do not find every one.\""]}, why:"Paragraph 3 explains that burrs have hooks that cling to fur and socks."},
+    {k:1, multi:1, q:"Choose two seeds from the passage that travel without the help of animals.", a:["dandelion seeds", "coconuts"], w:["burrs", "acorns", "oak trees"], why:"Dandelion seeds ride the wind and coconuts float on water. Burrs and acorns are moved by animals."},
+    {k:2, q:"What does the phrase \"hitch a ride\" mean as it is used in paragraph 3?", a:"travel by attaching to something", w:["run quickly", "pay for a trip", "fall to the ground"], why:"The burrs cling to fur and socks and are carried along."},
+    {k:2, q:"How is the passage mainly organized?", a:"It describes several ways seeds travel, one at a time.", w:["It tells a story in time order.", "It compares plants and animals.", "It gives the steps for planting a seed."], why:"Paragraphs 2 to 5 each explain one way: wind, hitching a ride, water, and animals."},
+    {k:2, q:"In paragraph 2, the author compares a dandelion's tuft of hairs to a parachute in order to", a:"help the reader picture how the seed floats on air", w:["show that dandelions are dangerous", "explain how airplanes work", "prove that seeds are heavy"], why:"A parachute drifts slowly through the air, just as the seed does."}]},
+  beaver:{t:"Beavers: Nature's Engineers", p:["Few animals change their surroundings as much as the beaver does. Using only teeth and paws, a beaver family can turn a small stream into a wide, still pond.", "The work begins with a dam. Beavers gnaw through tree trunks with their strong front teeth, which never stop growing. They drag branches into the stream and pack them with mud and stones. Water backs up behind the dam and slowly forms a pond.", "In the pond, the beavers build a lodge, a dome of sticks with a dry room inside. The entrances are underwater, so wolves and other hunters cannot easily get in.", "A beaver pond helps many other animals as well. Fish, frogs, and turtles live in the calm water. Ducks and herons come to feed. Because the pond holds water through dry months, plants along its edges stay green.", "Beavers can cause trouble, though. Their ponds sometimes flood roads and farm fields. In some places, people now protect trees with wire fences so that beavers and humans can share the land."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"Beavers reshape streams in ways that affect many living things.", w:["Beavers have teeth that never stop growing.", "Beaver ponds sometimes flood roads.", "Wolves hunt beavers."], why:"The passage explains how beavers build dams and lodges and how the pond affects other animals and people."},
+    {k:1, q:"According to the passage, why are the entrances to a beaver lodge underwater?", a:"to keep hunters out", w:["to keep the lodge cool", "to let fish swim in", "to make swimming easier"], why:"Paragraph 3 says wolves and other hunters cannot easily get in."},
+    {k:1, q:"Part A: Which conclusion is best supported by the passage?", a:"Beaver ponds are important to other wildlife.", w:["Beavers prefer rivers to streams.", "Beavers build dams alone.", "People have stopped beavers from building dams."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"Fish, frogs, and turtles live in the calm water.\"", w:["\"The work begins with a dam.\"", "\"Their ponds sometimes flood roads and farm fields.\"", "\"The entrances are underwater, so wolves and other hunters cannot easily get in.\""]}, why:"Paragraph 4 lists the animals that live in or visit the pond."},
+    {k:1, multi:1, q:"Choose two materials that beavers use to build a dam, according to paragraph 2.", a:["branches", "mud"], w:["wire", "shells", "feathers"], why:"Paragraph 2 says beavers drag branches into the stream and pack them with mud and stones."},
+    {k:2, q:"What does the word \"gnaw\" mean as it is used in paragraph 2?", a:"chew", w:["carry", "float", "hide"], why:"Beavers use their strong front teeth to get through tree trunks."},
+    {k:2, q:"Why did the author most likely include paragraph 5?", a:"to show that beaver ponds can also create problems", w:["to explain how beavers build dams", "to describe the animals in the pond", "to prove that beavers are dangerous to people"], why:"The paragraph begins \"Beavers can cause trouble, though,\" and gives examples of flooding."},
+    {k:2, q:"The title calls beavers \"Nature's Engineers\" because beavers", a:"build structures that change the land", w:["study science", "repair roads", "use tools made of metal"], why:"Engineers design and build things. Beavers build dams and lodges that turn streams into ponds."}]},
+  stones:{t:"The Mystery of the Sailing Stones", p:["In a dry lake bed in Death Valley, California, heavy rocks seem to move on their own. Behind each rock stretches a long track in the cracked mud, as if someone had dragged it across the ground. Yet for many years, no one ever saw a rock move.", "People offered many explanations. Some guessed that strong winds pushed the rocks. Others thought the rocks slid when rain made the mud slippery. A few even joked about magnets or pranks. None of these ideas could be proved.", "Finally, a team of scientists decided to watch the rocks closely. They attached small tracking devices to several stones and set up a weather station nearby. Then they waited.", "One winter, the team got its answer. Rain had left a shallow pond on the lake bed. At night the surface froze into thin sheets of ice. When the morning sun began to melt the ice, it broke into large floating panels. A light breeze pushed the panels against the rocks, and the rocks slid slowly across the wet mud.", "The mystery was solved not by a lucky guess but by careful observation. The stones still \"sail\" only when rain, ice, sun, and wind arrive in just the right order."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"Scientists used careful observation to learn how the rocks move.", w:["Death Valley is a very dry place.", "Rocks in lake beds can be heavy.", "People enjoy guessing about mysteries."], why:"The passage moves from the mystery, to guesses, to the study that finally explained it."},
+    {k:1, q:"According to paragraph 4, what pushes the rocks?", a:"sheets of ice moved by a light breeze", w:["strong storm winds", "flowing rivers", "animals in the lake bed"], why:"Paragraph 4 says a light breeze pushed the ice panels against the rocks."},
+    {k:1, q:"Part A: What made the scientists' explanation different from the earlier ones?", a:"It was based on evidence they collected.", w:["It was more exciting.", "It was the first idea anyone had.", "It involved magnets."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"They attached small tracking devices to several stones and set up a weather station nearby.\"", w:["\"A few even joked about magnets or pranks.\"", "\"People offered many explanations.\"", "\"Yet for many years, no one ever saw a rock move.\""]}, why:"Paragraph 2 says the earlier ideas could not be proved. Paragraph 3 shows the team gathering data."},
+    {k:1, multi:1, q:"Choose two things that must happen for the stones to move, according to the passage.", a:["Thin ice forms on a shallow pond.", "A light breeze blows."], w:["Strong magnets pull the rocks.", "Deep snow covers the ground.", "The mud dries and cracks."], why:"Paragraph 4 describes rain, thin ice, morning sun, and a light breeze."},
+    {k:2, q:"What does the word \"observation\" mean as it is used in paragraph 5?", a:"watching closely", w:["guessing", "arguing", "traveling"], why:"Paragraph 3 says the team decided to watch the rocks closely."},
+    {k:2, q:"How are paragraphs 2 through 4 mainly organized?", a:"They present a question and then explain how it was answered.", w:["They compare two different lake beds.", "They list rocks from smallest to largest.", "They describe a place from top to bottom."], why:"Paragraph 2 gives unproven guesses, paragraph 3 the study, and paragraph 4 the answer."},
+    {k:2, q:"Why does the author put the word \"sail\" in quotation marks in paragraph 5?", a:"The rocks do not really sail; the word describes how they seem to move.", w:["Someone is speaking in the passage.", "It is the title of a book.", "The word is spelled incorrectly."], why:"Quotation marks can show that a word is being used in a special, not literal, way."}]},
+  recess:{t:"A Longer Recess", p:["Our school board is deciding whether to lengthen recess from fifteen minutes to thirty. I believe the change would help students learn, not just play.", "First, movement wakes up the brain. After sitting through a long lesson, many students find it hard to pay attention. A real break lets them run, stretch, and return to class ready to focus.", "Second, recess is where students practice getting along. On the playground, children choose teams, settle disagreements, and include classmates who are left out. These skills are not taught on any worksheet.", "Some people worry that a longer recess would take time away from reading and math. That concern is understandable. However, fifteen extra minutes of play could save more than fifteen minutes now lost to restless, distracted students.", "A longer recess is not a reward for finishing work. It is part of the work of learning. I urge the school board to vote yes."], items:[
+    {k:1, q:"What is the author's main claim?", a:"Recess should be longer because it helps students learn.", w:["Recess should be shorter so students can read more.", "School boards should not make decisions about recess.", "Students should choose their own teams."], why:"Paragraph 1 says the change would help students learn, and the last paragraph asks the board to vote yes."},
+    {k:1, multi:1, q:"Choose two reasons the author gives to support the claim.", a:["Movement helps students pay attention.", "Recess gives students practice at getting along."], w:["Recess is a reward for finishing work.", "Students dislike reading and math.", "Teachers need a longer break."], why:"Paragraphs 2 and 3 begin with \"First\" and \"Second\" and give these two reasons."},
+    {k:1, q:"Part A: Which statement best describes how the author views recess?", a:"as a necessary part of the school day", w:["as a waste of time", "as a prize for good students", "as less important than lunch"], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"It is part of the work of learning.\"", w:["\"That concern is understandable.\"", "\"Our school board is deciding whether to lengthen recess from fifteen minutes to thirty.\"", "\"On the playground, children choose teams, settle disagreements, and include classmates who are left out.\""]}, why:"The final paragraph says recess is not a reward but part of the work of learning."},
+    {k:2, q:"Which sentence from the passage states an opposing point of view?", a:"\"Some people worry that a longer recess would take time away from reading and math.\"", w:["\"First, movement wakes up the brain.\"", "\"These skills are not taught on any worksheet.\"", "\"I urge the school board to vote yes.\""], why:"That sentence gives the view of people who disagree with the author."},
+    {k:2, q:"What is the purpose of paragraph 4?", a:"to respond to people who disagree with the author", w:["to describe the playground", "to give directions to the school board", "to tell a story about one student"], why:"The paragraph states a concern and then answers it."},
+    {k:2, q:"What does the word \"restless\" mean as it is used in paragraph 4?", a:"unable to stay still", w:["very sleepy", "well behaved", "extremely happy"], why:"The author pairs it with \"distracted\" to describe students who have been sitting too long."},
+    {k:2, q:"Which word in paragraph 4 signals that the author is returning to their own argument?", a:"However", w:["Some", "That", "now"], why:"\"However\" shows a contrast with the concern that was just described."}]},
+};
+const WORG = [
+  ["A student is writing a report about owls for her class. Read the draft of a paragraph.\n\nOwls are skilled hunters. Their large eyes help them see in dim light. Their soft feathers let them fly silently. ______", "Choose the sentence that best concludes the paragraph.", "These features make owls excellent nighttime hunters.", ["Owls live in many countries.", "Some people keep birds as pets.", "I saw an owl once at the zoo."]],
+  ["A student is writing a letter to his teacher. Read the draft.\n\nI think our class should adopt a hamster. ______ A hamster would teach us responsibility because we would have to feed it every day. It would also make our classroom more welcoming.", "Which sentence would best introduce the reasons that follow?", "There are two good reasons for this idea.", ["Hamsters are small and furry.", "My cousin has a cat.", "Thank you for reading my letter."]],
+  ["A student is writing a story. Read the draft.\n\nMaya wanted to bake bread. First, she mixed flour, water, and yeast. ______, she let the dough rise for an hour.", "Which word best connects the ideas?", "Next", ["However", "For example", "In conclusion"]],
+  ["A student is writing a narrative. Read the draft.\n\nThe storm arrived at night. [[It was bad.]] We stayed inside.", "Which sentence best replaces the underlined sentence to add descriptive detail?", "Wind rattled the windows and rain hammered the roof.", ["It was really, really bad.", "Storms are a kind of weather.", "I do not like storms."]],
+  ["A student is writing a report. Read the draft.\n\nRecycling helps the environment. ______", "Which sentence best supports the main idea of the paragraph?", "Recycling paper means fewer trees must be cut down.", ["Recycling day is on Tuesday.", "Some people forget to recycle.", "Trash trucks are loud."]],
+  ["A student is writing a report about honeybees. Read the draft.\n\n(1) Honeybees live in large groups called colonies. (2) Each colony has one queen. (3) My favorite food is honey on toast. (4) Worker bees gather nectar and care for the young.", "Which sentence does not belong in the paragraph?", "sentence 3", ["sentence 1", "sentence 2", "sentence 4"]],
+  ["A student is writing an opinion piece arguing that students should read every night.", "Which sentence gives a reason that supports the opinion?", "Reading every night builds a larger vocabulary.", ["Some books have pictures.", "Reading is something people do.", "Libraries close in the evening."]],
+  ["A student is writing a report. Read the draft.\n\nSharks have a frightening reputation. ______, most sharks are harmless to people.", "Which word best connects the two sentences?", "However", ["Also", "Then", "For example"]],
+  ["A student is writing a narrative. Read the draft.\n\nLuis practiced the piano piece every day for a month. On the night of the recital, his hands shook as he walked onto the stage. He took a breath and began to play. ______", "Choose the sentence that best ends the story.", "When the last note faded, the audience clapped, and Luis finally smiled.", ["Pianos have eighty-eight keys.", "Luis also likes soccer.", "The recital was on a Friday."]],
+  ["A student is writing a report about the desert. Read the draft.\n\nDesert animals have ways to survive the heat. ______ Kangaroo rats, for example, stay in cool burrows until the sun goes down.", "Which sentence best fits in the blank?", "Many of them rest during the day and come out at night.", ["Deserts can be found on several continents.", "Some deserts are cold.", "Cactus plants have sharp spines."]]];
+const WPREC = [
+  ["The hungry dog [[ate]] its dinner in seconds.", "gobbled", ["had", "nibbled", "saw"]], ["The scientist [[looked at]] the insect through a microscope.", "examined", ["glanced at", "ignored", "waited for"]],
+  ["After running the whole race, Tia was [[tired]].", "exhausted", ["okay", "bored", "calm"]], ["The [[big]] redwood tree rose high above the rest of the forest.", "towering", ["nice", "round", "little"]],
+  ["\"Watch out!\" Dad [[said]] as the ball flew toward the window.", "shouted", ["mumbled", "whispered", "wondered"]], ["The kitten [[went]] silently across the room toward the toy.", "crept", ["stomped", "raced", "tumbled"]],
+  ["The desert is a [[bad]] place for plants that need a lot of water.", "harsh", ["silly", "noisy", "gentle"]], ["The crowd was [[happy]] when the home team scored the winning goal.", "thrilled", ["fine", "quiet", "curious"]]];
+const EGRAM = [
+  ["Jo and I went to the library.", ["Me and Jo went to the library.", "Jo and me went to the library.", "I and Jo goed to the library."]], ["She doesn't have any pencils.", ["She don't have no pencils.", "She doesn't have no pencils.", "She don't have any pencils."]],
+  ["The children were playing outside.", ["The children was playing outside.", "The childs were playing outside.", "The children is playing outside."]], ["This is the tallest tree in the park.", ["This is the most tallest tree in the park.", "This is the more taller tree in the park.", "This is the tallest tree than the park."]],
+  ["He ran quickly to catch the bus.", ["He ran quick to catch the bus.", "He runned quickly to catch the bus.", "He ran quickly to caught the bus."]], ["Their dog chased its tail.", ["There dog chased it's tail.", "Their dog chased it's tail.", "They're dog chased its tail."]],
+  ["It was raining, so we stayed inside.", ["It was raining we stayed inside.", "It was raining, we stayed inside.", "It was raining so, we stayed inside."]], ["Each of the players has a uniform.", ["Each of the players have a uniform.", "Each of the player has a uniform.", "Each of the players having a uniform."]],
+  ["Yesterday we walked to the park and played soccer.", ["Yesterday we walked to the park and play soccer.", "Yesterday we walk to the park and played soccer.", "Yesterday we walked to the park and playing soccer."]], ["My brother and I are going to the store.", ["My brother and I is going to the store.", "My brother and me are going to the store.", "Me and my brother is going to the store."]]];
+const ECOMP = [["The bell rang before lunch.", ["Before the bell rang.", "Running down the hall.", "The tall girl with the red backpack."]], ["The puppy slept on the porch.", ["Sleeping on the porch.", "Because the puppy was tired.", "The puppy on the porch."]], ["We planted beans in the garden.", ["Planted beans in the garden.", "The beans in the garden.", "When we planted beans."]]];
+const ECONV = [
+  ["We visited Portland, Oregon, in June.", ["We visited portland, Oregon, in june.", "We visited Portland Oregon in June.", "We visited Portland, oregon, in June."]], ["Dr. Lee lives on Maple Street.", ["dr. Lee lives on Maple street.", "Dr. lee lives on maple Street.", "Dr. Lee lives on maple street."]],
+  ["Yes, I would like some soup.", ["Yes I would like some soup.", "Yes I would, like some soup.", "Yes, I would like, some soup."]], ["Mom asked, \"Did you feed the cat?\"", ["Mom asked, \"Did you feed the cat\"?", "Mom asked \"Did you feed the cat?\"", "Mom asked, Did you feed the cat?"]],
+  ["Lena packed sunscreen, a towel, and a hat.", ["Lena packed sunscreen a towel and a hat.", "Lena packed, sunscreen, a towel, and a hat.", "Lena packed sunscreen, a towel and, a hat."]], ["On Thanksgiving, my aunt came from Texas.", ["On thanksgiving, my aunt came from Texas.", "On Thanksgiving, my Aunt came from texas.", "On Thanksgiving my aunt came from texas."]]];
+const ESPELL = [["My [[freind]] and I [[believe]] the [[answer]] is [[different]].", "freind"], ["We will [[probably]] go to the [[libary]] [[tomorrow]] [[because]] it is closed today.", "libary"], ["The [[weather]] was [[beautiful]], so we ate [[outside]] in the [[gardin]].", "gardin"], ["I was [[suprised]] to [[receive]] a [[letter]] from my [[neighbor]].", "suprised"], ["It is [[necessary]] to [[seperate]] the [[recycling]] from the [[garbage]].", "seperate"], ["The [[calender]] shows that [[February]] is the [[shortest]] [[month]].", "calender"], ["She [[finally]] [[finished]] her [[favrite]] book last [[night]].", "favrite"], ["The [[government]] building is [[accross]] the [[street]] from the [[museum]].", "accross"]];
+const RSRC = [
+  ["A student is writing a report about how volcanoes form.", "Which source would most likely have useful information for the report?", "a science encyclopedia article titled \"Inside a Volcano\"", ["a story about a dragon who lives in a volcano", "an advertisement for a volcano-themed water park", "a poem called \"Fire Mountain\""]],
+  ["A student is researching what sea turtles eat.", "Which website would be the most trustworthy source?", "a website run by a marine science aquarium", ["a blog by someone selling turtle toys", "a page of turtle jokes", "a fan site for a cartoon about turtles"]],
+  ["A student is writing a report about why people should wear bicycle helmets. She took these notes.", "Which note best supports the topic of the report?", "Helmets protect the head in a fall.", ["Bicycles were invented long ago.", "Some helmets are blue.", "My bike has a bell."]],
+  ["A student wants to find the number of people who live in California.", "Which source would be best?", "a current government website about state populations", ["a novel set in California", "a dictionary", "a map of hiking trails"]],
+  ["A student is beginning a research report about honeybees.", "Which research question would best help the student focus the report?", "How do honeybees make honey?", ["Do I like honey?", "What is the tastiest dessert?", "Why are some insects scary?"]],
+  ["A student finds this sentence in a source: \"Everyone knows that cats are better pets than dogs.\"", "Why is this sentence not useful as evidence in a report?", "It is an opinion, not a fact.", ["It is too short.", "It mentions two animals.", "It is about pets."]],
+  ["A student read two sources about sloths.\n\nSource 1: Sloths sleep about fifteen hours a day.\nSource 2: Sloths move slowly so that they need less food.", "Which conclusion is supported by both sources?", "Sloths use very little energy.", ["Sloths are fast climbers.", "Sloths eat a great deal.", "Sloths live in cold places."]],
+  ["A student is using a book about bridges to write a report on the Golden Gate Bridge.", "Which part of the book would best help the student find the page that tells when the bridge was built?", "the index", ["the title page", "the front cover", "the author's note"]],
+  ["A student wants to find out how tall giraffes grow.", "Which search phrase would give the most useful results?", "giraffe height", ["giraffe", "funny tall animals", "zoo tickets"]],
+  ["A student is writing an opinion essay claiming that school gardens are useful. She took these notes from an article.", "Which note best supports her claim?", "Students at schools with gardens learned more about healthy food.", ["Gardens need soil.", "Some gardens have fences.", "Carrots are orange."]]];
+const passText = P => '**' + P.t + '**\n' + P.p.map((x,i) => (P.poem ? '' : (i+1) + '  ') + x).join(P.poem ? '\n\n' : '\n');
+const eRead2 = (key, ids) => () => { const P = PASSAGES[pickOf(ids)], it = pickOf(P.items.filter(x => x.k === key)), p = it.multi ? {q:it.q, ans:it.a.slice(), opts:it.w.slice(), multi:true, sol:'The answers are: ' + it.a.join(' / ')} : pk(it.q, it.a, it.w);
+  p.pass = passText(P); p.why = it.why; if (it.b){ p.partB = {q:it.b.q, ans:it.b.a, opts:it.b.w.slice()}; p.sol = 'Part A: ' + it.a + ' Part B: ' + it.b.a; } return p; };
+const mixOf = (...gens) => () => pickOf(gens)();
+const eOrg = () => { const it = pickOf(WORG); return pk(it[1], it[2], it[3], it[0]); };
+const ePrec = () => { const it = pickOf(WPREC); return pk('Which word best replaces the underlined word to make the meaning more precise?', it[1], it[2], 'A student is revising a sentence.\n\n' + it[0]); };
+const eGram = () => { if (Math.random() < .25){ const it = pickOf(ECOMP); return pk('Which of these is a complete sentence?', it[0], it[1]); } const it = pickOf(EGRAM); return pk('Which sentence is written correctly?', it[0], it[1]); };
+const eConv = () => { const it = pickOf(ECONV); return pk('Which sentence uses capital letters and punctuation correctly?', it[0], it[1]); };
+const eSpellCtx = () => { const it = pickOf(ESPELL), words = it[0].match(/\[\[(.+?)\]\]/g).map(x => x.slice(2,-2)); return pk('Which underlined word is spelled incorrectly?', it[1], words.filter(x => x !== it[1]), 'A student is editing a sentence.\n\n' + it[0]); };
+const eRsrc = () => { const it = pickOf(RSRC); return pk(it[1], it[2], it[3], it[0]); };
+const sbac = (g, lit, inf, vocab, gram) => [
+  ['RL.' + g + '.1-3', 'Reading stories: key details and theme', eRead2(1, lit)], ['RL.' + g + '.4-6', 'Reading stories: words and craft', eRead2(2, lit)],
+  ['RI.' + g + '.1-3', 'Reading information: main idea and details', eRead2(1, inf)], ['RI.' + g + '.4-8', 'Reading information: words, structure and reasoning', eRead2(2, inf)],
+  ['L.' + g + '.4-5', 'Vocabulary: word meanings', vocab], ['W.' + g + '.1-3', 'Writing: organize and develop ideas', eOrg], ['L.' + g + '.3', 'Writing: choose precise words', ePrec],
+  ['L.' + g + '.1', 'Editing: grammar and usage', gram], ['L.' + g + '.2', 'Editing: capitals, punctuation and spelling', mixOf(eConv, eSpellCtx, eQuote, eSeries)], ['W.' + g + '.8', 'Research: sources and evidence', eRsrc]];
+const E_3 = sbac(3, ['fair','garden'], ['seeds','beaver'], mixOf(eCtx('A'), eAffix(true)), mixOf(eGram, eAgree, ePast));
+const E_4 = sbac(4, ['garden','lantern'], ['beaver','stones'], mixOf(eCtx('B'), eFig, () => Math.random() < .5 ? eSyn('B')() : eAnt()), mixOf(eGram, eGram, eHomo, eAgree));
+const E_5 = sbac(5, ['lantern','tide'], ['stones','recess'], mixOf(eCtx('B'), eFig, () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }), mixOf(eGram, eGram, eHomo, ePast));
 const ELA = {K:E_K, '1':E_K, '2':E_2, '3':E_3, '4':E_4, '5':E_5, '6':E_5};
 
 const mathGrade = id => GRADES.find(g => g.id === id);
@@ -1298,6 +1424,7 @@ function pickSkill(g){
   let r = Math.random()*tot; for (const [i,v] of w){ r -= v; if (r <= 0) return i; } return w[0][0];
 }
 function choices(p){
+  if (p.multi) return shuffle(p.ans.concat(p.opts));
   if (p.opts){ if (p.keep) return p.opts;
     const val = v => /^\d+\/\d+$/.test(v) ? v.split('/')[0]/v.split('/')[1] : /^\d+$/.test(v) ? +v : v;   // drop wrong choices equal in value to the answer, like 2/4 for 1/2
     return shuffle([p.ans].concat(p.opts.filter((v,i,a) => a.indexOf(v) === i && val(String(v)) !== val(String(p.ans))))); }
@@ -1316,7 +1443,7 @@ function renderMath(){
   if (!g){ const o = el('option','', 'Pick a grade'); o.value = ''; sel.appendChild(o); }
   for (const x of GRADES){ const o = el('option','', x.name); o.value = x.id; o.selected = S.math.grade === x.id; sel.appendChild(o);
     const b = el('button','', x.name); b.type = 'button'; b.id = 'grade-' + x.id; b.onclick = () => setGrade(x.id); gb.appendChild(b); }
-  $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('subject').value = S.math.subject || 'math';
+  setReading(false); $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('subject').value = S.math.subject || 'math';
   $('mpick').hidden = !!g; $('mplay').hidden = !g || showSkills; $('mlist').hidden = !g || !showSkills; $('mshow').hidden = !g; $('mshow').textContent = showSkills ? 'Back to questions' : 'Show skills';
   if (!g){ $('mup').hidden = true; return; }
   renderProgress(); if (S.math.fix){ openFix(); return; }
@@ -1441,6 +1568,18 @@ Object.assign(LESSON, {
   "Greek and Latin roots": ["Many English words are built from Greek and Latin roots. If you know the root, you can work out new words.", "tele means far: a telescope sees far and a telephone carries sound far."],
   "Figurative language": ["Figurative language says something in a colorful way that is not exactly literal. Ask what the author really means.", "The classroom was a zoo = the classroom was noisy and wild."],
 });
+Object.assign(LESSON, {
+  "Reading stories: key details and theme": ["Read the whole passage first. For every question, go back and find the sentence that proves your answer. The theme is the lesson of the story, and it is usually shown by how the main character changes. In a two-part question, Part B must be the sentence that proves Part A.", "If a character is impatient at the start and glad he waited at the end, the theme is about patience. The evidence is the sentence that shows the change."],
+  "Reading stories: words and craft": ["Authors choose words on purpose. When a question asks what a word or phrase means, reread the sentences around it and try each choice in its place. When it asks why the author included something, ask what the story would lose without it.", "\"Round and red as fire engines\" is a simile. It is there to show how bright and ripe the tomatoes were, not to say anything about trucks."],
+  "Reading information: main idea and details": ["The main idea is what the whole passage is mostly about, not one detail from one paragraph. Wrong answers are often true facts from the passage that are too small. Check that your choice covers every paragraph.", "A passage with paragraphs about wind, hooks, water and animals has the main idea that seeds travel in different ways. \"Squirrels bury acorns\" is true but is only one detail."],
+  "Reading information: words, structure and reasoning": ["Look at how the passage is built: does it explain steps, compare things, or give a problem and its solution? For a word's meaning, use the clues around it. For why a paragraph is there, ask what job it does for the whole passage.", "A paragraph that begins \"Some people worry that...\" and then answers the worry is there to respond to people who disagree."],
+  "Vocabulary: word meanings": ["Use the words around an unknown word as clues, and use word parts you know: prefixes, suffixes and roots. Then test your choice by reading the sentence with it in place.", "The desert was so arid that no plants could grow. Plants need water, so arid must mean dry."],
+  "Writing: organize and develop ideas": ["Read the student's draft and decide its job: to inform, to give an opinion, or to tell a story. A good added sentence stays on the topic and does that job. A conclusion sums up the main idea. A transition word shows how two ideas connect.", "After three sentences about how owls hunt, the best ending sums that up: \"These features make owls excellent nighttime hunters.\" A sentence about seeing an owl at the zoo is off the topic."],
+  "Writing: choose precise words": ["A precise word says exactly what the writer means. Pick the word that fits the sentence's clues, and avoid vague words such as big, bad, said or went.", "The hungry dog ate its dinner in seconds. \"In seconds\" tells you it was fast, so gobbled is more precise than ate."],
+  "Editing: grammar and usage": ["Read each choice slowly, as if aloud. Check that the verb matches its subject, the verb tense stays the same, pronouns are right (Jo and I went), and there is only one negative. A complete sentence needs a subject and a verb and must finish its thought.", "\"Me and Jo went\" is wrong because you would not say \"Me went.\" Say \"Jo and I went.\""],
+  "Editing: capitals, punctuation and spelling": ["Check capitals on names, places, days, months and titles such as Dr. Check commas in lists, after Yes or No at the start, and between a city and a state. In speech, the comma or question mark goes inside the closing quotation mark.", "We visited Portland, Oregon, in June.  Mom asked, \"Did you feed the cat?\""],
+  "Research: sources and evidence": ["A good source is about your exact topic and comes from someone who knows the subject, such as an encyclopedia, a museum or a science group. Facts can be checked; opinions cannot. Evidence must support the point you are making.", "For a report on what sea turtles eat, an aquarium's website is more trustworthy than a page selling turtle toys."],
+});
 let lessonOf = null, lessonBack = null, lessonAfter = null;
 function lessonTry(){
   const p = lessonOf[2](false), btn = $('ml-show'); let shown = false; $('ml-try').textContent = 'Try one: ' + p.q; btn.textContent = 'Show the answer';
@@ -1449,7 +1588,7 @@ function lessonTry(){
 function openLesson(sk, back){
   const L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', '']; lessonOf = sk; lessonBack = back;
   $('ml-h').textContent = "Granny Dot's lesson: " + sk[1]; $('ml-how').textContent = L[0]; $('ml-ex').textContent = L[1] ? 'Example\n' + L[1] : ''; $('ml-ex').hidden = !L[1]; lessonTry();
-  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = false; $('mhow').classList.remove('pulse');
+  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = false; $('mhow').classList.remove('pulse'); setReading(false);
 }
 $('mhow').onclick = () => { if (prob && probGrade()) openLesson(probGrade().skills[prob.i], 'q'); };
 $('ml-back').onclick = () => {
@@ -1481,7 +1620,7 @@ function celebrate(btn, big){
 // a slate of questions: answer in any order, skip one and come back to it later
 const SLATE_N = 8, single = () => !!oneShot || rescue > 0;      // gathering, stew and rescues ask one question at a time instead
 function makeProb(gid){
-  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.gid = g.id; p.list = choices(p); p.st = 0; S.math.lastI = i;
+  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), p = g.skills[i][2](skState(g.id+':'+i).m > .5); p.i = i; p.gid = g.id; p.list = choices(p); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
   if (!gid && S.math.subject === 'mix') S.math.mixNext = curSub() === 'math' ? 'ela' : 'math';      // with Both chosen, single questions take turns
   return p;
 }
@@ -1506,36 +1645,57 @@ function renderStrip(){
   if (!prob.st && $('msum').hidden && sl.items.filter(p => !p.st).length > 1){ const b = el('button', 'skip', 'Skip'); b.type = 'button'; b.id = 'mskip'; b.onclick = skipProb; strip.appendChild(b); }
 }
 function skipProb(){ const sl = slate(), n = sl.items.length; for (let d = 1; d <= n; d++){ const j = (sl.cur + d) % n; if (!sl.items[j].st){ sl.cur = j; prob = sl.items[j]; showProb(); return; } } }
+// passages use **bold** for a title and [[double brackets]] for underlined words
+function setPass(elm, text){ elm.hidden = !text; elm.innerHTML = (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[\[(.+?)\]\]/g,'<u>$1</u>'); elm.scrollTop = 0; }
 // answer buttons: short answers sit two to a row, sentence-length ones take a full row each
 function fillAnswers(box, p, done, onPick, idp){
   box.textContent = ''; const long = p.list.some(v => String(v).length > 14); box.className = 'answers' + (typeof p.ans === 'string' && !/^[\d\/<>=]+$/.test(p.ans) ? ' text' : '');
   p.list.forEach((v,j) => { const b = el('button', (long ? 'wide ' : '') + (done && v === p.ans ? 'ok' : done && v === p.pick ? 'no' : ''), fmt(v)); b.type = 'button'; b.id = idp + j; if (done) b.disabled = true; else b.onclick = () => onPick(v, b); box.appendChild(b); });
 }
+// the test's other two formats: "choose two" (every choice must be right) and two-part questions (Part B asks for the evidence behind Part A)
+function fillSpecial(box, p, done){
+  box.textContent = ''; box.className = 'answers text'; const mk = (v, cls, id) => { const b = el('button', 'wide ' + cls, String(v)); b.type = 'button'; b.id = id; box.appendChild(b); return b; };
+  if (p.multi){
+    const sel = done ? (p.pick || []) : [], need = p.ans.length, btns = [];
+    const check = () => { const c = el('button', 'wide check', 'Check my ' + need + ' answers'); c.type = 'button'; c.id = 'ans-check'; c.disabled = true; c.onclick = () => { p.pick = sel.slice(); settle(sel.every(v => p.ans.includes(v)), c); }; box.appendChild(c); return c; };
+    p.list.forEach((v,j) => { const b = mk(v, done ? (p.ans.includes(v) ? 'ok' : sel.includes(v) ? 'no' : '') : '', 'ans-' + j); btns.push(b);
+      if (done) b.disabled = true; else b.onclick = () => { const k = sel.indexOf(v); if (k >= 0) sel.splice(k,1); else { if (sel.length >= need) btns[p.list.indexOf(sel.shift())].classList.remove('on'); sel.push(v); } b.classList.toggle('on', sel.includes(v)); cb.disabled = sel.length !== need; }; });
+    const cb = done ? null : check(); return;
+  }
+  const pick = done ? (p.pick || []) : [], partA = () => {
+    p.list.forEach((v,j) => { const locked = done || pick.length > 0, b = mk(v, done ? (v === p.ans ? 'ok' : v === pick[0] ? 'no' : '') : (v === pick[0] ? 'on' : ''), 'ans-' + j); if (locked) b.disabled = true; else b.onclick = () => { pick[0] = v; box.textContent = ''; partA(); partB(); }; }); };
+  const partB = () => { box.appendChild(el('div', 'part', p.partB.q));
+    p.partB.list.forEach((v,j) => { const b = mk(v, done ? (v === p.partB.ans ? 'ok' : v === pick[1] ? 'no' : '') : '', 'ansb-' + j); if (done) b.disabled = true; else b.onclick = () => { pick[1] = v; p.pick = pick.slice(); settle(pick[0] === p.ans && v === p.partB.ans, b); }; }); };
+  partA(); if (done) partB();
+}
+function setReading(on){ $('math').firstElementChild.classList.toggle('reading', on); }
 function showProb(){
   const g = probGrade(), s = g.skills[prob.i], done = !!prob.st;
   mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true;
-  $('mpass').hidden = !prob.pass; $('mpass').textContent = prob.pass || '';
+  setPass($('mpass'), prob.pass); setReading(!!prob.pass && prob.pass.length > 300);
   $('q').textContent = prob.q; $('q').className = prob.q.length > 16 || prob.pass ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
   $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + prob.sol) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
-  fillAnswers($('answers'), prob, done, answer, 'ans-');
+  if (prob.multi || prob.partB) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
   $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
 }
 function slateDone(){
   const sl = slate(), right = sl.items.filter(p => p.st === 1).length, n = sl.items.length, bonus = right === n ? 10 : right >= n-2 ? 4 : 0, box = $('msum-l');
   if (!sl.paid){ sl.paid = true; if (bonus){ S.bones += bonus; session += bonus; chime(); } if (right === n) award('slate', 'A perfect slate', 0); save(); }
-  $('mplay').hidden = true; $('msum').hidden = false; box.textContent = '';
+  $('mplay').hidden = true; $('msum').hidden = false; box.textContent = ''; setReading(false);
   $('msum-h').textContent = right + ' of ' + n + ' right' + (bonus ? '. Slate bonus +' + bonus + ' bones!' : '.');
   sl.items.forEach((p,j) => { if (p.st !== 2) return; const row = el('div','item'), info = el('div'); info.appendChild(el('b','', 'Question ' + (j+1) + ': ' + p.q)); info.appendChild(document.createTextNode(p.sol + ' This skill will come back for more practice.')); row.appendChild(info); box.appendChild(row); });
   box.hidden = right === n; renderStrip(); $('mearn').textContent = 'Earned ' + session + ' bones'; ui();
 }
 $('mnew').onclick = () => { S.math.slate = null; nextProb(); };
-function answer(v, b){
+function answer(v, b){ if (mathLock || !prob) return; prob.pick = v; settle(v === prob.ans, b); }
+function settle(ok, b){
   if (mathLock || !prob) return; mathLock = true;
-  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), ok = v === prob.ans, was = isMastered(st);
-  prob.st = ok ? 1 : 2; prob.pick = v;
+  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB;
+  prob.st = ok ? 1 : 2;
   st.n++; st.last = m.n; m.n++;
+  if (special){ const r0 = b.getBoundingClientRect(); fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); }
   if (ok){
-    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0);
+    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (special ? 1 : 0);
     S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
     $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
     if (rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
@@ -1546,15 +1706,15 @@ function answer(v, b){
     return;
   }
   // A miss stops play: Granny Dot explains this exact problem, then a fresh one on the same skill must be answered correctly.
-  m.streak = 0; st.m *= .55; m.redo.push({g:g.id, i:prob.i, at:m.n+2}); b.classList.add('no');
-  [...$('answers').children].forEach((o,j) => { if (prob.list[j] === prob.ans) o.classList.add('ok'); });
+  m.streak = 0; st.m *= .55; m.redo.push({g:g.id, i:prob.i, at:m.n+2});
+  if (!special){ b.classList.add('no'); [...$('answers').children].forEach((o,j) => { if (prob.list[j] === prob.ans) o.classList.add('ok'); }); }
   $('fb').textContent = 'Not quite. Let us work it out together.'; beep(220,.2,'sine',.06,.7);
   m.fix = {gid:g.id, i:prob.i}; fixMissed = prob;
   if (oneShot){ const o = oneShot; oneShot = null; fixResume = () => { $('math').hidden = true; o.fn(true); ui(); }; }          // prove the skill and the gathering still pays
   else if (rescue > 0) fixResume = () => { rescue--; if (rescue > 0) nextProb(); else comeHome(); };
   else fixResume = null;
   renderProgress(); renderStrip(); ui(); save();
-  setTimeout(openFix, 1300);
+  setTimeout(openFix, special ? 2600 : 1300);
 }
 let fixMissed = null, fixResume = null, fixProb = null, fixLock = false;
 const cap1 = t => t[0].toUpperCase() + t.slice(1), PLACE = ['ones','tens','hundreds','thousands','ten thousands','hundred thousands'];
@@ -1601,14 +1761,14 @@ function explain(p){
 function fixLocks(on){ $('mdone').hidden = on; $('mshow').hidden = on || !curGrade(); $('grade').disabled = on; $('subject').disabled = on; }
 function openFix(){
   const f = S.math.fix, g = f && allGrade(f.gid); if (!g || !g.skills[f.i]){ S.math.fix = null; fixLocks(false); nextProb(); return; }
-  const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], m0 = fixMissed, steps = m0 ? explain(m0) : null;
-  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mfix').hidden = false; fixLocks(true);
+  const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], m0 = fixMissed, steps = m0 ? (explain(m0) || (m0.why ? ['Why: ' + m0.why] : null)) : null;
+  $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mfix').hidden = false; fixLocks(true); setReading(false);
   $('fx-h').textContent = "Granny Dot: let's work it out"; $('fx-fb').textContent = '';
-  $('fx-steps').hidden = !m0; if (m0) $('fx-steps').textContent = (m0.pass ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (steps ? steps.join('\n') : m0.sol);
+  $('fx-steps').hidden = !m0; if (m0) setPass($('fx-steps'), (m0.pass && m0.pass.length < 260 ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (m0.why || !explain(m0) ? m0.sol + '\n' : '') + (steps ? steps.join('\n') : ''));
   $('fx-tip').textContent = 'How it works: ' + L[0] + (!steps && L[1] ? '\n\nExample: ' + L[1] : '');
-  let p; for (let k = 0; k < 10; k++){ p = sk[2](false); if (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || '')) break; }
+  let p; for (let k = 0; k < 30; k++){ p = sk[2](false); if (!p.multi && !p.partB && (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || ''))) break; }   // the retry is always a plain one-answer question
   p.list = choices(p); fixProb = p; fixLock = false;
-  $('fx-pass').hidden = !p.pass; $('fx-pass').textContent = p.pass || ''; $('fx-q').textContent = 'Now you try: ' + p.q;
+  setPass($('fx-pass'), p.pass); $('fx-q').textContent = 'Now you try: ' + p.q;
   fillAnswers($('fx-answers'), p, false, checkAnswer, 'fx-');
 }
 function checkAnswer(v, b){

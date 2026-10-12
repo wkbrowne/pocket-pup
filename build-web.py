@@ -16,6 +16,15 @@ if os.path.exists(JSC):
         os.unlink(t.name)
         if out != 'ok': sys.exit('index.html did not pass the syntax check, nothing was built.\n' + out)
     print('syntax ok')
+    # the shared learning engine: the copy inside the page must be the copy in vendor/, and the engine's own tests must pass
+    core = io.open('vendor/learn-core.js', encoding='utf-8').read().rstrip('\n')
+    a0 = src.index('/* <learn-core>'); a0 = src.index('\n', a0) + 1; b0 = src.index('/* </learn-core> */')
+    if src[a0:b0].rstrip('\n') != core: sys.exit('The engine inside index.html differs from vendor/learn-core.js. Run sync-core.py; never edit the engine in the page.')
+    with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as t:
+        t.write(core + '\nvar c = LearnCore.checks(), bad = Object.keys(c).filter(function (k) { return c[k] !== true; });\nfor (var s0 = 1; s0 <= 10; s0++) LearnCore.simulate({skills: 28, total: 300, seed: s0 * 31}).broke.forEach(function (b) { bad.push(b); });\nprint(bad.length ? "ENGINE FAILED: " + bad.join("; ") : "engine ok " + LearnCore.VERSION + ", " + Object.keys(c).length + " rules");')
+    out = subprocess.run([JSC, t.name], capture_output=True, text=True).stdout.strip(); os.unlink(t.name)
+    if not out.startswith('engine ok'): sys.exit('The learning engine did not pass its tests, nothing was built.\n' + out)
+    print(out)
 else: print('syntax not checked: jsc not found')
 font = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">'
 assert src.count(font) == 1

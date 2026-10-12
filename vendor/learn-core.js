@@ -28,7 +28,7 @@
  */
 var LearnCore = (function () {
   'use strict';
-  var VERSION = '1.1.0';
+  var VERSION = '1.1.1';
   var GAPS = [1, 3, 7, 14, 30, 60];      // REVIEW BY DAYS: a mastered skill comes back after 1 day, then 3, 7, 14, 30 and 60
   // SKILL BUILDER: the steps Granny Dot or the Guide takes, by why play stopped
   var STEPS = { miss: ['one'], intro: ['watch', 'two', 'all'], teach: ['watch', 'two', 'all', 'solo', 'solo'], refresh: ['watch', 'solo', 'solo'] };
@@ -37,7 +37,7 @@ var LearnCore = (function () {
     newPerDay: 4,       // ...then this many more a day (99 for no limit)
     early: true,        // while nothing started is shaky, the next new skill may come early
     inPlay: 8,          // ...but new skills wait while this many started skills are not yet mastered (99 for no limit)
-    liftBelow: 0.75,    // when fewer than this share of the last ten answers were right, a strong skill is asked and new skills wait (0 for never)
+    liftBelow: 0.75,    // when fewer than this share of the lane's last ten answers today were right, a strong skill is asked and new skills wait (0 for never)
     liftGap: 2,         // at least this many other questions between those
     retryAfter: 3,      // a missed skill comes back this many questions later
     retryGap: 2,        // at least this many other questions between retries (so at most one in three is a retry)
@@ -75,39 +75,46 @@ var LearnCore = (function () {
     function cfg(k) { var c = host.config || {}, v = c[k] === undefined ? DEFAULTS[k] : c[k]; return typeof v === 'function' ? v() : v; }
     function shuffle(a) { return a.map(function (v) { return [rnd(), v]; }).sort(function (x, y) { return x[0] - y[0]; }).map(function (v) { return v[1]; }); }
     function pickOf(a) { return a[Math.floor(rnd() * a.length)]; }
-    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; c.recent = c.recent || []; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
+    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; if (!c.recent || c.recent.length !== undefined) c.recent = {}; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
     function rec(group, id) { var s = host.state(), k = host.key(group, id); s.sk = s.sk || {}; return s.sk[k] || (s.sk[k] = { n: 0, r: 0, cs: 0, miss: 0 }); }
     function ids(group) { var all = host.skills(group) || []; return host.live ? all.filter(function (id) { return host.live(group, id) !== false; }) : all; }
     function has(group, id) { return (host.skills(group) || []).indexOf(id) >= 0; }
     function breadth(group, id) { var k = host.kinds ? host.kinds(group, id) : 6; return Math.min(rec(group, id).head ? 3 : 6, Math.max(1, k || 1)); }
     function card(group, id) { return '^' + group + '|' + id; }
     function uncard(c) { var cut = c.indexOf('|'); return { group: c.slice(1, cut), id: c.slice(cut + 1) }; }
+    // the last ten answers in a lane today (not counting first meetings), for the lift
+    function recent(lane) { var c = core(), r = c.recent[lane]; if (!r || r.d !== host.today()) r = c.recent[lane] = { d: host.today(), a: [] }; return r.a; }
     function prereq(group, id) { var p = host.prereq ? host.prereq(group, id) : null; return p && has(p.group, p.id) && !(p.group === group && p.id === id) ? p : null; }
 
     // WHICH SKILL NEXT.
     //  - A missed skill comes back a few questions later as the same kind ("One more try"); at most one question in three is a retry.
     //  - Each round deals every skill still being learned (a shaky one twice, unless that would crowd out the rest),
     //    every mastered skill whose review day has come, and any earlier skill being built up ("Warm-up").
-    //  - New skills join a few at a time, in teaching order, and wait while enough are already in play. The same skill is never asked twice in a row.
+    //  - New skills join a few at a time, in teaching order, and wait while enough are already in play. The same skill is never asked twice in a row
+    //    unless nothing else can be asked.
     //  - After a run of misses new skills wait, and now and then a skill she is good at is asked ("lift"), so most answers stay right.
     // Returns {group, id, tag, want}: tag is '', 'One more try', 'Review', 'Warm-up' or 'Stretch'; want is a kind to ask for, or null.
+    // Returns null when the group has nothing to ask (no skills, or none live).
     // A lift also carries lift: true; its tag is 'Review' for a mastered skill and '' otherwise.
+    // When a lift, or reviews brought forward, ask a mastered skill before its review day, the picker notes it for the answer
+    // that follows, and a miss there costs no slip: the review is pulled to tomorrow and the step is kept. A retry is not noted.
     function pick(group) {
       var c = core(), now = host.today(), all = ids(group), lane = host.lane(group);
+      if (!all.length) return null;
       var st = function (id) { return rec(group, id); }, rested = function (g, id) { return rec(g, id).rest === now; };
-      var out = function (g, id, tag, want) { c.lastS = id; return { group: g, id: id, tag: tag || '', want: want || null, noRecord: tag === 'Stretch' }; };
+      var out = function (g, id, tag, want, ahead) { c.lastS = id; var s0 = rec(g, id); c.ahead = ahead && s0.m && s0.due > now ? { g: g, s: id, n: c.n, d: now } : null; return { group: g, id: id, tag: tag || '', want: want || null, noRecord: tag === 'Stretch' }; };
       var sup = c.support.filter(function (x) { return host.lane(x.group) === lane && has(x.group, x.id); });
       // where a waiting retry lives: this group, or an earlier group's skill that is being built up
       var home = function (r) { if (r.g === group) return all.indexOf(r.s) >= 0 ? group : null; return sup.some(function (x) { return x.group === r.g && x.id === r.s; }) ? r.g : null; };
       c.retry = c.retry.filter(function (r) { return r && r.g && r.s && c.n - r.at < cfg('retryKeep'); });
       // room for new skills: started skills not yet mastered count against the limit
       var slots = cfg('inPlay') - all.filter(function (id) { var s2 = st(id); return s2.n > 0 && !s2.m; }).length;
-      var low = c.recent.length >= 6 && c.recent.filter(function (x) { return x; }).length / c.recent.length < cfg('liftBelow');
+      var rc = recent(lane), low = rc.length >= 6 && rc.filter(function (x) { return x; }).length / rc.length < cfg('liftBelow');
       // new skills wait after a run of misses, unless so few are in play that one hard skill would hold everything up
       var hold = low && slots <= cfg('inPlay') / 2;
       if (low && (c.sinceLift == null ? 99 : c.sinceLift) >= cfg('liftGap')) {
-        var strong = all.filter(function (id) { var s2 = st(id); return id !== c.lastS && s2.n > 0 && box(s2) >= 3 && !rested(group, id); }), going = strong.filter(function (id) { return !st(id).m; });
-        if (strong.length) { var e = pickOf(going.length ? going : strong), o = out(group, e, st(e).m ? 'Review' : '', null);
+        var strong = all.filter(function (id) { var s2 = st(id); return id !== c.lastS && s2.n > 0 && box(s2) >= 3 && !rested(group, id); }), going = strong.filter(function (id) { return !st(id).m; }), dueNow = strong.filter(function (id) { return st(id).m && st(id).due <= now; });
+        if (strong.length) { var e = pickOf(going.length ? going : dueNow.length ? dueNow : strong), o = out(group, e, st(e).m ? 'Review' : '', null, true);
           c.sinceLift = 0; c.gap = (c.gap || 0) + 1; if (c.deck[group]) c.deck[group] = c.deck[group].filter(function (x) { return x !== e; }); o.lift = true; return o; }
       }
       c.sinceLift = (c.sinceLift || 0) + 1;
@@ -123,8 +130,8 @@ var LearnCore = (function () {
       if (d.length && c.seenDay[group] !== now) { var room0 = hold ? 0 : Math.min(cfg('newPerDay') - (c.nd.c[group] || 0), slots) - unseen(d), at = 1;
         all.forEach(function (id) { if (room0 > 0 && !st(id).n && d.indexOf(id) < 0 && !rested(group, id)) { d.splice(Math.min(d.length, at), 0, id); at += 2; room0--; } }); }
       c.seenDay[group] = now;
-      // a skill mastered part-way through a round does not get its second turn: it waits for its review day
-      if (!c.fwd[group]) d = d.filter(function (x) { var s2 = cst(x); return !s2 || !(s2.m && s2.due > now); });
+      // a skill mastered part-way through a round does not get its second turn: it waits for its review day; a skill rested today is out too
+      d = d.filter(function (x) { var s2 = cst(x); if (!s2) { var u0 = uncard(x); return !rested(u0.group, u0.id); } return !rested(group, x) && (c.fwd[group] || !(s2.m && s2.due > now)); });
       if (!d.length) {
         c.fwd[group] = false;
         var started = all.filter(function (id) { return st(id).n > 0; }).length, room = Math.max(cfg('newStart') - started, cfg('newPerDay') - (c.nd.c[group] || 0)), shaky = [];
@@ -139,50 +146,54 @@ var LearnCore = (function () {
         c.support = c.support.filter(function (x) { return has(x.group, x.id) && !rec(x.group, x.id).m; });
         c.support.forEach(function (x) { if (host.lane(x.group) === lane && !rested(x.group, x.id)) d.push(card(x.group, x.id)); });
         if (shaky.length * 2 <= (d.length + shaky.length) / 3) d = d.concat(shaky);
-        // nothing left to learn and nothing due today: bring forward the reviews that are due soonest
-        if (!d.length) { d = all.filter(function (id) { return st(id).m && !rested(group, id); }).sort(function (x, y) { return (st(x).due || 0) - (st(y).due || 0); }).slice(0, 4); c.fwd[group] = d.length > 0; }
-        if (!d.length) d = all.filter(function (id) { return st(id).n > 0; });
-        if (!d.length) d = all.slice(0, Math.max(1, cfg('newStart')));
-        d = shuffle(d);
+        // nothing left to learn and nothing due today: bring the reviews forward, soonest first, every one before any comes round again
+        if (!d.length) { d = all.filter(function (id) { return st(id).m && !rested(group, id); }).sort(function (x, y) { return (st(x).due || 0) - (st(y).due || 0); }); c.fwd[group] = d.length > 0; }
+        if (!d.length) d = all.filter(function (id) { return st(id).n > 0 && !rested(group, id); });
+        if (!d.length) d = all.filter(function (id) { return !rested(group, id); }).slice(0, Math.max(1, cfg('newStart')));
+        if (!c.fwd[group]) d = shuffle(d);
         // open each round with something she is good at
         var si = -1; for (var k = 0; k < d.length && si < 0; k++) { var s3 = cst(d[k]); if (s3 && box(s3) >= 3) si = k; } if (si > 0) d.unshift(d.splice(si, 1)[0]);
       }
       var last = c.lastS, j = -1; for (var k2 = 0; k2 < d.length && j < 0; k2++) if ((mine(d[k2]) ? d[k2] : uncard(d[k2]).id) !== last) j = k2;
       var id;
-      if (j < 0 && all.length > 1) {      // only the skill just asked is left in the round: ask a different one that is in play
-        var others = all.filter(function (x) { return x !== last; }), inPlay = others.filter(function (x) { var s2 = st(x); return s2.n > 0 && !(s2.m && s2.due > now); });
+      var others = all.filter(function (x) { return x !== last && !rested(group, x); });
+      if (j < 0 && others.length) {      // only the skill just asked is left in the round: ask a different one that is in play
+        var inPlay = others.filter(function (x) { var s2 = st(x); return s2.n > 0 && !(s2.m && s2.due > now); });
         var begun = others.filter(function (x) { return st(x).n > 0; });
         id = pickOf(inPlay.length ? inPlay : begun.length ? begun : others.slice(0, Math.max(1, cfg('newStart'))));
       } else {
-        var cardNow = d.splice(Math.max(0, j), 1)[0];
-        if (!mine(cardNow)) { var u = uncard(cardNow); c.deck[group] = d; if (has(u.group, u.id)) { var wk0 = openKinds(rec(u.group, u.id))[0]; return out(u.group, u.id, 'Warm-up', wk0 && rnd() < cfg('wantOpen') ? wk0 : null); } id = pickOf(all); }
+        var cardNow = d.splice(Math.max(0, j), 1)[0]; if (cardNow == null) { c.deck[group] = d; return null; }
+        if (!mine(cardNow)) { var u = uncard(cardNow); c.deck[group] = d; if (has(u.group, u.id)) { var wk0 = openKinds(rec(u.group, u.id))[0]; return out(u.group, u.id, 'Warm-up', wk0 && rnd() < cfg('wantOpen') ? wk0 : null); } id = pickOf(others.length ? others : all); }
         else id = cardNow;
       }
       c.deck[group] = d;
       var s4 = st(id), wk = openKinds(s4)[0];
-      if (s4.m && box(s4) >= 3 && cfg('stretch') && host.harder && rnd() < cfg('stretch')) { var up = host.harder(group, id); if (up && has(up.group, up.id)) return out(up.group, up.id, 'Stretch', null); }
-      return out(group, id, s4.m ? 'Review' : '', wk && rnd() < cfg('wantOpen') ? wk : null);
+      if (s4.m && box(s4) >= 3 && cfg('stretch') && host.harder && rnd() < cfg('stretch')) { var up = host.harder(group, id); if (up && ids(up.group).indexOf(up.id) >= 0 && !rested(up.group, up.id)) return out(up.group, up.id, 'Stretch', null); }
+      return out(group, id, s4.m ? 'Review' : '', wk && rnd() < cfg('wantOpen') ? wk : null, c.fwd[group]);
     }
 
     // WHAT AN ANSWER MEANS. One answer goes into the record, and what comes back says what should happen next:
     //   'ok'      right: carry on
     //   'miss'    a single slip: a hint and a second try, then an explanation if needed
-    //   'intro'   not taught yet (a miss the first time the skill is met, or "I'm not sure yet"): teach it, with no penalty
+    //   'intro'   not taught yet (a miss the first time the skill is met, or "I'm not sure yet"): teach it, with no penalty.
+    //             On a mastered skill "I'm not sure yet" is a slip, like any other miss on it.
     //   'teach'   it keeps going wrong (two of the last three missed, or two rushed misses): the Skill Builder
     //   'refresh' a mastered skill has slipped twice: a refresher
     // Teaching happens only on one of these signs. A skill answered right from the start never gets a lesson.
     // how: {sig, ex, fast, unsure}: the kind of question, an example of it for the report, a rushed answer, "not sure".
     function record(group, id, ok, how) {
       how = how || {}; var c = core(), st = rec(group, id), first = !st.n, h = how.sig, now = host.today(); c.n++;
-      c.recent = c.recent.concat(ok && !how.unsure ? 1 : 0).slice(-10);
+      var ahead = !!(c.ahead && c.ahead.g === group && c.ahead.s === id && c.ahead.n === c.n - 1 && c.ahead.d === now && st.m && st.due > now); c.ahead = null;
       var again = function () { if ((st.miss || 0) < cfg('retryStop') && c.retry.length < cfg('retryCap') && !c.retry.some(function (r) { return r.g === group && r.s === id; })) c.retry.push({ g: group, s: id, at: c.n + cfg('retryAfter'), sig: h }); };
       // a missed kind has to be answered right twice before it is cleared; one example is kept for the grown-up report
       var open = function () { if (!h) return; st.w = st.w || {}; st.w[h] = 2; var ks = Object.keys(st.w); if (ks.length > 5) { delete st.w[ks[0]]; if (st.wx) delete st.wx[ks[0]]; } if (how.ex) (st.wx = st.wx || {})[h] = how.ex; };
       var tell = function (taught) { if (host.answered) host.answered(group, id, ok, taught); };
       if (first) c.nd.c[group] = (c.nd.c[group] || 0) + 1;
       st.n++;
-      if (how.unsure || (first && !ok)) { tell(true); st.cs = 0; st.box = Math.min(box(st), 1); if (how.unsure) st.hist = (st.hist || []).concat(0).slice(-3); open(); again(); return 'intro'; }
+      if (how.unsure && st.m) ok = false;
+      if ((how.unsure && !st.m) || (first && !ok)) { tell(true); st.cs = 0; st.box = Math.min(box(st), 1); if (how.unsure) st.hist = (st.hist || []).concat(0).slice(-3); open(); again(); return 'intro'; }
       tell(false); st.hist = (st.hist || []).concat(ok ? 1 : 0).slice(-3);
+      var rc = recent(host.lane(group)); rc.push(ok ? 1 : 0); if (rc.length > 10) rc.shift();
       if (ok) {
         st.r = (st.r || 0) + 1; st.miss = Math.max(0, (st.miss || 0) - 1); st.cs = (st.cs || 0) + 1; st.box = Math.min(4, box(st) + 1);
         if (h && st.w && st.w[h] && --st.w[h] <= 0) { delete st.w[h]; if (st.wx) delete st.wx[h]; }
@@ -194,6 +205,7 @@ var LearnCore = (function () {
         return 'ok';
       }
       st.miss = Math.min(6, (st.miss || 0) + 1); st.cs = 0; st.box = 0; open(); again(); if (how.fast) st.fast = (st.fast || 0) + 1;
+      if (ahead) { st.due = now + GAPS[0]; return 'miss'; }
       if (st.m) { st.rv = 0; st.due = now + GAPS[0]; st.slip = (st.slip || 0) + 1; if (st.slip >= 2) { st.m = false; st.slip = 0; st.hist = []; st.fast = 0; return 'refresh'; } }
       if (st.hist.filter(function (x) { return !x; }).length >= 2 || st.fast >= 2) { st.hist = []; st.fast = 0; return 'teach'; }
       return 'miss';
@@ -213,7 +225,7 @@ var LearnCore = (function () {
     function taught(group, id, mode, sig) {
       var c = core(), st = rec(group, id); st.miss = 0; st.hist = []; st.fast = 0;
       if (mode === 'teach') { if (sig && st.w) delete st.w[sig]; if (sig && st.wx) delete st.wx[sig];
-        c.retry = c.retry.filter(function (r) { return !(r.g === group && r.s === id); }); c.retry.push({ g: group, s: id, at: c.n + 8, sig: sig }); }
+        c.retry = c.retry.filter(function (r) { return !(r.g === group && r.s === id); }); while (c.retry.length >= cfg('retryCap')) c.retry.shift(); c.retry.push({ g: group, s: id, at: c.n + 8, sig: sig }); }
     }
     function rest(group, id) { rec(group, id).rest = host.today(); }
     // QUICK CHECK: a right answer gives a head start (two more right answers master it), not mastery, because one answer can be luck.
@@ -222,7 +234,7 @@ var LearnCore = (function () {
     function standing(group) {
       var now = host.today(), rows = (host.skills(group) || []).map(function (id) { return { id: id, st: rec(group, id) }; }), on = rows.filter(function (x) { return x.st.n > 0; });
       return { all: rows, mastered: rows.filter(function (x) { return x.st.m; }), due: rows.filter(function (x) { return x.st.m && x.st.due != null && x.st.due <= now; }),
-        fresh: rows.filter(function (x) { return !x.st.n; }), weak: on.filter(function (x) { return !x.st.m && (box(x.st) === 0 || (x.st.miss || 0) >= 2); }), strong: on.filter(function (x) { return x.st.m || box(x.st) >= 3; }) };
+        fresh: rows.filter(function (x) { return !x.st.n; }), weak: on.filter(function (x) { return x.st.m ? x.st.slip > 0 : box(x.st) === 0 || ((x.st.miss || 0) >= 2 && box(x.st) < 3); }), strong: on.filter(function (x) { return x.st.m ? !x.st.slip : box(x.st) >= 3; }) };
     }
     function reset(group) { var c = core(); if (group) { delete c.deck[group]; delete c.fwd[group]; c.retry = c.retry.filter(function (r) { return r.g !== group; }); } else { c.deck = {}; c.fwd = {}; c.retry = []; c.gap = 0; } }
 
@@ -276,6 +288,51 @@ var LearnCore = (function () {
     for (var q9 = 0; q9 < 12; q9++) { var p9 = E.pick('m4'); if (p9.lift) lifts++; seen[p9.id] = 1; E.record(p9.group, p9.id, !!p9.lift, { sig: 'y' }); }
     out['and new skills wait until answers are going right again'] = lifts === 4 && size(seen) === 5;
     H.fresh(); lifts = 0; for (var q10 = 0; q10 < 60; q10++) { var p10 = E.pick('m4'); if (p10.lift) lifts++; E.record(p10.group, p10.id, q10 % 5 > 0, { sig: 'g' + q10 }); } out['with four answers in five right there is no lift'] = lifts === 0;
+    H.fresh(); var begun = []; for (var q11 = 0; q11 < 6; q11++) { var p11 = E.pick('m4'); begun.push(p11.id); E.record('m4', p11.id, true, { sig: 's' }); }
+    var drawn = E.pick('m4'), tired = begun.filter(function (x) { return x !== drawn.id; })[0]; E.rest('m4', tired); E.record('m4', drawn.id, true, { sig: 's' }); var askedTired = 0;
+    for (var q12 = 0; q12 < 40; q12++) { var p12 = E.pick('m4'); if (p12.group === 'm4' && p12.id === tired) askedTired++; E.record(p12.group, p12.id, true, { sig: 's' + q12 }); }
+    out['a skill rested today is not dealt from the round already under way'] = askedTired === 0;
+    H.fresh(); for (var q13 = 0; q13 < 8; q13++) E.record('m4', 'm0', true, { sig: 'k' + q13 }); H.nextDay(); var stU = E.rec('m4', 'm0');
+    var u1 = E.record('m4', 'm0', false, { sig: 'u', unsure: true }), slip1 = stU.slip, due1 = stU.due, m1 = stU.m, u2 = E.record('m4', 'm0', false, { sig: 'u', unsure: true });
+    out['"not sure yet" on a mastered skill counts as a slip, and twice gives a refresher'] = u1 === 'miss' && slip1 === 1 && due1 === H.today() + 1 && m1 === true && u2 === 'refresh' && !stU.m;
+    var slump = function (g, id, n0) { for (var i = 0; i < n0; i++) E.record(g, id, false, { sig: 'k' }); }, liftsIn = function (g, n0) { var L = 0, fresh0 = 0; for (var i = 0; i < n0; i++) { var p0 = E.pick(g); if (p0.lift) L++; if (!E.rec(p0.group, p0.id).n) fresh0++; E.record(p0.group, p0.id, true, { sig: 'q' + i }); } return { lifts: L, fresh: fresh0 }; };
+    H.fresh(); for (var q14 = 0; q14 < 8; q14++) E.record('m4', 'm0', true, { sig: 'k' + q14 }); slump('e4', 'e0', 10); var r14 = liftsIn('m4', 12);
+    out['a slump in English neither lifts nor holds math'] = r14.lifts === 0 && r14.fresh > 0;
+    H.fresh(); for (var q15 = 0; q15 < 8; q15++) E.record('m4', 'm0', true, { sig: 'k' + q15 }); slump('m4', 'm1', 10); H.nextDay();
+    out["yesterday's slump does not lift today"] = liftsIn('m4', 3).lifts === 0;
+    H.fresh(); for (var q16 = 0; q16 < 8; q16++) E.record('m4', 'm0', true, { sig: 'k' + q16 }); for (var q17 = 1; q17 < 9; q17++) E.record('m4', 'm' + q17, false, { sig: 'k' });
+    out['first-time misses are taught, not counted as a slump'] = !E.pick('m4').lift;
+    var dueFirst = true; for (var sd = 1; sd <= 8; sd++) { var HD = fakeHost({ seed: sd * 53 }), ED = create(HD); for (var q18 = 0; q18 < 8; q18++) ED.record('m4', 'm0', true, { sig: 'k' + q18 }); HD.nextDay(); ED.record('m4', 'm0', true, { sig: 'r' }); for (var q19 = 0; q19 < 8; q19++) ED.record('m4', 'm1', true, { sig: 'k' + q19 }); HD.nextDay();
+      for (var q19b = 0; q19b < 10; q19b++) ED.record('m4', 'm2', false, { sig: 'k' }); var pl3 = ED.pick('m4'); if (!(pl3.lift === true && pl3.id === 'm1')) dueFirst = false; }
+    out['a lift prefers a mastered skill that is due over one that is not'] = dueFirst;
+    H.fresh(); for (var q20 = 0; q20 < 8; q20++) E.record('m4', 'm0', true, { sig: 'k' + q20 }); H.nextDay(); E.record('m4', 'm0', true, { sig: 'r' }); var stE = E.rec('m4', 'm0'), rv0 = stE.rv, due0 = stE.due; slump('m4', 'm1', 10);
+    var pe = E.pick('m4'), wasEarly = pe.lift === true && pe.id === 'm0' && due0 > H.today(); E.record('m4', 'm0', false, { sig: 'z' });
+    out['a miss on a review asked early costs no slip and keeps the review step'] = wasEarly && !stE.slip && stE.rv === rv0 && stE.due === H.today() + 1 && stE.m === true;
+    var H12 = fakeHost({ skills: 12 }), E12 = create(H12); H12.skills('m4').forEach(function (id) { for (var i = 0; i < 8; i++) E12.record('m4', id, true, { sig: 'k' + i }); }); H12.nextDay();
+    var seen12 = {}; for (var q21 = 0; q21 < 24; q21++) { var p21 = E12.pick('m4'); seen12[p21.id] = (seen12[p21.id] || 0) + 1; E12.record('m4', p21.id, true, { sig: 'r' + q21 }); }
+    out['with everything mastered, a day cycles through every skill before repeating'] = size(seen12) === 12 && Object.keys(seen12).every(function (k) { return seen12[k] === 2; });
+    var badStretch = 0, stretches = 0; [0, 1].forEach(function (way) { var HS = fakeHost({ config: { stretch: 1 } }), ES = create(HS); HS.harder = function (g, id) { return g === 'm4' && id === 'm0' ? { group: 'e4', id: 'e0' } : null; };
+      if (way === 0) HS.live = function (g, id) { return !(g === 'e4' && id === 'e0'); }; for (var q22 = 0; q22 < 8; q22++) ES.record('m4', 'm0', true, { sig: 'k' + q22 }); HS.nextDay(); if (way === 1) ES.rest('e4', 'e0');
+      for (var q23 = 0; q23 < 20; q23++) { var pS = ES.pick('m4'); if (pS.tag === 'Stretch') badStretch++; if (pS.id === 'm0') stretches++; if (!pS.noRecord) ES.record(pS.group, pS.id, true, { sig: 'q' + q23 }); } });
+    out['a stretch never lands on a harder skill that is kept out or rested'] = badStretch === 0 && stretches >= 2;
+    H.fresh(); for (var q25 = 0; q25 < 9; q25++) { E.record('m4', 'm' + q25, true, { sig: 'a' }); E.record('m4', 'm' + q25, false, { sig: 'b' }); } E.taught('m4', 'm11', 'teach', 'b');
+    out['after the Skill Builder the follow-up check is queued within the retry limit'] = E.retries().length === DEFAULTS.retryCap && E.retries().some(function (x) { return x.s === 'm11'; });
+    H.fresh(); for (var q26 = 0; q26 < 8; q26++) E.record('m4', 'm0', true, { sig: 'k' + q26 }); H.nextDay(); E.record('m4', 'm0', false, { sig: 'z' }); var inL = function (list) { return list.some(function (x) { return x.id === 'm0'; }); }, sA = E.standing('m4');
+    for (var q27 = 0; q27 < 3; q27++) E.record('m4', 'm0', true, { sig: 'f' + q27 }); var sB = E.standing('m4');
+    out['a mastered skill that has slipped stands as weak until the slip is forgiven'] = inL(sA.weak) && !inL(sA.strong) && inL(sB.strong) && !inL(sB.weak);
+    H.fresh(); for (var q28 = 0; q28 < 8; q28++) E.record('m4', 'm0', true, { sig: 'k' + q28 }); H.nextDay(); var vR = E.record('m4', 'm0', false, { sig: 'z' }), vT = null;
+    for (var q29 = 0; q29 < 30 && vT === null; q29++) { var p29 = E.pick('m4'); if (p29.id === 'm0' && p29.tag === 'One more try') vT = E.record('m4', 'm0', false, { sig: 'z' }); else E.record(p29.group, p29.id, true, { sig: 'q' + q29 }); }
+    out['a second slip on the "one more try" the same day still gives a refresher'] = vR === 'miss' && vT === 'refresh';
+    H.fresh(); for (var q30 = 0; q30 < 8; q30++) E.record('m4', 'm0', true, { sig: 'k' + q30 }); H.nextDay(); E.record('m4', 'm0', true, { sig: 'r' }); slump('m4', 'm1', 10); var pAhead = E.pick('m4'); H.nextDay(); E.record('m4', 'm0', false, { sig: 'z' });
+    out['an early ask noted yesterday does not waive a slip today'] = pAhead.lift === true && pAhead.id === 'm0' && E.rec('m4', 'm0').slip === 1;
+    var H2 = fakeHost({ skills: 2 }), E2 = create(H2); E2.rest('m4', 'm1'); var askedRested = 0; for (var q31 = 0; q31 < 15; q31++) { var p31 = E2.pick('m4'); if (p31.id === 'm1') askedRested++; E2.record(p31.group, p31.id, true, { sig: 'q' + q31 }); }
+    out['a rested skill is not asked even when it is the only other skill'] = askedRested === 0;
+    H.fresh(); for (var q32 = 0; q32 < 6; q32++) E.record('m4', 'm0', false, { sig: 'k' }); for (var q33 = 0; q33 < 3; q33++) E.record('m4', 'm0', true, { sig: 'k' }); var sO = E.standing('m4');
+    out['a skill never stands as both weak and strong'] = !(inL(sO.weak) && inL(sO.strong));
+    H.fresh(); for (var q34 = 0; q34 < 4; q34++) { var p34 = E.pick('m4'); E.record('m4', p34.id, true, { sig: 'q' }); } H.skills('m4').forEach(function (id) { E.rest('m4', id); });
+    out['when every skill is rested there is nothing to ask'] = E.pick('m4') === null;
+    H.fresh(); var live0 = H.live; H.live = function () { return false; }; var none = E.pick('m4'); H.live = live0;
+    out['a group with nothing to ask gives null, not an error'] = none === null && E.pick('no-such-group') === null;
     H.fresh(); var w = E.warmupFor('m4', 'm2'); out['a skill can point back to an earlier one that is not solid'] = !!w && w.group === 'm3' && w.id === 'p2' && E.warmupFor('m4', 'm9') === null;
     out['two of three warm-ups right means the trouble is in the new part'] = E.warmupDone('m4', 'm2', w, 2) === 'on' && !E.support().length;
     out['otherwise the earlier skill is built first and the harder one rests'] = E.warmupDone('m4', 'm2', w, 1) === 'back' && E.support().length === 1 && E.rec('m4', 'm2').rest === H.today();

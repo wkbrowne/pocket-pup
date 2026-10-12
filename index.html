@@ -104,6 +104,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 8px;max-width:50%}
 .grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .grades button.on{background:var(--sun)}
+.grades.subs{grid-template-columns:repeat(3,minmax(0,1fr))}
 #grade{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 10px;white-space:nowrap}
 #grade[disabled]{opacity:.5}
 .pinrow{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:15px;flex-wrap:wrap}
@@ -278,11 +279,12 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 
   <div class="modal" id="math" hidden>
     <div class="card wide">
-      <div class="row"><h2 id="math-h">Math for bones</h2><span style="display:flex;gap:6px;min-width:0"><select id="subject" aria-label="Subject"><option value="math">Math</option><option value="ela">English</option><option value="mix">Both</option></select><button id="grade" type="button" aria-label="Grade level. Locked: grown-ups can change it."></button></span></div>
+      <div class="row"><h2 id="math-h">Math for bones</h2><span style="display:flex;gap:6px;min-width:0"><select id="subject" aria-label="Subject" hidden><option value="math">Math</option><option value="ela">English</option><option value="mix">Both</option></select><button id="grade" type="button" aria-label="Grade level. Locked: grown-ups can change it."></button></span></div>
       <div class="stack" id="mgrown" hidden>
         <h2>Grown-ups only</h2>
         <p id="gr-p" style="font-size:15px"></p>
         <div class="grades" id="grades"></div>
+        <div class="grades subs" id="gr-subs"></div>
         <label class="pinrow"><span id="gr-l"></span><input id="gr-pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></label>
         <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:16px;letter-spacing:0"></label>
         <p id="gr-keyp" style="font-size:12px;margin:0;text-align:center"></p>
@@ -392,7 +394,7 @@ const TRICKS = [
 const STAGES = ['Puppy','Young dog','Grown dog'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, ela2:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
 // the grade and the grown-up code live apart from the save, so erasing the game does not unlock the grade
 const LOCK = 'pocketpup.lock'; let GL = {};
@@ -404,6 +406,7 @@ try { G = Object.assign(G, JSON.parse(localStorage.getItem(GAMES))); } catch(e){
 const saveGames = () => { try { localStorage.setItem(GAMES, JSON.stringify(G)); } catch(e){} };
 const newId = () => 'g' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36);
 const lockGrade = () => (GL.grades || {})[G.cur] || null;
+const lockSub = () => (GL.subjects || {})[G.cur] || 'mix';      // math and English together unless a grown-up chooses otherwise
 const setLockGrade = v => { if (!G.cur) return; (GL.grades = GL.grades || {})[G.cur] = v; saveLock(); };
 try { if (!G.list.length){ const raw = localStorage.getItem(KEY); if (raw){      // the single save from before named games becomes the first one
   const o = JSON.parse(raw), id = newId(); localStorage.setItem(gkey(id), raw); G.list.push({id, name:o.adopted && o.name ? o.name + "'s game" : 'My game'}); G.cur = id; saveGames();
@@ -419,6 +422,7 @@ function load(extra){
     for (const g of ['E3','E4','E5','E6']){ const old = mp.map((v,i) => sk[g+':'+i]); for (let i = 0; i < 12; i++) delete sk[g+':'+i]; old.forEach((v,i) => { if (v) sk[g+':'+mp[i]] = v; }); }
     S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; if (S.math.slate && E.test(S.math.slate.g || '')) S.math.slate = null; S.math.ela2 = 1; }
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
+  S.math.subject = lockSub();
   // time away: needs drift down gently, never to zero
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
   if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
@@ -1665,7 +1669,7 @@ function openMath(){ if (!S.adopted) return; session = 0; rescue = 0; oneShot = 
 function setGrade(id){ S.math.grade = id; setLockGrade(id); S.math.lastI = -1; S.math.streak = 0; showSkills = false; save(); renderMath(); }
 function renderMath(){
   const g = curGrade(), cur = S.math.grade && mathGrade(S.math.grade), gb = $('grade');
-  gb.hidden = !cur; if (cur) gb.textContent = cur.name + ' (locked)';
+  gb.hidden = !cur; if (cur) gb.textContent = cur.name + ' · ' + SUBS[S.math.subject || 'mix'] + ' (locked)';
   stopSpeak(); grown = null; setReading(false); $('slate').hidden = true; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('mgrown').hidden = true; $('subject').value = S.math.subject || 'math';
   $('mplay').hidden = !g || showSkills; $('mlist').hidden = !g || !showSkills; $('mshow').hidden = !g; $('mshow').textContent = showSkills ? 'Back to questions' : 'Show skills';
   if (!g){ $('mup').hidden = true; openGrown(); return; }
@@ -1673,18 +1677,20 @@ function renderMath(){
   if (showSkills) renderSkills(); else nextProb();
 }
 // No level cheating: the grade is chosen once with a grown-up code. After that it only moves up by mastering the grade, or with the code.
-let grown = null;
+let grown = null; const SUBS = {mix:'Math + English', math:'Math only', ela:'English only'};
 function openGrown(){
-  grown = {mode: GL.pin ? 'unlock' : 'setup', pick: S.math.grade || null}; stopSpeak(); setReading(false);
+  grown = {mode: GL.pin ? 'unlock' : 'setup', pick: S.math.grade || null, sub: S.math.subject || 'mix'}; stopSpeak(); setReading(false);
   for (const k of ['mplay','mlist','msum','slate','mlesson','mup','mshow']) $(k).hidden = true;
   $('mgrown').hidden = false; $('gr-pin').value = ''; $('gr-fb').textContent = ''; renderGrown();
 }
 function renderGrown(){
   const m = grown.mode, gb = $('grades'); gb.textContent = ''; gb.hidden = m === 'unlock';
   for (const x of GRADES){ const b = el('button', grown.pick === x.id ? 'on' : '', x.name); b.type = 'button'; b.id = 'grade-' + x.id; b.onclick = () => { grown.pick = x.id; renderGrown(); }; gb.appendChild(b); }
-  $('gr-p').textContent = m === 'unlock' ? 'The grade is locked so the questions stay at the right level. Enter the grown-up code to change it.'
-    : m === 'setup' ? 'Pick the grade your child is in at school, then choose a 4-digit code that only you know. After that the grade is locked. It moves up by itself when every math skill in the grade is mastered. Any other change needs your code.'
-    : 'Unlocked. Pick the grade. Type a new code only if you want to change the code.';
+  const sb = $('gr-subs'); sb.textContent = ''; sb.hidden = m === 'unlock';
+  for (const k of ['mix','math','ela']){ const b = el('button', grown.sub === k ? 'on' : '', SUBS[k]); b.type = 'button'; b.id = 'sub-' + k; b.onclick = () => { grown.sub = k; renderGrown(); }; sb.appendChild(b); }
+  $('gr-p').textContent = m === 'unlock' ? 'The grade and subjects are locked so the questions stay at the right level. Enter the grown-up code to change them.'
+    : m === 'setup' ? 'Pick the grade your child is in at school and the subjects to practice, then choose a 4-digit code that only you know. After that the grade is locked. It moves up by itself when every math skill in the grade is mastered. Any other change needs your code.'
+    : 'Unlocked. Pick the grade and the subjects. Type a new code only if you want to change the code.';
   $('gr-l').textContent = m === 'unlock' ? 'Grown-up code' : m === 'setup' ? 'Choose a 4-digit code' : 'New code (optional)';
   $('gr-keyrow').hidden = $('gr-keyp').hidden = m === 'unlock'; $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
   $('gr-keyp').textContent = 'Now and then your child types a sentence of their own. The tablet marks it by itself. With an Anthropic API key here, the sentence and its question are sent to Claude over the internet for better marking and feedback. Nothing else is sent. Leave it empty to keep everything on the tablet.';
@@ -1700,6 +1706,7 @@ $('gr-ok').onclick = () => {
   if (!grown.pick){ fb.textContent = 'Pick a grade first.'; return; }
   if (grown.mode === 'setup' ? !/^\d{4}$/.test(v) : v && !/^\d{4}$/.test(v)){ fb.textContent = 'The code must be 4 digits.'; return; }
   if (v) GL.pin = v; { const k = $('gr-key').value.trim(); if (/^none$/i.test(k)) delete GL.key; else if (k) GL.key = k; } const pick = grown.pick; $('gr-pin').blur();
+  if (grown.sub !== S.math.subject){ (GL.subjects = GL.subjects || {})[G.cur] = grown.sub; S.math.subject = grown.sub; S.math.mixNext = 'math'; S.math.slate = null; }
   if (pick === S.math.grade){ saveLock(); renderMath(); } else setGrade(pick);
 };
 $('gr-cancel').onclick = () => renderMath();
@@ -2004,8 +2011,8 @@ function makeProb(gid){
 function slate(){
   const m = S.math, key = m.grade + '|' + (m.subject || 'math');
   if (!m.slate || m.slate.key !== key || !m.slate.items || !m.slate.items.length){
-    const sub = m.subject === 'mix' ? (m.slateSub = m.slateSub === 'math' ? 'ela' : 'math') : (m.subject || 'math'), gid = (sub === 'ela' ? 'E' : '') + m.grade;     // and so do whole slates
-    m.slate = {key, g:gid, cur:0, paid:false, items:[]}; for (let k = 0; k < SLATE_N; k++) m.slate.items.push(makeProb(gid)); }
+    const gidOf = k => ((m.subject === 'mix' ? k % 2 === 1 : m.subject === 'ela') ? 'E' : '') + m.grade;     // and a slate takes turns too: math, English, math, English
+    m.slate = {key, g:gidOf(0), cur:0, paid:false, items:[]}; for (let k = 0; k < SLATE_N; k++) m.slate.items.push(makeProb(gidOf(k))); }
   return m.slate;
 }
 function nextProb(){
@@ -3329,7 +3336,7 @@ $('adoptform').addEventListener('submit', e => {
 $('cancel').onclick = () => { $('adopt').hidden = true; };
 $('reset').onclick = () => {
   if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all dogs, bones and gear'; return; }
-  const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = lockGrade(); scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
+  const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = lockGrade(); S.math.subject = lockSub(); scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
 };
 
 /* ---------- main loop ---------- */

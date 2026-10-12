@@ -117,6 +117,9 @@ select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#
 #grade[disabled]{opacity:.5}
 .pinrow{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:15px;flex-wrap:wrap}
 .pinrow input{font:inherit;font-weight:800;font-size:22px;letter-spacing:.3em;text-align:center;width:150px;border:2px solid var(--ink);border-radius:12px;padding:6px;background:#fff;color:var(--ink)}
+.answers.numpad{grid-template-columns:repeat(3,1fr);max-width:340px;margin:0 auto;width:100%}
+.answers .numdisp{grid-column:1/-1;min-height:48px;background:#fff;border:2px solid var(--ink);border-radius:12px;font-family:var(--display);font-size:30px;text-align:center;line-height:48px;letter-spacing:.05em}
+.answers.numpad button{padding:10px 0}
 .answers.typed textarea{grid-column:1/-1;font:inherit;font-weight:700;font-size:18px;line-height:1.35;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;background:#fff;color:var(--ink);resize:none;width:100%;box-sizing:border-box}
 .modal textarea{-webkit-user-select:text;user-select:text}
 .answers .part.note{font-weight:700;font-size:14px;text-align:center}
@@ -402,7 +405,7 @@ const TRICKS = [
 const STAGES = ['Puppy','Young dog','Grown dog'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, ela3:1, g4:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
 // the grade and the grown-up code live apart from the save, so erasing the game does not unlock the grade
 const LOCK = 'pocketpup.lock'; let GL = {};
@@ -423,12 +426,15 @@ try { if (!G.list.length){ const raw = localStorage.getItem(KEY); if (raw){     
 function load(extra){
   try { const raw = G.cur && localStorage.getItem(gkey(G.cur)); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
   if (extra && extra.S) S = Object.assign(fresh(), extra.S);
-  const oldEla = S.math && !S.math.ela2;
+  const oldEla = S.math && !S.math.ela2, old3 = S.math && !S.math.ela3, old4 = S.math && !S.math.g4;
   S.math = Object.assign(fresh().math, S.math); S.mode = 'both'; S.trophies = S.trophies || []; S.breed = S.breed || 'lab'; S.sex = S.sex || 'girl';
   if (oldEla){      // listening and essay skills joined the English lists for grades 3 and up: move saved mastery to the new places
     const mp = [0,1,3,4,5,6,8,9,10,11], sk = S.math.sk, E = /^E[3-6]/;
     for (const g of ['E3','E4','E5','E6']){ const old = mp.map((v,i) => sk[g+':'+i]); for (let i = 0; i < 12; i++) delete sk[g+':'+i]; old.forEach((v,i) => { if (v) sk[g+':'+mp[i]] = v; }); }
     S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; if (S.math.slate && E.test(S.math.slate.g || '')) S.math.slate = null; S.math.ela2 = 1; }
+  { const sk = S.math.sk, clear = E => { S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; S.math.slate = null; };
+    if (old3){ for (const g of ['E3','E4','E5','E6']) for (let i = 11; i >= 3; i--) if (sk[g+':'+i]){ sk[g+':'+(i+1)] = sk[g+':'+i]; delete sk[g+':'+i]; } clear(/^E[3-6]/); S.math.ela3 = 1; }      // a fill-the-gap reading skill joined English at place 3
+    if (old4){ const mp = [0,2,3,5,6,7,9,11,12,13,15,16,17,20], was = mp.map((v,i) => sk['4:'+i]); for (let i = 0; i < 25; i++) delete sk['4:'+i]; was.forEach((v,i) => { if (v) sk['4:'+mp[i]] = v; }); clear(/^4$/); S.math.g4 = 1; } }      // eleven skills joined Grade 4 math
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
   S.math.subject = lockSub();
   // time away: needs drift down gently, never to zero
@@ -1170,6 +1176,27 @@ const pickFrom = (q, ans, opts, keep) => ({q, sol:'The answer is ' + fmt(ans) + 
 const cmp = (la, lb, a, b) => pickFrom(la + '  ?  ' + lb, a < b ? '<' : a > b ? '>' : '=', ['<','>','='], true);
 const addsub = (a, b) => Math.random() < .5 ? eq(fmt(a)+PL+fmt(b), r3(a+b)) : eq(fmt(r3(a+b))+M+fmt(b), a);
 const fr = () => { const d = pickOf([2,3,4,5,6,8]); return [ri(1,d-1), d]; };
+// word problems, measurement, data, geometry and reasoning: the parts of the state test that are more than arithmetic
+const KIDS = ['Ana','Ben','Chloe','Dev','Elena','Finn','Grace','Hiro','Isla','Jamal','Kira','Leo','Maya','Noor','Omar','Priya'];
+const wp = (q, ans, extra, why) => { const p = ask(q, ans, extra); p.why = why; return p; };
+const pf = (q, ans, opts, why, pass) => { const p = pickFrom(q, ans, opts); p.why = why; if (pass) p.pass = pass; return p; };
+const mixed = (w, n, d) => n ? (w ? w + ' ' : '') + F(n, d) : String(w);
+const GEO = [
+  ["Which describes parallel lines?", "lines that never cross and stay the same distance apart", ["lines that cross to make square corners", "lines that cross at one point", "lines that curve"], "Parallel lines run side by side like train tracks."],
+  ["Which describes perpendicular lines?", "lines that cross to make right angles", ["lines that never cross", "lines that curve toward each other", "lines that are the same length"], "Perpendicular lines meet at square corners, like the corner of a page."],
+  ["A triangle has one angle of 90°. What kind of triangle is it?", "a right triangle", ["an acute triangle", "an obtuse triangle", "an equal triangle"], "A 90° angle is a right angle, and a triangle with one is a right triangle."],
+  ["A triangle has one angle greater than 90°. What kind of triangle is it?", "an obtuse triangle", ["a right triangle", "an acute triangle", "a square triangle"], "An angle wider than 90° is obtuse."],
+  ["All three angles of a triangle are less than 90°. What kind of triangle is it?", "an acute triangle", ["a right triangle", "an obtuse triangle", "a straight triangle"], "Angles smaller than 90° are acute."],
+  ["How many lines of symmetry does a square have?", "4", ["1", "2", "8"], "A square folds onto itself up and down, side to side, and along both diagonals."],
+  ["How many lines of symmetry does a rectangle that is not a square have?", "2", ["1", "4", "0"], "It folds onto itself up and down and side to side, but not along the diagonals."],
+  ["How many lines of symmetry does a triangle with three equal sides have?", "3", ["1", "2", "6"], "There is one fold line through each corner."],
+  ["Which shape always has four right angles?", "a rectangle", ["a rhombus", "a trapezoid", "a triangle"], "Every rectangle has four square corners. A rhombus or trapezoid may not."],
+  ["Which shape always has exactly one pair of parallel sides?", "a trapezoid", ["a square", "a rectangle", "a rhombus"], "Squares, rectangles and rhombuses have two pairs of parallel sides."],
+  ["Which shape has four equal sides but may have no right angles?", "a rhombus", ["a rectangle", "a trapezoid", "a right triangle"], "A rhombus has four equal sides. It is only a square if its corners are right angles."],
+  ["A line that goes on forever in one direction from a starting point is called a", "ray", ["line segment", "point", "angle"], "A ray has one endpoint and goes on forever the other way."],
+  ["A part of a line with two endpoints is called a", "line segment", ["ray", "angle", "plane"], "A line segment starts at one point and stops at another."],
+  ["Which capital letter has a line of symmetry?", "A", ["F", "G", "J"], "Fold the letter A down the middle and the two halves match."],
+  ["How many pairs of parallel sides does a rectangle have?", "2", ["0", "1", "4"], "The top and bottom are parallel, and so are the left and right sides."]];
 const GRADES = [
   {id:'K', name:'Kindergarten', skills:[
     ['K.CC.A.2', 'Count on from any number', h => { const a = ri(1, h ? 98 : 18); return ask('What number comes after ' + a + '?', a+1); }],
@@ -1217,22 +1244,77 @@ const GRADES = [
   ]},
   {id:'4', name:'Grade 4', skills:[
     ['4.NBT.B.4', 'Add and subtract multi-digit numbers', () => addsub(ri(1200,6400), ri(1100,3500))],
+    ['4.NBT.A.2', 'Place value: read and compare large numbers', () => { const t = ri(0,3), ds = shuffle([1,2,3,4,5,6,7,8,9]).slice(0,5), n = +ds.join('');
+      if (t === 0){ const k = ri(0,3), v = ds[k]*Math.pow(10, 4-k); return wp('What is the value of the digit ' + ds[k] + ' in ' + fmt(n) + '?', v, [ds[k], v/10, v*10], 'The ' + ds[k] + ' is in the ' + PLACE[4-k] + ' place, so it is worth ' + fmt(v) + '.'); }
+      if (t === 1){ const d = ri(2,9); return wp('In ' + fmt(d*1100) + ', the ' + d + ' in the thousands place is worth how many times as much as the ' + d + ' in the hundreds place?', 10, [100, d, 1000], 'Each place is worth 10 times the place to its right.'); }
+      if (t === 2){ const parts = ds.map((x,i) => x*Math.pow(10, 4-i)); return wp('What number is ' + parts.map(fmt).join(' + ') + '?', n, [+ds.slice().reverse().join(''), n+1000], 'Each part fills one place: ' + fmt(n) + '.'); }
+      const a = ri(10000,98000), b = a + pickOf([-900,-90,90,900,0]); return cmp(fmt(a), fmt(b), a, b); }],
     ['4.NBT.A.3', 'Round multi-digit numbers', () => { const p = pickOf([10,100,1000]), a = ri(1001,98999), f = Math.floor(a/p)*p; return ask('Round ' + fmt(a) + ' to the nearest ' + fmt(p) + '.', Math.round(a/p)*p, [f, f+p]); }],
     ['4.NBT.B.5', 'Multiply by a one-digit number', h => { const a = ri(12, h ? 999 : 99), b = ri(2,9); return eq(fmt(a)+X+b, a*b); }],
+    ['4.OA.A.2', 'Word problems: times as many', () => { const [A, B] = shuffle(KIDS), th = pickOf(['stickers','marbles','shells','cards','beads']), a = ri(3,12), k = ri(2,8);
+      return Math.random() < .5 ? wp(A + ' has ' + a + ' ' + th + '. ' + B + ' has ' + k + ' times as many. How many ' + th + ' does ' + B + ' have?', a*k, [a+k, a*k-a], k + ' times as many means multiply: ' + k + X + a + ' = ' + a*k + '.')
+        : wp(B + ' has ' + a*k + ' ' + th + '. That is ' + k + ' times as many as ' + A + ' has. How many ' + th + ' does ' + A + ' have?', a, [a*k-k, a*k+k, k], B + ' has ' + k + ' times as many, so divide: ' + a*k + D + k + ' = ' + a + '.'); }],
     ['4.NBT.B.5', 'Multiply two two-digit numbers', h => { const a = ri(11, h ? 49 : 25), b = ri(11, h ? 39 : 20); return eq(a+X+b, a*b, [a*b+a, a*b-b]); }],
     ['4.NBT.B.6', 'Divide by a one-digit number', h => { const b = ri(2,9), c = ri(11, h ? 240 : 60); return eq(fmt(b*c)+D+b, c); }],
     ['4.OA.A.3', 'Division with remainders', () => { const b = ri(3,9), c = ri(2,9), r = ri(1,b-1); return ask('What is the remainder when ' + (b*c+r) + ' is divided by ' + b + '?', r, [c, 0]); }],
+    ['4.OA.A.3', 'Multi-step word problems', () => { const A = pickOf(KIDS), t = ri(0,5);
+      if (t === 0){ const n = ri(3,8), k = ri(6,12), g = ri(5, n*k-10); return wp(A + ' buys ' + n + ' packs of stickers with ' + k + ' stickers in each pack, then gives ' + g + ' stickers away. How many stickers are left?', n*k-g, [n*k, n*k+g, n+k-g], 'First multiply: ' + n + X + k + ' = ' + n*k + '. Then subtract: ' + n*k + M + g + ' = ' + (n*k-g) + '.'); }
+      if (t === 1){ const r = ri(6,14), c = ri(8,15), e = ri(4,30); return wp('A theater has ' + r + ' rows of ' + c + ' seats. ' + e + ' seats are empty. How many seats are filled?', r*c-e, [r*c, r*c+e], 'Seats in all: ' + r + X + c + ' = ' + r*c + '. Filled seats: ' + r*c + M + e + ' = ' + (r*c-e) + '.'); }
+      if (t === 2){ const v = ri(4,9), q = ri(4,12), rem = ri(1,v-1), s = v*q+rem; return wp(s + ' students are going on a trip. Each van holds ' + v + ' students. How many vans are needed so that every student has a seat?', q+1, [q, rem, q+2], s + D + v + ' = ' + q + ' with ' + rem + ' left over. The ' + rem + ' left over still need a van, so ' + (q+1) + ' vans are needed.'); }
+      if (t === 3){ const w = ri(4,9), a = ri(5,12), sp = ri(8, w*a-5); return wp(A + ' saves $' + a + ' each week for ' + w + ' weeks and then spends $' + sp + ' on a gift. How many dollars are left?', w*a-sp, [w*a, w*a+sp], 'Saved: ' + w + X + a + ' = ' + w*a + '. Left: ' + w*a + M + sp + ' = ' + (w*a-sp) + '.'); }
+      if (t === 4){ const n1 = ri(2,6), p1 = ri(3,9), n2 = ri(2,6), p2 = ri(2,8); return wp(A + ' buys ' + n1 + ' notebooks for $' + p1 + ' each and ' + n2 + ' pens for $' + p2 + ' each. How many dollars does ' + A + ' spend in all?', n1*p1+n2*p2, [n1*p1, (n1+n2)*(p1+p2), n1+p1+n2+p2], 'Notebooks: ' + n1 + X + p1 + ' = ' + n1*p1 + '. Pens: ' + n2 + X + p2 + ' = ' + n2*p2 + '. Together: ' + n1*p1 + PL + n2*p2 + ' = ' + (n1*p1+n2*p2) + '.'); }
+      const k = ri(4,9), q = ri(5,12), rem = ri(1,k-1), n = k*q+rem; return wp('A baker has ' + n + ' cookies and puts ' + k + ' in each bag. How many bags can be completely filled?', q, [q+1, rem], n + D + k + ' = ' + q + ' with ' + rem + ' left over. The ' + rem + ' left over do not fill a bag, so ' + q + ' bags are full.'); }],
     ['4.OA.B.4', 'Factors and prime numbers', () => { if (Math.random() < .5){ const n = pickOf([12,18,20,24,28,30,36,40,42,48]), all = []; for (let i = 3; i <= n/2; i++) all.push(i);
         return pickFrom('Which number is a factor of ' + n + '?', pickOf(all.filter(i => n % i === 0)), shuffle(all.concat([n/2+1, n/2+2]).filter(i => n % i)).slice(0,3)); }
       return pickFrom('Which number is prime?', pickOf([11,13,17,19,23,29,31,37,41,43,47]), shuffle([9,15,21,25,27,33,35,39,45,49,51]).slice(0,3)); }],
+    ['4.OA.C.5', 'Number patterns', () => { const t = ri(0,3), a = ri(1,9), d = ri(2,9);
+      if (t === 0){ const n = ri(5,8); return wp('A pattern starts at ' + a + ' and follows the rule "add ' + d + '". What is the ' + n + 'th number in the pattern?', a+d*(n-1), [a+d*n, a+d*(n-2), d*n], 'Write it out: ' + Array.from({length:n}, (x,i) => a+d*i).join(', ') + '.'); }
+      if (t === 1){ const seq = [0,1,2,3].map(i => a+d*i); return pf('What is the rule for this pattern?  ' + seq.join(', ') + ', ...', 'add ' + d, ['add ' + (d+1), 'multiply by ' + d, 'add ' + a].filter(x => x !== 'add ' + d), 'Each number is ' + d + ' more than the one before it.'); }
+      if (t === 2){ const s = ri(1,4), seq = [s, s*2, s*4, s*8]; return wp('What number comes next?  ' + seq.join(', ') + ', ...', s*16, [s*8+s*4, s*10, s*12], 'Each number is double the one before it: ' + s*8 + X + '2 = ' + s*16 + '.'); }
+      const odd = Math.random() < .5; return pf('A pattern starts at ' + (odd ? 1 : 2) + ' and follows the rule "add 2". Which statement is true about every number in the pattern?', 'Every number is ' + (odd ? 'odd' : 'even') + '.', ['Every number is ' + (odd ? 'even' : 'odd') + '.', 'The numbers switch between odd and even.', 'Every number is a multiple of 5.'], 'Adding 2 to an ' + (odd ? 'odd number gives another odd' : 'even number gives another even') + ' number.'); }],
     ['4.NF.A.1', 'Equivalent fractions', () => { const [n,d] = fr(), k = ri(2,4); return ask(F(n,d) + ' = ?/' + d*k, n*k, [n+k, n]); }],
     ['4.NF.A.2', 'Compare fractions with different denominators', () => { const [a,b] = fr(), [c,d] = fr(); return cmp(F(a,b), F(c,d), a*d, c*b); }],
     ['4.NF.B.3', 'Add and subtract fractions with like denominators', () => { const d = pickOf([5,6,8,10,12]), a = ri(1,d-2), b = ri(1,d-1-a);
       return Math.random() < .5 ? pickFrom(F(a,d)+PL+F(b,d)+' = ?', F(a+b,d), [F(a+b,2*d), F(a+b+1,d), F(a*b+1,d+1)]) : pickFrom(F(a+b,d)+M+F(b,d)+' = ?', F(a,d), [F(a,2*d), F(a+1,d), F(a+2*b,d)]); }],
+    ['4.NF.B.3', 'Mixed numbers', () => { const d = pickOf([4,5,6,8,10]), t = ri(0,2);
+      if (t === 0){ const w = ri(1,4), n = ri(1,d-1), imp = w*d+n; return pf(F(imp,d) + ' = ?', mixed(w,n,d), [mixed(w+1,n,d), mixed(n,w,d), mixed(w,d-n,d), mixed(w+2,n,d)].filter(x => x !== mixed(w,n,d)), d + ' ' + (d === 1 ? 'piece makes' : 'pieces make') + ' one whole. ' + imp + D + d + ' = ' + w + ' with ' + n + ' left over, so ' + F(imp,d) + ' = ' + mixed(w,n,d) + '.'); }
+      const w1 = ri(1,5), w2 = ri(1,4), n1 = ri(1,d-1), n2 = ri(1,d-1);
+      if (t === 1){ const s = n1+n2, W = w1+w2+Math.floor(s/d), N = s % d; return pf(mixed(w1,n1,d) + PL + mixed(w2,n2,d) + ' = ?', mixed(W,N,d), [mixed(w1+w2,(s % d) || 1,d === 4 ? 8 : 2*d), mixed(W+1,N,d), mixed(w1+w2, Math.abs(n1-n2) || 1, d), mixed(W+2,N,d)].filter(x => x !== mixed(W,N,d)), 'Add the wholes: ' + w1 + PL + w2 + ' = ' + (w1+w2) + '. Add the fractions: ' + F(n1,d) + PL + F(n2,d) + ' = ' + F(s,d) + (s >= d ? ', which is 1 whole and ' + (N ? F(N,d) : 'nothing') + ' more' : '') + '.'); }
+      const a = Math.max(n1,n2), b = Math.min(n1,n2), W = w1+w2; return pf(mixed(W,a,d) + M + mixed(w2,b,d) + ' = ?', mixed(w1,a-b,d), [mixed(w1+1,a-b,d), mixed(w1,a+b > d ? 1 : a+b,d), mixed(W,a-b,d), mixed(w1+2,a-b,d)].filter(x => x !== mixed(w1,a-b,d)), 'Subtract the wholes: ' + W + M + w2 + ' = ' + w1 + '. Subtract the fractions: ' + F(a,d) + M + F(b,d) + ' = ' + (a-b ? F(a-b,d) : '0') + '.'); }],
     ['4.NF.B.4', 'Multiply a fraction by a whole number', () => { const [n,d] = fr(), w = ri(2,5); return pickFrom(w+X+F(n,d)+' = ?', F(w*n,d), [F(w*n,w*d), F(w+n,d), F(n,w*d)]); }],
     ['4.NF.C.6', 'Write fractions as decimals', () => { if (Math.random() < .5){ const n = ri(1,9); return eq(F(n,10), n/10, [n/100, n]); } const n = ri(11,99); return eq(F(n,100), n/100, [n/10, n/1000]); }],
     ['4.NF.C.7', 'Compare decimals', () => { const a = ri(1,9)/10, b = Math.random() < .2 ? a : ri(1,99)/100; return cmp(fmt(a), b === a ? fmt(a)+'0' : fmt(b), a, b); }],
+    ['4.MD.A.1', 'Convert units of measure', () => { const [big, small, f] = pickOf([['feet','inches',12],['yards','feet',3],['pounds','ounces',16],['hours','minutes',60],['minutes','seconds',60],['kilometers','meters',1000],['meters','centimeters',100],['kilograms','grams',1000],['liters','milliliters',1000],['gallons','quarts',4]]), n = ri(2, f > 100 ? 9 : 8);
+      return wp('How many ' + small + ' are in ' + n + ' ' + big + '?', n*f, [n+f, n*10, f], 'There are ' + fmt(f) + ' ' + small + ' in 1 ' + big.replace(/s$/, '').replace('feet','foot') + '. ' + n + X + fmt(f) + ' = ' + fmt(n*f) + '.'); }],
+    ['4.MD.A.2', 'Measurement word problems', () => { const A = pickOf(KIDS), t = ri(0,3);
+      if (t === 0){ const h = ri(1,10), m = pickOf([5,10,15,20,25,30,35,40]), dur = pickOf([25,35,45,50,55]), tot = m+dur, eh = h + Math.floor(tot/60), em = tot % 60, tm = (x,y) => x + ':' + (y < 10 ? '0' : '') + y;
+        return pf('Practice starts at ' + tm(h,m) + ' and lasts ' + dur + ' minutes. What time does it end?', tm(eh,em), [tm(h,(m+dur) % 60), tm(eh+1,em), tm(eh,(em+10) % 60)].filter(x => x !== tm(eh,em)), 'Count on from ' + tm(h,m) + ': ' + dur + ' minutes later is ' + tm(eh,em) + '. Remember that 60 minutes make a new hour.'); }
+      if (t === 1){ const a = ri(5,19)*25, b = ri(3,15)*25, s = (a+b)/100; return wp(A + ' buys a sandwich for $' + (a/100).toFixed(2) + ' and a drink for $' + (b/100).toFixed(2) + '. How many dollars does ' + A + ' spend?', s, [s+1, (a-b)/100 > 0 ? (a-b)/100 : s+.5, s+.1], 'Line up the decimal points and add: ' + (a/100).toFixed(2) + PL + (b/100).toFixed(2) + ' = ' + s.toFixed(2) + '.'); }
+      if (t === 2){ const ft = ri(2,6), cut = ri(5,20); return wp(A + ' has a ribbon ' + ft + ' feet long and cuts off ' + cut + ' inches. How many inches of ribbon are left?', ft*12-cut, [ft-cut > 0 ? ft-cut : ft*12, ft*12, ft*10-cut], 'Change feet to inches first: ' + ft + X + '12 = ' + ft*12 + ' inches. Then ' + ft*12 + M + cut + ' = ' + (ft*12-cut) + '.'); }
+      const L = ri(2,5), ml = ri(2,9)*50; return wp('A jug holds ' + L + ' liters of water. ' + A + ' pours out ' + ml + ' milliliters. How many milliliters are left?', L*1000-ml, [L*100-ml > 0 ? L*100-ml : L*1000, L*1000+ml, L*1000], 'Change liters to milliliters first: ' + L + X + '1,000 = ' + fmt(L*1000) + '. Then ' + fmt(L*1000) + M + ml + ' = ' + fmt(L*1000-ml) + '.'); }],
     ['4.MD.A.3', 'Area and perimeter: find the missing side', () => { const a = ri(2,9), b = ri(2,12); return ask('A rectangle has area ' + a*b + ' and width ' + a + '. What is its length?', b, [a*b-a]); }],
+    ['4.MD.B.4', 'Line plots', () => { const vals = [[1,4],[1,2],[3,4],[1,1]], cnt = vals.map(() => ri(1,5)), lab = v => v[1] === 1 ? '1' : F(v[0],v[1]), tot = cnt.reduce((a,b) => a+b, 0), th = pickOf(['beetles','leaves','seeds','worms']);
+      const plot = '**Lengths of ' + tot + ' ' + th + ', in inches**\n' + vals.map((v,i) => lab(v) + '   ' + 'X '.repeat(cnt[i])).join('\n') + '\nEach X stands for one of the ' + th + '.', t = ri(0,3);
+      if (t === 0){ const i = ri(0,3); const p = wp('How many of the ' + th + ' are ' + lab(vals[i]) + ' inch long?', cnt[i], [tot, cnt[(i+1) % 4]], 'Count the X marks in the row for ' + lab(vals[i]) + '.'); p.pass = plot; return p; }
+      if (t === 1){ const p = wp('How many of the ' + th + ' are 1/2 inch long or longer?', cnt[1]+cnt[2]+cnt[3], [cnt[1], tot, cnt[2]+cnt[3]], 'Add the rows for 1/2, 3/4 and 1: ' + cnt[1] + PL + cnt[2] + PL + cnt[3] + '.'); p.pass = plot; return p; }
+      if (t === 2) return pf('What is the difference in length between the longest and the shortest of the ' + th + '?', '3/4 inch', ['1/4 inch', '1/2 inch', '1 1/4 inches'], 'The longest is 1 inch, which is 4/4. The shortest is 1/4. 4/4 − 1/4 = 3/4.', plot);
+      const p = wp('How many more of the ' + th + ' are in the longest row than in the shortest row of X marks?', Math.max(...cnt)-Math.min(...cnt), [Math.max(...cnt), tot], 'The most X marks in a row is ' + Math.max(...cnt) + ' and the fewest is ' + Math.min(...cnt) + '. Subtract.'); p.pass = plot; return p; }],
+    ['4.MD.C.7', 'Angles', () => { const t = ri(0,3);
+      if (t === 0){ const [fr2, deg] = pickOf([['1/4',90],['1/2',180],['3/4',270]]); return wp('An angle turns through ' + fr2 + ' of a full circle. How many degrees is the angle?', deg, [360, deg/2, 100], 'A full circle is 360 degrees. ' + fr2 + ' of 360 is ' + deg + '.'); }
+      if (t === 1){ const whole = pickOf([90,120,135,150,180]), a = ri(2, whole/5-2)*5; return wp('A ' + whole + '° angle is split into two smaller angles. One of them measures ' + a + '°. How many degrees is the other?', whole-a, [whole+a, 180-a === whole-a ? 90-a : 180-a], 'The two parts add up to the whole angle: ' + whole + M + a + ' = ' + (whole-a) + '.'); }
+      if (t === 2){ const a = ri(2,8)*5, b = ri(2,9)*5; return wp('Two angles that share a side measure ' + a + '° and ' + b + '°. How many degrees is the angle they make together?', a+b, [Math.abs(a-b) || 5, 180-a-b > 0 ? 180-a-b : a+b+10], 'Angles next to each other add: ' + a + PL + b + ' = ' + (a+b) + '.'); }
+      const deg = pickOf([35,60,85,90,95,120,155,180]), kind = deg < 90 ? 'acute' : deg === 90 ? 'right' : deg < 180 ? 'obtuse' : 'straight'; return pf('What kind of angle measures ' + deg + '°?', kind, ['acute','right','obtuse','straight'].filter(x => x !== kind), 'Less than 90° is acute, exactly 90° is right, between 90° and 180° is obtuse, and exactly 180° is straight.'); }],
+    ['4.G.A.1-3', 'Lines, shapes and symmetry', () => { const it = pickOf(GEO); return pf(it[0], it[1], it[2], it[3]); }],
+    ['MP.3', 'Math reasoning: who is right, and why?', () => { const A = pickOf(KIDS), t = ri(0,8);
+      if (t === 0){ const n = ri(1,3), d1 = pickOf([4,5,6]), d2 = d1*2; return pf(A + ' says ' + F(n,d2) + ' is greater than ' + F(n,d1) + ' because ' + d2 + ' is greater than ' + d1 + '. Which statement is true?', A + ' is wrong. A whole cut into ' + d2 + ' pieces has smaller pieces than one cut into ' + d1 + ', so ' + F(n,d2) + ' is less.', [A + ' is right. A bigger bottom number always means a bigger fraction.', A + ' is wrong. The fractions are equal because the top numbers match.', A + ' is right. ' + d2 + ' − ' + n + ' is more than ' + d1 + ' − ' + n + '.'], 'The bottom number tells how many equal pieces make the whole. More pieces means each piece is smaller.'); }
+      if (t === 1){ const th = ri(2,8), h = ri(5,9), n = th*1000 + h*100 + ri(10,99); return pf(A + ' rounded ' + fmt(n) + ' to the nearest thousand and got ' + fmt(th*1000) + '. Which statement is true?', A + ' is wrong. The hundreds digit is ' + h + ', which is 5 or more, so it rounds up to ' + fmt((th+1)*1000) + '.', [A + ' is right. Rounding always makes a number smaller.', A + ' is right. The thousands digit is ' + th + ', so the answer is ' + fmt(th*1000) + '.', A + ' is wrong. The answer should be ' + fmt(th*1000+h*100) + '.'], 'To round to the thousands, look at the hundreds digit. 5 or more rounds up.'); }
+      if (t === 2){ const a = pickOf([19,21,29,31,39,41,48,52]), b = pickOf([18,22,28,32,38,42]), ra = Math.round(a/10)*10, rb = Math.round(b/10)*10; return pf(A + ' worked out ' + a + X + b + ' and got ' + fmt(ra+rb) + '. Is that answer reasonable?', 'No. ' + ra + X + rb + ' = ' + fmt(ra*rb) + ', so the answer should be close to ' + fmt(ra*rb) + '.', ['Yes. ' + ra + ' + ' + rb + ' = ' + (ra+rb) + '.', 'Yes. Any answer bigger than both numbers is reasonable.', 'No. The answer should be less than ' + a + '.'], 'Round each number and multiply to estimate. ' + A + ' added instead of multiplying.'); }
+      if (t === 3){ const v = ri(4,8), q = ri(4,9), rem = ri(1,v-1), s = v*q+rem; return pf(s + ' students need rides, and each car holds ' + v + '. ' + A + ' says ' + q + ' cars are enough because ' + s + D + v + ' = ' + q + ' remainder ' + rem + '. Which statement is true?', A + ' is wrong. The ' + rem + ' left over still need a ride, so ' + (q+1) + ' cars are needed.', [A + ' is right. Remainders are always dropped.', A + ' is wrong. ' + rem + ' cars are needed.', A + ' is right. ' + q + X + v + ' is more than ' + s + '.'], 'In a story problem, think about what the remainder means. Here it is students who still need seats.'); }
+      if (t === 4){ const a = pickOf([3,5,7,9]), b = pickOf([5,7,9,11]); return pf(A + ' says the sum of two odd numbers is always even. Which choice best explains why this is true?', a + ' + ' + b + ' = ' + (a+b) + '. Each odd number has one left over after making pairs, and the two left over make another pair.', [a + ' + ' + b + ' = ' + (a+b) + '. Odd numbers are bigger than even numbers.', 'It is not true. ' + a + ' + ' + b + ' is odd.', 'Odd numbers cannot be added.'], 'An odd number is some pairs and one extra. Two extras make a pair, so nothing is left over.'); }
+      if (t === 5){ const a = ri(2,8), b = ri(11,a*10-1 > 11 ? a*10-1 : 12); return pf(A + ' says 0.' + a + ' is less than 0.' + b + ' because ' + a + ' is less than ' + b + '. Which statement is true?', A + ' is wrong. 0.' + a + ' is the same as 0.' + a + '0, and ' + a + '0 hundredths is more than ' + b + ' hundredths.', [A + ' is right. More digits always means a larger number.', A + ' is right. 0.' + a + ' has only one digit, so it is smaller.', A + ' is wrong. The two decimals are equal.'], 'Give both decimals the same number of places before comparing: 0.' + a + ' = 0.' + a + '0.'); }
+      if (t === 6){ const l = ri(5,9), w = ri(2,4); return pf('A garden is ' + l + ' feet long and ' + w + ' feet wide. ' + A + ' says ' + l*w + ' feet of fence will go all the way around it. Which statement is true?', A + ' is wrong. ' + l*w + ' is the area. The distance around is ' + l + ' + ' + w + ' + ' + l + ' + ' + w + ' = ' + 2*(l+w) + ' feet.', [A + ' is right. Length times width gives the distance around.', A + ' is wrong. The fence should be ' + (l+w) + ' feet.', A + ' is right. Area and perimeter are always the same number.'], 'A fence goes around the edge, which is the perimeter: add all four sides. Area is the space inside.'); }
+      if (t === 7){ const [n,d] = fr(), k = ri(2,4); return pf(A + ' says ' + F(n,d) + ' and ' + F(n*k,d*k) + ' are equal. Which choice best explains whether ' + A + ' is right?', A + ' is right. Multiplying the top and bottom by ' + k + ' cuts every piece into ' + k + ' smaller pieces without changing the amount.', [A + ' is wrong. ' + F(n*k,d*k) + ' is bigger because its numbers are bigger.', A + ' is wrong. Fractions with different bottom numbers can never be equal.', A + ' is right. Any two fractions are equal.'], 'Equivalent fractions name the same amount. Multiply or divide the top and bottom by the same number.'); }
+      const a = ri(3,9), b = ri(12,19); return pf('Which is a correct way to work out ' + a + X + b + '?', '(' + a + X + '10) + (' + a + X + (b-10) + ')', ['(' + a + X + '10) + ' + (b-10), '(' + a + ' + 10)' + X + '(' + a + ' + ' + (b-10) + ')', a + X + '10' + X + (b-10)], 'Break ' + b + ' into 10 and ' + (b-10) + ', multiply each part by ' + a + ', then add the two products.'); }],
   ]},
   {id:'5', name:'Grade 5', skills:[
     ['5.OA.A.1', 'Order of operations with parentheses', () => { const a = ri(2,9), b = ri(2,9), c = ri(2,9); return Math.random() < .5 ? eq('('+a+PL+b+')'+X+c, (a+b)*c, [a+b*c]) : eq(a+PL+b+X+c, a+b*c, [(a+b)*c]); }],
@@ -1592,6 +1674,17 @@ const ESSAYS = [
     {l:"Transition", q:"Which sentence best shows what happens next?", a:"Before she could change her mind, she bent her knees and jumped.", w:["In addition, she jumped.", "For instance, a jump.", "She jumped because."], why:"\"Before she could change her mind\" moves the story forward in time and keeps the feeling of the moment."},
     {l:"Ending", q:"Which sentence best ends the story?", a:"When she surfaced, sputtering and grinning, the board no longer looked so high.", w:["Then she went home.", "Diving boards are often made of fiberglass.", "She was brave, the end."], why:"The ending shows how Lucia has changed: the board that scared her at the beginning no longer does."}]},
 ];
+const MAZE = [
+  "Every morning, Rosa walks her dog before school. Today the grass was {wet|loud|angry} from the rain, so she put on her boots. The dog pulled hard on the {leash|window|spoon} because it saw a squirrel. Rosa held on tight and {laughed|melted|folded} as they ran. When they got home, she dried the dog's paws with an old {towel|ladder|cloud}. Then she grabbed her backpack and hurried to catch the {bus|moon|soup}.",
+  "A honeybee visits hundreds of flowers in one day. At each flower it drinks a sweet liquid called {nectar|gravel|thunder}. The bee carries the liquid back to the {hive|river|kitchen}, where other bees fan it with their {wings|shoes|books} until it becomes thick. This thick liquid is {honey|paper|smoke}. The bees store it in wax cells so they have food during the cold {winter|pencil|ocean}.",
+  "Jamal had never been on a train before. He pressed his face to the {window|pillow|sandwich} and watched the town slide past. Soon the houses gave way to wide green {fields|hammers|blankets}. A man in a blue uniform walked down the aisle to check each {ticket|turtle|carrot}. Jamal handed his over {proudly|sourly|backward}. Three hours later the train slowed, and he saw his grandmother waving from the {platform|ceiling|bathtub}.",
+  "The desert looks empty during the day, but it comes alive at night. When the sun goes down, the air becomes {cool|purple|noisy}. Small animals leave their burrows to search for {food|music|homework}. Owls sit silently on tall cactus plants and listen for {mice|trucks|bells}. By sunrise, most of the animals have gone back {underground|upstairs|overseas} to escape the {heat|snow|flood}.",
+  "Our class planted a garden behind the school. First we pulled the weeds and turned the {soil|ceiling|glass} with shovels. Then each student dropped seeds into a shallow {hole|drawer|pocket} and covered them gently. We took turns carrying the watering {can|chair|coat} every afternoon. After two weeks, tiny green {sprouts|buttons|feathers} pushed up through the dirt. By June we were eating {lettuce|pebbles|crayons} we had grown ourselves.",
+  "Long ago, sailors crossed the ocean without modern maps. At night they studied the {stars|socks|soup} to find their way. During the day they watched the sun and felt the direction of the {wind|door|song}. A trip could last many {months|inches|colors}, so ships carried dried food that would not {spoil|sing|jump}. When birds appeared in the sky, the sailors knew that {land|lunch|laundry} was near."];
+const mazeOf = raw => ({parts:raw.split(/\{[^}]+\}/), gaps:raw.match(/\{[^}]+\}/g).map(x => x.slice(1,-1).split('|'))});
+const eMaze = () => { const {parts, gaps} = mazeOf(pickOf(MAZE)); return {q:'Choose the word that makes sense in each gap.', maze:parts, sel:[], allow:1, pass:'', sol:'The passage reads: ' + parts.map((t,i) => t + (gaps[i] ? gaps[i][0] : '')).join(''),
+  steps:gaps.map((g,i) => ({l:'Gap ' + (i+1), q:'Which word makes sense in gap ' + (i+1) + '?', ans:g[0], opts:g.slice(1), multi:false, why:'"' + g[0] + '" is the only choice that makes sense in its sentence.'}))}; };
+const eMazeOne = () => { const {parts, gaps} = mazeOf(pickOf(MAZE)), k = ri(0, gaps.length-1), p = pk('Which word makes sense in the gap?', gaps[k][0], gaps[k].slice(1), parts.map((t,i) => t + (gaps[i] ? (i === k ? '**______**' : gaps[i][0]) : '')).join('')); p.why = 'Read the whole sentence with each choice in the gap. Only "' + gaps[k][0] + '" makes sense.'; return p; };
 const eListen = ids => () => { const L = LISTEN[pickOf(ids)], it = pickOf(L.items), p = pk(it.q, it.a, it.w); p.listen = L.x; p.lt = L.t; p.why = it.why; return p; };
 const essayText = (E, k) => E.steps.slice(0, k).map(s => [].concat(s.a).join(' ')).join(' ');
 const essayBase = E => '**Writing task: ' + E.kind + '**\n' + E.task + (E.src ? '\n\n' + E.src.map((s,i) => 'Source ' + (i+1) + ' ' + s).join('\n') : '');
@@ -1632,7 +1725,7 @@ const eSpellCtx = h => { if (h && Math.random() < .3) return eSpellType(); const
 const eRsrc = () => { const it = pickOf(RSRC); return pk(it[1], it[2], it[3], it[0]); };
 const LIS = {3:['workday','leaves','sled'], 4:['leaves','sled','ranger','paper'], 5:['sled','ranger','paper','zones']};
 const sbac = (g, lit, inf, vocab, gram) => [
-  ['RL.' + g + '.1-3', 'Reading stories: key details and theme', eRead2(1, lit)], ['RL.' + g + '.4-6', 'Reading stories: words and craft', eRead2(2, lit)], ['SL.' + g + '.2', 'Listening: understand a presentation', eListen(LIS[g])],
+  ['RL.' + g + '.1-3', 'Reading stories: key details and theme', eRead2(1, lit)], ['RL.' + g + '.4-6', 'Reading stories: words and craft', eRead2(2, lit)], ['SL.' + g + '.2', 'Listening: understand a presentation', eListen(LIS[g])], ['RF.' + g + '.4', 'Reading fluency: fill the gaps', mixOf(eMaze, eMaze, eMazeOne)],
   ['RI.' + g + '.1-3', 'Reading information: main idea and details', eRead2(1, inf)], ['RI.' + g + '.4-8', 'Reading information: words, structure and reasoning', eRead2(2, inf)],
   ['L.' + g + '.4-5', 'Vocabulary: word meanings', vocab], ['W.' + g + '.1-3', 'Writing: organize and develop ideas', eOrg], ['W.' + g + '.4-5', 'Writing: plan and build an essay', h => h && Math.random() < .3 && ESSAYS.some(canWrite) ? eWrite() : mixOf(eEssay, eEssay, eBrief)()], ['L.' + g + '.3', 'Writing: choose precise words', ePrec],
   ['L.' + g + '.1', 'Editing: grammar and usage', gram], ['L.' + g + '.2', 'Editing: capitals, punctuation and spelling', mixOf(eConv, eSpellCtx, eQuote, eSeries)], ['W.' + g + '.8', 'Research: sources and evidence', eRsrc]];
@@ -1849,6 +1942,18 @@ Object.assign(LESSON, {
   "Editing: capitals, punctuation and spelling": ["Check capitals on names, places, days, months and titles such as Dr. Check commas in lists, after Yes or No at the start, and between a city and a state. In speech, the comma or question mark goes inside the closing quotation mark.", "We visited Portland, Oregon, in June.  Mom asked, \"Did you feed the cat?\""],
   "Listening: understand a presentation": ["You will hear a short talk, and its words are not on the screen. Before you listen, read the question so you know what to listen for. As you listen, notice the topic, the two or three most important points, and why the speaker is talking. You may listen again as many times as you like.", "A principal says: meet at nine, bring a water bottle, gloves will be provided. If the question asks what to bring, the answer is a water bottle, not gloves."],
   "Writing: plan and build an essay": ["Every essay on the test has the same bones. An introduction states your opinion or main idea. The middle gives evidence from the sources and explains what it shows. A conclusion sums up in fresh words. A story has a beginning that sets up a character and a problem, a middle with details and dialogue, and an ending that solves the problem.", "Opinion: \"Our school should start a garden because...\"  Evidence: a fact from a source.  Elaboration: \"This shows that...\"  Conclusion: say the opinion again in new words."],
+  "Reading fluency: fill the gaps": ["Read the whole sentence, not only the words before the gap. Try each choice in the gap and ask: does this make sense here? Only one will. Keep reading at a steady pace, as you would read a story.", "The dog pulled hard on the ______ because it saw a squirrel. Leash makes sense. Window and spoon do not."],
+  "Place value: read and compare large numbers": ["Each place is worth 10 times the place to its right: ones, tens, hundreds, thousands, ten thousands. To compare two numbers, start at the left and find the first place where the digits differ.", "In 47,215 the 7 is in the thousands place, so it is worth 7,000."],
+  "Word problems: times as many": ["\"Times as many\" means multiply. If you know the bigger amount and need the smaller one, divide.", "Ana has 6 shells. Ben has 4 times as many: 4 × 6 = 24. Going back: 24 ÷ 4 = 6."],
+  "Multi-step word problems": ["Read the whole problem and decide what it asks. Do one step at a time and write down each answer. When you divide, think about what the leftover means in the story.", "23 students, 4 to a van: 23 ÷ 4 = 5 with 3 left over. Those 3 still need a van, so 6 vans."],
+  "Number patterns": ["A rule tells how to get from one number to the next. Find it by looking at how much each number changes, then keep applying it.", "3, 7, 11, 15: each is 4 more, so the rule is add 4 and the next number is 19."],
+  "Mixed numbers": ["A mixed number is a whole number and a fraction together. Add or subtract the wholes and the fractions separately. If the fractions add up to a whole or more, trade that whole over.", "2 3/5 + 1 4/5: wholes make 3, fractions make 7/5, which is 1 2/5. Altogether 4 2/5."],
+  "Convert units of measure": ["To change a bigger unit into smaller ones, multiply by how many small units make one big unit.", "1 foot = 12 inches, so 4 feet = 4 × 12 = 48 inches. 1 hour = 60 minutes. 1 kilogram = 1,000 grams."],
+  "Measurement word problems": ["Make the units match before you add or subtract. For time, remember that 60 minutes make an hour. For money, line up the decimal points.", "A 3-foot ribbon with 10 inches cut off: 3 feet = 36 inches, and 36 − 10 = 26 inches."],
+  "Line plots": ["A line plot shows data with one X for each item. Count the X marks in a row to see how many items have that measurement.", "If the row for 1/2 has three X marks, three of the items are 1/2 inch long."],
+  "Angles": ["Angles are measured in degrees. A full circle is 360°, a straight line is 180°, and a square corner is 90°. Angles that sit next to each other add up.", "A 120° angle split into two parts, one of them 45°: the other is 120 − 45 = 75°."],
+  "Lines, shapes and symmetry": ["Parallel lines never meet. Perpendicular lines cross at right angles. Shapes are sorted by their sides and angles. A line of symmetry folds a shape into two matching halves.", "A rectangle has 4 right angles, 2 pairs of parallel sides and 2 lines of symmetry."],
+  "Math reasoning: who is right, and why?": ["These questions ask you to judge someone else's thinking. Work the problem yourself first. Then pick the choice that gives the right answer and a reason that is actually true.", "Someone says 3/8 is more than 3/4 because 8 is more than 4. That is wrong: eighths are smaller pieces than fourths."],
   "Research: sources and evidence": ["A good source is about your exact topic and comes from someone who knows the subject, such as an encyclopedia, a museum or a science group. Facts can be checked; opinions cannot. Evidence must support the point you are making.", "For a report on what sea turtles eat, an aquarium's website is more trustworthy than a page selling turtle toys."],
 });
 let lessonOf = null, lessonBack = null, lessonAfter = null;
@@ -1922,7 +2027,9 @@ $('lplay').onclick = () => {
   renderListen(false);
 };
 // the essay grows in the passage box as each part is chosen
-function essayPass(p, done){ const parts = p.steps.map((s,i) => done ? [].concat(s.ans).join(' ') : i < p.sel.length ? [].concat(p.sel[i]).join(' ') : '').filter(Boolean);
+function essayPass(p, done){
+  if (p.maze) return '**Read the passage. Choose the word that makes sense in each numbered gap.**\n' + p.maze.map((t,i) => t + (i < p.steps.length ? (done ? '[[' + p.steps[i].ans + ']]' : i < p.sel.length ? '[[' + p.sel[i] + ']]' : i === p.sel.length ? '**(' + (i+1) + ') ______**' : '(' + (i+1) + ') ______') : '')).join('');
+  const parts = p.steps.map((s,i) => done ? [].concat(s.ans).join(' ') : i < p.sel.length ? [].concat(p.sel[i]).join(' ') : '').filter(Boolean);
   return p.pass + '\n\n**' + (done ? 'A strong response' : 'Your draft so far') + '**\n' + (parts.length ? parts.join(' ') : '(Your sentences will appear here as you choose them.)'); }
 // ---- typed answers. Editing fixes and spelling are checked exactly. Her own sentences are read by a grader:
 // Claude over the internet when a grown-up has added a key, otherwise the grader on the tablet.
@@ -1936,6 +2043,16 @@ function fillTyped(box, p, done){
   ta.oninput = () => { p.draft = ta.value; }; ta.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); c.click(); } }; ta.onfocus = () => setTimeout(() => { try { ta.scrollIntoView({block:'center'}); } catch(e){} }, 350);
   c.type = 'button'; c.id = 'ans-check'; note.id = 'ans-note'; c.onclick = () => submitTyped(p, ta, c, note);
   box.appendChild(ta); box.appendChild(note); box.appendChild(c);
+}
+function fillNum(box, p, done){
+  box.textContent = ''; box.className = 'answers numpad'; const key = (t, cls, id) => { const b = el('button', cls || '', t); b.type = 'button'; if (id) b.id = id; box.appendChild(b); return b; };
+  if (done){ box.className = 'answers text'; box.appendChild(el('div', 'part', 'You typed')); key(p.pick === '' || p.pick == null ? '(nothing)' : String(p.pick), 'wide ' + (p.st === 1 ? 'ok' : 'no')).disabled = true;
+    if (p.st !== 1){ box.appendChild(el('div', 'part', 'Correct')); key(fmt(p.ans), 'wide ok').disabled = true; } return; }
+  const disp = el('div', 'numdisp', p.entry || ''); disp.id = 'num-disp'; box.appendChild(disp);
+  const tap = ch => { let e = p.entry || ''; if (ch === 'del') e = e.slice(0,-1); else if (ch === '.'){ if (!e.includes('.')) e = (e || '0') + '.'; } else if (e.replace('.', '').length < 9) e = e === '0' ? ch : e + ch; p.entry = e; disp.textContent = e; ok.disabled = !e || e.endsWith('.'); };
+  for (const ch of ['7','8','9','4','5','6','1','2','3','.','0']) key(ch, '', 'num-' + (ch === '.' ? 'dot' : ch)).onclick = () => tap(ch);
+  key('\u232b', '', 'num-del').onclick = () => tap('del');
+  const ok = key('Check my answer', 'wide check', 'ans-check'); ok.disabled = !p.entry; ok.onclick = () => { if (mathLock) return; p.pick = p.entry; settle(Math.abs(parseFloat(p.entry) - p.ans) < 1e-9, ok); };
 }
 function ruleCheck(t){
   if (t.split(' ').length < 5) return 'Write a full sentence of at least five words.';
@@ -2012,7 +2129,8 @@ const TYPED_GAP = 10, SLATE_N = 8, single = () => !!oneShot || rescue > 0;      
 function makeProb(gid){
   const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), h = skState(g.id+':'+i).m > .5, m0 = S.math; let p = g.skills[i][2](h);
   for (let k = 0; k < 20 && p.typed && (single() || (m0.tq || 0) < TYPED_GAP); k++) p = g.skills[i][2](k < 19 && h);      // typed questions are kept rare, and out of gathering and rescues
-  m0.tq = p.typed ? 0 : (m0.tq || 0) + 1; p.i = i; p.gid = g.id; p.list = p.steps || p.typed ? [] : choices(p); if (p.steps) for (const x of p.steps) x.list = shuffle([].concat(x.ans, x.opts)); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
+  m0.tq = p.typed ? 0 : (m0.tq || 0) + 1; p.i = i; p.gid = g.id; p.list = p.steps || p.typed ? [] : choices(p);
+  if (!gid || !single()) if (h && typeof p.ans === 'number' && p.ans >= 0 && !p.opts && !single() && Math.random() < .4) p.num = 1;      // the real test often has her type a number instead of choosing one if (p.steps) for (const x of p.steps) x.list = shuffle([].concat(x.ans, x.opts)); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
   if (!gid && S.math.subject === 'mix') S.math.mixNext = curSub() === 'math' ? 'ela' : 'math';      // with Both chosen, single questions take turns
   return p;
 }
@@ -2053,7 +2171,7 @@ function fillSpecial(box, p, done){
         right.forEach((v,j) => { mk(v, 'ok', 'ans-' + i + '-' + j).disabled = true; }); mine.filter(v => !right.includes(v)).forEach((v,j) => { mk(v, 'no', 'ansx-' + i + '-' + j).disabled = true; }); }); return; }
     const sel = p.sel, k = sel.length, s = p.steps[k];
     const next = (v, b) => { sel.push(v); if (sel.length < n){ save(); showProb(); return; }
-      p.pick = sel.slice(); const miss = p.steps.filter((x,i) => x.multi ? !x.ans.every(a => sel[i].includes(a)) : sel[i] !== x.ans); p.why = miss.map(x => x.l + ': ' + x.why).join('\n'); settle(!miss.length, b); };
+      p.pick = sel.slice(); const miss = p.steps.filter((x,i) => x.multi ? !x.ans.every(a => sel[i].includes(a)) : sel[i] !== x.ans); p.why = miss.map(x => x.l + ': ' + x.why).join('\n'); settle(miss.length <= (p.allow || 0), b); };
     box.appendChild(el('div', 'part', 'Part ' + (k+1) + ' of ' + n + ': ' + s.l));
     if (!s.multi){ s.list.forEach((v,j) => { const b = mk(v, '', 'ans-' + j); b.onclick = () => next(v, b); }); return; }
     const two = [], btns = [], need = s.ans.length; let cb = null;
@@ -2079,10 +2197,10 @@ function showProb(){
   stopSpeak(); mathLock = done; $('mplay').hidden = false; $('msum').hidden = true; $('mlesson').hidden = true; $('mfix').hidden = true; $('mgrown').hidden = true; $('answers').hidden = false;
   // a presentation's words stay hidden while it can be heard; they appear once the question is settled, or on a device with no voice
   const text = st ? essayPass(prob, done) : lis ? (done ? '**' + prob.lt + '**\n' + lis : canSpeak() ? '' : '**' + prob.lt + '**\n(This device cannot read aloud, so read the presentation instead.)\n' + lis) : prob.pass;
-  setPass($('mpass'), text); setReading(!!text && text.length > 300); if (st && (done || prob.sel.length)) $('mpass').scrollTop = 1e6;
+  setPass($('mpass'), text); setReading(!!text && text.length > 300); if (st && !prob.maze && (done || prob.sel.length)) $('mpass').scrollTop = 1e6;
   const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
-  $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + (st ? 'The strong response is shown.' : prob.sol)) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
-  if (prob.typed) fillTyped($('answers'), prob, done); else if (prob.multi || prob.partB || st) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
+  $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + (st ? (prob.maze ? 'The right words are shown.' : 'The strong response is shown.') : prob.sol)) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
+  if (prob.num) fillNum($('answers'), prob, done); else if (prob.typed) fillTyped($('answers'), prob, done); else if (prob.multi || prob.partB || st) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
   renderListen(done); $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
 }
 function slateDone(){
@@ -2097,10 +2215,10 @@ $('mnew').onclick = () => { S.math.slate = null; nextProb(); };
 function answer(v, b){ if (mathLock || !prob) return; prob.pick = v; settle(v === prob.ans, b); }
 function settle(ok, b){
   if (mathLock || !prob) return; mathLock = true;
-  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB || prob.steps || prob.typed;
+  const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB || prob.steps || prob.typed || prob.num;
   prob.st = ok ? 1 : 2;
   st.n++; st.last = m.n; m.n++;
-  if (special){ if (prob.typed) fillTyped($('answers'), prob, true); else fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
+  if (special){ if (prob.num) fillNum($('answers'), prob, true); else if (prob.typed) fillTyped($('answers'), prob, true); else fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
   if (ok){
     m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (prob.steps ? 3 : prob.typed === 'write' ? 4 : prob.typed ? 2 : special ? 1 : 0);
     S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();

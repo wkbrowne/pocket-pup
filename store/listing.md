@@ -18,7 +18,7 @@ Explore five themed areas, from Sunny Meadow to snowy Frostbite Peak and the cit
 
 Math powers everything. Each thing you gather is one question from the grade you choose.
 
-- The grade is locked with a grown-up code, so questions stay at the right level. It moves up only when the grade is mastered.
+- The grade can be chosen and changed at any time, and progress in each grade is kept. Subjects, the daily goal and the time limit sit behind a grown-up code.
 - 84 math skills across Kindergarten to Grade 6, each tagged with its Common Core standard (also the California standards).
 - Questions adapt: new skills open as earlier ones go well, weak skills come back more often, and missed ones return for another try.
 - Every skill has a short lesson with a worked example, one tap away from any question.

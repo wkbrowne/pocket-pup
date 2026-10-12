@@ -28,7 +28,7 @@
  */
 var LearnCore = (function () {
   'use strict';
-  var VERSION = '1.1.1';
+  var VERSION = '1.2.0';
   var GAPS = [1, 3, 7, 14, 30, 60];      // REVIEW BY DAYS: a mastered skill comes back after 1 day, then 3, 7, 14, 30 and 60
   // SKILL BUILDER: the steps Granny Dot or the Guide takes, by why play stopped
   var STEPS = { miss: ['one'], intro: ['watch', 'two', 'all'], teach: ['watch', 'two', 'all', 'solo', 'solo'], refresh: ['watch', 'solo', 'solo'] };
@@ -242,6 +242,50 @@ var LearnCore = (function () {
       total: function () { return core().n; }, support: function () { return core().support; }, retries: function () { return core().retry; }, core: core };
   }
 
+  // SESSIONS. Where a sitting starts and ends, how long she was at it, and what she was doing when she left: so a grown-up
+  // can see whether she stops at lessons, at questions or at play. Kept under `sessions` in the state the host gives, 30 at most.
+  // A host provides state() and now() (ms). The game calls:
+  //   note(kind, detail)   what she is doing now: 'play' (not a question), 'question' (plain, retry, review, gate), 'lesson' (mode/step),
+  //                        'goal-done' or 'report'. The first note after a gap of IDLE, or after away(), starts a new session.
+  //   answered(ok)         a question was answered
+  //   tick()               about once a second while the game is on screen: active time grows by the gap, capped at TICK_CAP
+  //   pause(on)            paused time is not active
+  //   away()               the game went to the background or closed: the session ends
+  //   list()               the sessions, oldest first; the open one last with open: true
+  //   lines(when, days)    the last ten as text rows, and a summary of where she stopped most often in the last `days`
+  var IDLE = 5 * 60000, TICK_CAP = 5000, KEEP = 30;
+  function sessions(host) {
+    var cur = function () { var S = host.state(), a = S.sessions || (S.sessions = []), z = a[a.length - 1]; return z && z.open ? z : null; };
+    var start = function (now) { var S = host.state(), a = S.sessions; a.push({ at: now, end: now, seen: now, min: 0, q: 0, r: 0, lessons: 0, last: null, open: true }); while (a.length > KEEP) a.shift(); return a[a.length - 1]; };
+    var close = function (z) { if (z) { z.open = false; delete z.seen; delete z.paused; } };
+    var live = function () { var now = host.now(), z = cur(); if (z && now - z.seen > IDLE) { close(z); z = null; } return z || start(now); };
+    var tick = function () { var now = host.now(), z = live(); if (!z.paused) z.min += Math.min(TICK_CAP, now - z.seen) / 60000; z.seen = z.end = now; return z; };
+    function describe(last) {
+      if (!last) return 'nothing yet';
+      if (last.kind === 'lesson') { var m = (last.detail || '').split('/'); return 'a lesson (' + ({ teach: 'Skill Builder', intro: 'first lesson', refresh: 'refresher', miss: 'one more try' }[m[0]] || m[0]) + (m[1] ? ', ' + m[1] : '') + ')'; }
+      if (last.kind === 'goal-done') return 'the daily goal screen';
+      if (last.kind === 'report') return 'the report';
+      return last.kind + (last.detail ? ' (' + last.detail + ')' : '');
+    }
+    return {
+      note: function (kind, detail) { var z = tick(); if (kind === 'lesson' && STEPS[(detail || '').split('/')[0]] && (detail || '').split('/')[1] === STEPS[(detail || '').split('/')[0]][0]) z.lessons++; z.last = { kind: kind, detail: detail || '' }; },
+      answered: function (ok) { var z = tick(); z.q++; if (ok) z.r++; },
+      tick: tick,
+      pause: function (on) { var z = tick(); z.paused = !!on; },
+      away: function () { var z = cur(); if (z) { tick(); close(z); } },
+      list: function () { return host.state().sessions || []; },
+      describe: describe,
+      lines: function (when, days) {
+        var all = this.list(), now = host.now(), rows = all.slice(-10).reverse().map(function (z) {
+          return when(z.at) + ' · ' + Math.round(z.min) + ' min · ' + z.q + ' questions, ' + z.r + ' right · stopped at: ' + describe(z.last); });
+        var week = all.filter(function (z) { return !z.open && z.last && now - z.at <= (days || 7) * 86400000; }), tally = {}, top = null;
+        week.forEach(function (z) { var k = z.last.kind; tally[k] = (tally[k] || 0) + 1; if (!top || tally[k] > tally[top]) top = k; });
+        var name = { play: 'play', question: 'a question', lesson: 'a lesson', 'goal-done': 'the daily goal screen', report: 'the report' };
+        return { rows: rows, summary: top ? 'Stopped during ' + name[top] + ' ' + tally[top] + ' of ' + week.length + ' times this week' : '' };
+      }
+    };
+  }
+
   // ---- checks. A made-up learner and a made-up curriculum, so the rules can be tested with no game around them.
   function fakeHost(opts) {
     opts = opts || {}; var S = { sk: {} }, day = 0, seed = opts.seed || 7;
@@ -253,8 +297,9 @@ var LearnCore = (function () {
     return host;
   }
   // Each rule is run on a made-up answer history. Every line should come back true.
-  function checks() {
-    var out = {}, H = fakeHost(), E = create(H), n = 0;
+  // `mk` is the engine to test (default: this file's create), so check.sh can run today's rules against yesterday's engine.
+  function checks(mk) {
+    mk = mk || create; var out = {}, H = fakeHost(), E = mk(H), n = 0;
     var run = function (seq, sigFn, id) { H.fresh(); id = id || 'm0'; var vs = seq.map(function (a, q) { return E.record('m4', id, a[0] === 'R', { fast: a === 'Mf', unsure: a === 'U', sig: sigFn ? sigFn(q) : 'kind' + (n++) }); }); return { vs: vs, st: E.rec('m4', id) }; };
     var R = function (c) { var a = []; while (c--) a.push('R'); return a; }, r;
     r = run(['M']); out['a first-time miss is taught with no penalty'] = r.vs[0] === 'intro' && !r.st.miss && r.st.box === 1;
@@ -302,16 +347,16 @@ var LearnCore = (function () {
     out["yesterday's slump does not lift today"] = liftsIn('m4', 3).lifts === 0;
     H.fresh(); for (var q16 = 0; q16 < 8; q16++) E.record('m4', 'm0', true, { sig: 'k' + q16 }); for (var q17 = 1; q17 < 9; q17++) E.record('m4', 'm' + q17, false, { sig: 'k' });
     out['first-time misses are taught, not counted as a slump'] = !E.pick('m4').lift;
-    var dueFirst = true; for (var sd = 1; sd <= 8; sd++) { var HD = fakeHost({ seed: sd * 53 }), ED = create(HD); for (var q18 = 0; q18 < 8; q18++) ED.record('m4', 'm0', true, { sig: 'k' + q18 }); HD.nextDay(); ED.record('m4', 'm0', true, { sig: 'r' }); for (var q19 = 0; q19 < 8; q19++) ED.record('m4', 'm1', true, { sig: 'k' + q19 }); HD.nextDay();
+    var dueFirst = true; for (var sd = 1; sd <= 8; sd++) { var HD = fakeHost({ seed: sd * 53 }), ED = mk(HD); for (var q18 = 0; q18 < 8; q18++) ED.record('m4', 'm0', true, { sig: 'k' + q18 }); HD.nextDay(); ED.record('m4', 'm0', true, { sig: 'r' }); for (var q19 = 0; q19 < 8; q19++) ED.record('m4', 'm1', true, { sig: 'k' + q19 }); HD.nextDay();
       for (var q19b = 0; q19b < 10; q19b++) ED.record('m4', 'm2', false, { sig: 'k' }); var pl3 = ED.pick('m4'); if (!(pl3.lift === true && pl3.id === 'm1')) dueFirst = false; }
     out['a lift prefers a mastered skill that is due over one that is not'] = dueFirst;
     H.fresh(); for (var q20 = 0; q20 < 8; q20++) E.record('m4', 'm0', true, { sig: 'k' + q20 }); H.nextDay(); E.record('m4', 'm0', true, { sig: 'r' }); var stE = E.rec('m4', 'm0'), rv0 = stE.rv, due0 = stE.due; slump('m4', 'm1', 10);
     var pe = E.pick('m4'), wasEarly = pe.lift === true && pe.id === 'm0' && due0 > H.today(); E.record('m4', 'm0', false, { sig: 'z' });
     out['a miss on a review asked early costs no slip and keeps the review step'] = wasEarly && !stE.slip && stE.rv === rv0 && stE.due === H.today() + 1 && stE.m === true;
-    var H12 = fakeHost({ skills: 12 }), E12 = create(H12); H12.skills('m4').forEach(function (id) { for (var i = 0; i < 8; i++) E12.record('m4', id, true, { sig: 'k' + i }); }); H12.nextDay();
+    var H12 = fakeHost({ skills: 12 }), E12 = mk(H12); H12.skills('m4').forEach(function (id) { for (var i = 0; i < 8; i++) E12.record('m4', id, true, { sig: 'k' + i }); }); H12.nextDay();
     var seen12 = {}; for (var q21 = 0; q21 < 24; q21++) { var p21 = E12.pick('m4'); seen12[p21.id] = (seen12[p21.id] || 0) + 1; E12.record('m4', p21.id, true, { sig: 'r' + q21 }); }
     out['with everything mastered, a day cycles through every skill before repeating'] = size(seen12) === 12 && Object.keys(seen12).every(function (k) { return seen12[k] === 2; });
-    var badStretch = 0, stretches = 0; [0, 1].forEach(function (way) { var HS = fakeHost({ config: { stretch: 1 } }), ES = create(HS); HS.harder = function (g, id) { return g === 'm4' && id === 'm0' ? { group: 'e4', id: 'e0' } : null; };
+    var badStretch = 0, stretches = 0; [0, 1].forEach(function (way) { var HS = fakeHost({ config: { stretch: 1 } }), ES = mk(HS); HS.harder = function (g, id) { return g === 'm4' && id === 'm0' ? { group: 'e4', id: 'e0' } : null; };
       if (way === 0) HS.live = function (g, id) { return !(g === 'e4' && id === 'e0'); }; for (var q22 = 0; q22 < 8; q22++) ES.record('m4', 'm0', true, { sig: 'k' + q22 }); HS.nextDay(); if (way === 1) ES.rest('e4', 'e0');
       for (var q23 = 0; q23 < 20; q23++) { var pS = ES.pick('m4'); if (pS.tag === 'Stretch') badStretch++; if (pS.id === 'm0') stretches++; if (!pS.noRecord) ES.record(pS.group, pS.id, true, { sig: 'q' + q23 }); } });
     out['a stretch never lands on a harder skill that is kept out or rested'] = badStretch === 0 && stretches >= 2;
@@ -325,12 +370,28 @@ var LearnCore = (function () {
     out['a second slip on the "one more try" the same day still gives a refresher'] = vR === 'miss' && vT === 'refresh';
     H.fresh(); for (var q30 = 0; q30 < 8; q30++) E.record('m4', 'm0', true, { sig: 'k' + q30 }); H.nextDay(); E.record('m4', 'm0', true, { sig: 'r' }); slump('m4', 'm1', 10); var pAhead = E.pick('m4'); H.nextDay(); E.record('m4', 'm0', false, { sig: 'z' });
     out['an early ask noted yesterday does not waive a slip today'] = pAhead.lift === true && pAhead.id === 'm0' && E.rec('m4', 'm0').slip === 1;
-    var H2 = fakeHost({ skills: 2 }), E2 = create(H2); E2.rest('m4', 'm1'); var askedRested = 0; for (var q31 = 0; q31 < 15; q31++) { var p31 = E2.pick('m4'); if (p31.id === 'm1') askedRested++; E2.record(p31.group, p31.id, true, { sig: 'q' + q31 }); }
+    var H2 = fakeHost({ skills: 2 }), E2 = mk(H2); E2.rest('m4', 'm1'); var askedRested = 0; for (var q31 = 0; q31 < 15; q31++) { var p31 = E2.pick('m4'); if (p31.id === 'm1') askedRested++; E2.record(p31.group, p31.id, true, { sig: 'q' + q31 }); }
     out['a rested skill is not asked even when it is the only other skill'] = askedRested === 0;
     H.fresh(); for (var q32 = 0; q32 < 6; q32++) E.record('m4', 'm0', false, { sig: 'k' }); for (var q33 = 0; q33 < 3; q33++) E.record('m4', 'm0', true, { sig: 'k' }); var sO = E.standing('m4');
     out['a skill never stands as both weak and strong'] = !(inL(sO.weak) && inL(sO.strong));
     H.fresh(); for (var q34 = 0; q34 < 4; q34++) { var p34 = E.pick('m4'); E.record('m4', p34.id, true, { sig: 'q' }); } H.skills('m4').forEach(function (id) { E.rest('m4', id); });
     out['when every skill is rested there is nothing to ask'] = E.pick('m4') === null;
+    // SESSIONS: a fake clock and a fake save
+    var clock = 1700000000000, SS = { sessions: [] }, Z = sessions({ state: function () { return SS; }, now: function () { return clock; } }), mins = function (m) { clock += m * 60000; };
+    Z.note('play', 'home'); Z.note('question', 'retry'); Z.answered(true); Z.answered(false); var z1 = Z.list();
+    out['a session opens on the first sign of play and keeps the last event'] = z1.length === 1 && z1[0].q === 2 && z1[0].r === 1 && z1[0].last.kind === 'question' && z1[0].last.detail === 'retry';
+    Z.note('lesson', 'teach/watch'); Z.note('lesson', 'teach/two'); Z.note('lesson', 'teach/all'); Z.note('lesson', 'refresh/watch');
+    out['a lesson counts once, at its first step'] = Z.list()[0].lessons === 2;
+    mins(3); Z.tick(); Z.away(); mins(1); Z.note('play', 'valley'); var z2 = Z.list();
+    out['going away ends the session and the next play starts another'] = z2.length === 2 && z2[0].end === clock - 60000 && z2[0].last.kind === 'lesson' && z2[1].q === 0;
+    mins(6); Z.note('question', 'plain');
+    out['five quiet minutes end a session'] = Z.list().length === 3;
+    var zA = Z.list()[2], secs = function (n) { while (n--) { clock += 1000; Z.tick(); } }; secs(30); Z.pause(true); secs(120); Z.pause(false); secs(30); mins(1); Z.tick();
+    out['active minutes leave out paused time and long gaps'] = Math.abs(zA.min - (1 + 5 / 60)) < 0.01;
+    for (var zi = 0; zi < 40; zi++) { Z.away(); mins(10); Z.note('play', 'home'); }
+    out['only the last thirty sessions are kept'] = Z.list().length === 30 && Z.list()[29].open === true;
+    var when = function (ms) { return 'T' + Math.round((ms - 1700000000000) / 60000); }, L = Z.lines(when, 7);
+    out['the report names each session and where she stopped most often'] = L.rows.length === 10 && /^T\d+ · \d+ min · \d+ questions, \d+ right · stopped at: play \(home\)$/.test(L.rows[0]) && L.summary === 'Stopped during play 29 of 29 times this week';
     H.fresh(); var live0 = H.live; H.live = function () { return false; }; var none = E.pick('m4'); H.live = live0;
     out['a group with nothing to ask gives null, not an error'] = none === null && E.pick('no-such-group') === null;
     H.fresh(); var w = E.warmupFor('m4', 'm2'); out['a skill can point back to an earlier one that is not solid'] = !!w && w.group === 'm3' && w.id === 'p2' && E.warmupFor('m4', 'm9') === null;
@@ -376,6 +437,6 @@ var LearnCore = (function () {
       fewestOther: Math.min.apply(null, others.map(function (id) { return count[id] || 0; })), missing: others.filter(function (id) { return !count[id]; }) };
   }
 
-  return { VERSION: VERSION, GAPS: GAPS, STEPS: STEPS, DEFAULTS: DEFAULTS, create: create, hash: hash, box: box, openKinds: openKinds, solid: solid, numberHint: numberHint, fakeHost: fakeHost, checks: checks, simulate: simulate };
+  return { VERSION: VERSION, GAPS: GAPS, STEPS: STEPS, DEFAULTS: DEFAULTS, create: create, sessions: sessions, hash: hash, box: box, openKinds: openKinds, solid: solid, numberHint: numberHint, fakeHost: fakeHost, checks: checks, simulate: simulate };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = LearnCore;

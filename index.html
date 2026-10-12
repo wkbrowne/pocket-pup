@@ -473,7 +473,14 @@ function load(extra){
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
   if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
 }
-function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } if (!G.cur) return; try { localStorage.setItem(gkey(G.cur), JSON.stringify(S)); } catch(e){} }
+function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } if (!G.cur) return; try { logDay(); } catch(e){} try { localStorage.setItem(gkey(G.cur), JSON.stringify(S)); } catch(e){} }
+// what each day held, so a grown-up can see change over time and not only where she stands today
+function logDay(){
+  const D = S.day; if (!S.adopted || !D || !S.math.grade || (!D.n && !((D.secs || 0) > 60))) return;
+  const cnt = gid => { const g = allGrade(gid); return g ? g.skills.filter((x,i) => (S.math.sk[skKey(gid, i)] || {}).M).length : 0; };
+  S.log = S.log || []; let e = S.log[S.log.length - 1]; if (!e || e.d !== D.d){ e = {d:D.d}; S.log.push(e); if (S.log.length > 120) S.log.shift(); }
+  e.n = D.n; e.r = D.r; e.t = D.t || 0; e.s = Math.round(D.secs || 0); e.m = cnt(S.math.grade); e.e = cnt('E' + S.math.grade);
+}
 
 const level = () => Math.floor((1 + Math.sqrt(1 + 4*S.xp/25))/2);
 const lvlBase = L => 25*L*(L-1);
@@ -1762,8 +1769,8 @@ const sbac = (g, lit, inf, vocab, gram) => [
   ['L.' + g + '.4-5', 'Vocabulary: word meanings', vocab], ['W.' + g + '.1-3', 'Writing: organize and develop ideas', eOrg], ['W.' + g + '.4-5', 'Writing: plan and build an essay', h => h && Math.random() < .3 && ESSAYS.some(canWrite) ? eWrite() : mixOf(eEssay, eEssay, eBrief)()], ['L.' + g + '.3', 'Writing: choose precise words', ePrec],
   ['L.' + g + '.1', 'Editing: grammar and usage', gram], ['L.' + g + '.2', 'Editing: capitals, punctuation and spelling', mixOf(eConv, eSpellCtx, eQuote, eSeries)], ['W.' + g + '.8', 'Research: sources and evidence', eRsrc]];
 const E_3 = sbac(3, ['fair','garden','quilt'], ['seeds','beaver','octopus'], mixOf(eCtx('A'), eAffix(true)), mixOf(eGram, eAgree, ePast));
-const E_4 = sbac(4, ['garden','lantern','quilt','chess','baker'], ['beaver','stones','octopus','mule'], mixOf(eCtx('B'), eFig, () => Math.random() < .5 ? eSyn('B')() : eAnt()), mixOf(eGram, eGram, eHomo, eAgree));
-const E_5 = sbac(5, ['lantern','tide','chess','baker'], ['stones','recess','mule','dark'], mixOf(eCtx('B'), eFig, () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }), mixOf(eGram, eGram, eHomo, ePast));
+const E_4 = sbac(4, ['garden','lantern','quilt','chess','baker','pie'], ['beaver','stones','octopus','mule','wolves'], mixOf(eCtx('B'), eFig, () => Math.random() < .5 ? eSyn('B')() : eAnt()), mixOf(eGram, eGram, eHomo, eAgree));
+const E_5 = sbac(5, ['lantern','tide','chess','baker','pie'], ['stones','recess','mule','dark','wolves'], mixOf(eCtx('B'), eFig, () => { const it = pickOf(ROOTS); return pk('What does the root ' + it[0] + ' mean?', it[1], it[2]); }), mixOf(eGram, eGram, eHomo, ePast));
 const ELA = {K:E_K, '1':E_K, '2':E_2, '3':E_3, '4':E_4, '5':E_5, '6':E_5};
 
 const mathGrade = id => GRADES.find(g => g.id === id);
@@ -1799,22 +1806,43 @@ const breadth = (g, i) => Math.min(skState(g.id+':'+i).head ? 3 : 6, kindsOf(g, 
 const openKinds = st => st.w ? Object.keys(st.w) : [];
 // REVIEW BY DAYS: a mastered skill leaves the daily rounds and comes back after 1 day, then 3, 7, 14, 30 and 60. A miss starts that over.
 const GAPS = [1, 3, 7, 14, 30, 60], dayNo = () => Math.floor((Date.now() - new Date().getTimezoneOffset()*60000)/864e5) + (window.__dayShift || 0);
-let pickTag = '', pickWant = null; const NEW_START = 6, newDay = () => (GL.pace || {})[G.cur] || 4;
+// PREREQUISITES. When a skill keeps going wrong, the trouble is often one step back. Each skill can name the earlier skill it rests on.
+// The grade stays locked for her; the engine alone can reach down to an earlier grade, and only for the skill that is in the way.
+const PRE = {
+  '3':{'Multiply within 100':['2','Equal groups and arrays'], 'Divide within 100':['2','Equal groups and arrays'], 'Add and subtract within 1000':['2','Add and subtract within 1000'], 'Round to the nearest 10 or 100':['2','Compare three-digit numbers'], 'Two-step problems':['2','Add within 100']},
+  '4':{'Add and subtract multi-digit numbers':['3','Add and subtract within 1000'], 'Place value: read and compare large numbers':['2','Compare three-digit numbers'], 'Round multi-digit numbers':['3','Round to the nearest 10 or 100'], 'Multiply by a one-digit number':['3','Multiply within 100'],
+    'Word problems: times as many':['3','Multiply within 100'], 'Multiply two two-digit numbers':['3','Multiply by multiples of 10'], 'Divide by a one-digit number':['3','Divide within 100'], 'Division with remainders':['3','Divide within 100'], 'Multi-step word problems':['3','Two-step problems'],
+    'Factors and prime numbers':['3','Divide within 100'], 'Number patterns':['2','Skip-count by 5s, 10s and 100s'], 'Equivalent fractions':['3','Fractions equal to whole numbers'], 'Compare fractions with different denominators':['3','Compare fractions'],
+    'Add and subtract fractions with like denominators':['3','Compare fractions'], 'Mixed numbers':['4','Add and subtract fractions with like denominators'], 'Multiply a fraction by a whole number':['3','Multiply within 100'], 'Write fractions as decimals':['4','Equivalent fractions'],
+    'Compare decimals':['4','Write fractions as decimals'], 'Convert units of measure':['3','Multiply by multiples of 10'], 'Measurement word problems':['4','Convert units of measure'], 'Area and perimeter: find the missing side':['3','Area of a rectangle'],
+    'Add tenths and hundredths':['4','Equivalent fractions'], 'Fraction word problems':['4','Add and subtract fractions with like denominators'], 'Break fractions apart':['4','Add and subtract fractions with like denominators'], 'Math reasoning: who is right, and why?':['3','Two-step problems']},
+  '5':{'Multiply multi-digit numbers':['4','Multiply two two-digit numbers'], 'Divide by two-digit numbers':['4','Divide by a one-digit number'], 'Round decimals':['4','Round multi-digit numbers'], 'Add and subtract decimals':['4','Compare decimals'], 'Multiply decimals':['4','Multiply by a one-digit number'],
+    'Add and subtract fractions with unlike denominators':['4','Equivalent fractions'], 'Multiply fractions':['4','Multiply a fraction by a whole number'], 'Volume of a box':['4','Area and perimeter: find the missing side']}};
+// In English the step back is the same skill a grade earlier, with that grade's easier passages and items.
+function prereqOf(g, i){ const nm = g.skills[i][1]; let lo = null, want = nm;
+  if (g.ela){ const n = +g.id.slice(1); if (n >= 4) lo = allGrade('E' + (n - 1)); } else { const P = (PRE[g.id] || {})[nm]; if (P){ lo = allGrade(P[0]); want = P[1]; } }
+  const k = lo ? lo.skills.findIndex(x => x[1] === want) : -1; return k >= 0 && !(lo.id === g.id && k === i) ? {g:lo, i:k} : null; }
+const solid = st => !!st.M || (st.n >= 3 && boxOf(st) >= 2);
+const subOf = gid => gid[0] === 'E' ? 'e' : 'm';
+let pickTag = '', pickWant = null, pickG = null; const NEW_START = 6, newDay = () => (GL.pace || {})[G.cur] || 4;
 // while nothing she has started is shaky, the next new skill may come early: she sets the pace
 const steady = (g, all) => all.every(i => { const st = skState(g.id+':'+i); return !st.n || st.M || boxOf(st) >= 2; });
 function pickSkill(g){
   const m = S.math, name = i => g.skills[i][1], idx = nm => g.skills.findIndex(x => x[1] === nm), all = g.skills.map((x,i) => i);
-  m.retry = (m.retry || []).filter(r => r && r.g); m.deck = m.deck || {}; m.cyc = m.cyc || {}; pickTag = ''; pickWant = null;
+  m.retry = (m.retry || []).filter(r => r && r.g); m.deck = m.deck || {}; m.cyc = m.cyc || {}; pickTag = ''; pickWant = null; pickG = null;
+  const cst = nm => nm[0] === '^' ? null : skState(g.id+':'+idx(nm)), sup = (m.support || []).filter(x => subOf(x.g) === subOf(g.id));
+  // where a waiting retry lives: this grade, or an earlier grade's skill that is being built up
+  const rAt = r => { const gg = r.g === g.id ? g : sup.some(x => x.g === r.g && x.s === r.s) ? allGrade(r.g) : null, k = gg ? gg.skills.findIndex(x => x[1] === r.s) : -1; return k >= 0 ? {gg, k} : null; };
   const tod = today(), now = dayNo(), rested = i => skState(g.id+':'+i).rest === tod;      // a skill that was worked hard today is left alone until tomorrow
-  const ri = (m.gap || 0) >= 2 ? m.retry.findIndex(r => r.g === g.id && r.at <= m.n && idx(r.s) >= 0 && r.s !== m.lastS && !rested(idx(r.s))) : -1;
-  if (ri >= 0){ m.gap = 0; pickTag = 'One more try'; m.lastS = m.retry[ri].s; pickWant = m.retry[ri].sig || null; return idx(m.retry.splice(ri,1)[0].s); }
+  const ri = (m.gap || 0) >= 2 ? m.retry.findIndex(r => { if (r.at > m.n || r.s === m.lastS) return false; const a = rAt(r); return !!a && skState(a.gg.id+':'+a.k).rest !== tod; }) : -1;
+  if (ri >= 0){ m.gap = 0; const r = m.retry.splice(ri,1)[0], a = rAt(r); m.lastS = r.s; pickWant = r.sig || null; if (a.gg !== g){ pickG = a.gg; pickTag = 'Warm-up'; } else pickTag = 'One more try'; return a.k; }
   m.gap = (m.gap || 0) + 1;
-  let d = (m.deck[g.id] || []).filter(nm => idx(nm) >= 0);
+  let d = (m.deck[g.id] || []).filter(nm => nm[0] === '^' || idx(nm) >= 0);
   { const D = dayState(); m.deckDay = m.deckDay || {};      // on a new day the day's new skills join the round already under way
-    if (d.length && m.deckDay[g.id] !== D.d){ let room = newDay() - ((D.newS || {})[g.id] || 0) - d.filter(nm => !skState(g.id+':'+idx(nm)).n).length; for (const i of all) if (room > 0 && !skState(g.id+':'+i).n && !d.includes(name(i))){ d.splice(Math.min(d.length, 1 + 2*(newDay() - room)), 0, name(i)); room--; } }
+    if (d.length && m.deckDay[g.id] !== D.d){ let room = newDay() - ((D.newS || {})[g.id] || 0) - d.filter(nm => { const c = cst(nm); return c && !c.n; }).length; for (const i of all) if (room > 0 && !skState(g.id+':'+i).n && !d.includes(name(i))){ d.splice(Math.min(d.length, 1 + 2*(newDay() - room)), 0, name(i)); room--; } }
     m.deckDay[g.id] = D.d; }
   // a skill mastered part-way through a round does not get its second turn: it waits for its review day
-  m.fwd = m.fwd || {}; if (!m.fwd[g.id]) d = d.filter(nm => { const st = skState(g.id+':'+idx(nm)); return !(st.M && st.due > now); });
+  m.fwd = m.fwd || {}; if (!m.fwd[g.id]) d = d.filter(nm => { const st = cst(nm); return !st || !(st.M && st.due > now); });
   if (!d.length){
     const c = m.cyc[g.id] = (m.cyc[g.id] || 0) + 1; m.fwd[g.id] = false;
     // New skills come in a few at a time, in the order they are taught: enough to have six going, then a set number more each day in each subject (four unless a grown-up changes it).
@@ -1823,15 +1851,21 @@ function pickSkill(g){
     for (const i of all){ const st = skState(g.id+':'+i), b = boxOf(st); if (rested(i)) continue; if (!st.n){ if (room-- > 0) d.push(name(i)); continue; }
       if (st.M){ if (st.due == null) st.due = now + i % 4; if (st.due > now) continue; d.push(name(i)); continue; }
       d.push(name(i)); if (b === 0) shaky.push(name(i)); }
+    // an earlier skill she is building up takes a turn in every round until it is mastered
+    m.support = (m.support || []).filter(x => { const lo = allGrade(x.g), k = lo ? lo.skills.findIndex(y => y[1] === x.s) : -1; return k >= 0 && !skState(x.g+':'+k).M; });
+    for (const x of m.support) if (subOf(x.g) === subOf(g.id)) d.push('^' + x.g + '|' + x.s);
     if (shaky.length*2 <= (d.length + shaky.length)/3) d = d.concat(shaky);      // shaky skills are dealt twice in a round, unless that would let them crowd out the rest
     // nothing left to learn and nothing due today: bring forward the reviews that are due soonest
     if (!d.length){ d = all.filter(i => skState(g.id+':'+i).M && !rested(i)).sort((x,y) => (skState(g.id+':'+x).due || 0) - (skState(g.id+':'+y).due || 0)).slice(0, 4).map(name); m.fwd[g.id] = d.length > 0; }
     if (!d.length) d = all.filter(i => skState(g.id+':'+i).n > 0).map(name); if (!d.length) d = all.slice(0, NEW_START).map(name);
-    d = shuffle(d); const si = d.findIndex(nm => boxOf(skState(g.id+':'+idx(nm))) >= 3); if (si > 0) d.unshift(d.splice(si,1)[0]);      // open each round with something she is good at
+    d = shuffle(d); const si = d.findIndex(nm => { const c = cst(nm); return !!c && boxOf(c) >= 3; }); if (si > 0) d.unshift(d.splice(si,1)[0]);      // open each round with something she is good at
   }
   // never the same skill twice in a row: take the first card that is not the skill just asked
   let j = d.findIndex(nm => nm !== m.lastS), i;
-  if (j < 0 && all.length > 1){ const live = all.filter(x => { const st = skState(g.id+':'+x); return name(x) !== m.lastS && st.n > 0 && !(st.M && st.due > now); }), seen = live.length ? live : all.filter(x => name(x) !== m.lastS && skState(g.id+':'+x).n > 0); i = pickOf(seen.length ? seen : all.filter(x => name(x) !== m.lastS).slice(0, NEW_START)); } else i = idx(d.splice(Math.max(0, j), 1)[0]);
+  if (j < 0 && all.length > 1){ const live = all.filter(x => { const st = skState(g.id+':'+x); return name(x) !== m.lastS && st.n > 0 && !(st.M && st.due > now); }), seen = live.length ? live : all.filter(x => name(x) !== m.lastS && skState(g.id+':'+x).n > 0); i = pickOf(seen.length ? seen : all.filter(x => name(x) !== m.lastS).slice(0, NEW_START)); } else { const card = d.splice(Math.max(0, j), 1)[0];
+    if (card[0] === '^'){ const cut = card.indexOf('|'), lo = allGrade(card.slice(1, cut)), k = lo ? lo.skills.findIndex(x => x[1] === card.slice(cut + 1)) : -1;
+      if (k >= 0){ m.deck[g.id] = d; m.lastS = card.slice(cut + 1); pickG = lo; pickTag = 'Warm-up'; const wk0 = openKinds(skState(lo.id+':'+k))[0]; if (wk0 && Math.random() < .7) pickWant = wk0; return k; }
+      i = pickOf(all); } else i = idx(card); }
   m.deck[g.id] = d; m.lastS = name(i); const st = skState(g.id+':'+i); if (st.M) pickTag = 'Review';
   const wk = openKinds(st)[0]; if (wk && Math.random() < .7) pickWant = wk;      // a kind she missed is favored whenever its skill comes up
   return i;
@@ -1937,6 +1971,11 @@ function practiceReport(){
     if (ex.length) out.push('Missed and not yet fixed (question, then answer):\n' + ex.slice(0, 8).map(x => '\u2022 ' + x).join('\n')); }
   const dsh = m.dash || [], slow = slowFacts();
   out.push('**Fact Dash**\n' + (dsh.length ? 'Last: ' + dsh[dsh.length-1].n + ' right, ' + dsh[dsh.length-1].w + ' wrong. Best: ' + Math.max(...dsh.map(x => x.n)) + '. Dashes played: ' + dsh.length + '.' : 'Not played yet.') + (slow.length ? '\nSlow or missed facts: ' + slow.slice(0, 8).join(', ') + '.' : ''));
+  const sup = m.support || []; if (sup.length) out.push('**Building an earlier step**\n' + sup.map(x => { const lo = allGrade(x.g); return (lo ? lo.name : x.g) + ': ' + x.s + (x.need ? ' (needed for ' + x.need + ')' : ''); }).join('\n'));
+  const tests = m.tests || []; if (tests.length) out.push('**Practice tests**\n' + tests.slice(-4).map(t => t.d.slice(5) + ' ' + (t.ela ? 'English' : 'Math') + ': ' + t.r + ' of ' + t.n + ' in ' + Math.max(1, Math.round(t.secs/60)) + ' min').join('\n'));
+  const log = S.log || []; if (log.length){ const last = log.slice(-14), wk = log.slice(-7), first = wk[0], end = log[log.length - 1], q7 = wk.reduce((a, e) => a + (e.n || 0), 0), min7 = Math.round(wk.reduce((a, e) => a + (e.s || 0), 0)/60);
+    out.push('**History**\n' + (wk.length === 1 ? 'Last day played: ' : 'Last ' + wk.length + ' days played: ') + q7 + ' questions in about ' + min7 + ' minutes. Skills mastered went from ' + ((first.m || 0) + (first.e || 0)) + ' to ' + ((end.m || 0) + (end.e || 0)) + '.\n'
+      + last.map(e => { const tested = (e.n || 0) - (e.t || 0); return e.d.slice(5) + ': ' + (e.n || 0) + ' questions, ' + (tested > 0 ? Math.round((e.r || 0)/tested*100) + '% right' : 'all lessons') + ', ' + Math.round((e.s || 0)/60) + ' min, mastered ' + (e.m || 0) + ' math and ' + (e.e || 0) + ' English'; }).join('\n')); }
   const D = dayState(); out.push('**Today**\n' + D.n + ' of ' + dayGoal() + ' questions' + ((D.taught || []).length ? ', lessons on: ' + [...new Set(D.taught)].join('; ') : '') + '.\nQuick check: ' + (m.placed === m.grade ? 'done.' : 'not done yet (it is under Show skills).'));
   return out.join('\n\n');
 }
@@ -1995,16 +2034,42 @@ function quickStart(){
   showSkills = false; quick = {items:all, k:0, known:[]}; prob = all[0]; mathLock = false; $('mplay').hidden = false; $('mlist').hidden = true; showProb();
 }
 function quickStep(ok){
-  const q = quick, p = q.items[q.k], g = allGrade(p.gid); $('fb').textContent = 'Noted.';
-  if (ok){ const st = skState(p.gid+':'+p.i); st.head = 1; st.n = Math.max(st.n, 3); st.r = Math.max(st.r || 0, 3); st.cs = Math.max(st.cs || 0, 3); st.box = Math.max(3, boxOf(st)); st.kd = st.kd || []; if (!st.kd.includes(p.sig)) st.kd.push(p.sig); q.known.push(g.skills[p.i][1]); }
-  q.k++; setTimeout(() => { if (quick !== q) return; if (q.k < q.items.length){ prob = q.items[q.k]; mathLock = false; showProb(); } else quickEnd(); }, 900);
+  const q = quick, p = q.items[q.k], g = allGrade(p.gid); $('fb').textContent = q.test ? 'Answer saved.' : 'Noted.';
+  if (q.test){ record(g, p.i, ok, {sig:p.sig, ex:exOf(p)}); q.res.push(ok); }
+  else if (ok){ const st = skState(p.gid+':'+p.i); st.head = 1; st.n = Math.max(st.n, 3); st.r = Math.max(st.r || 0, 3); st.cs = Math.max(st.cs || 0, 3); st.box = Math.max(3, boxOf(st)); st.kd = st.kd || []; if (!st.kd.includes(p.sig)) st.kd.push(p.sig); q.known.push(g.skills[p.i][1]); }
+  q.k++; setTimeout(() => { if (quick !== q) return; if (q.k < q.items.length){ prob = q.items[q.k]; mathLock = false; showProb(); } else if (q.test) testEnd(); else quickEnd(); }, q.test ? 600 : 900);
+}
+// PRACTICE TEST: twelve questions under test conditions. One from each of twelve skills, in the real formats, with no hints,
+// no lessons and nothing marked until the end. Then a score, a breakdown by strand, and the answers to what was missed.
+const STRAND = {OA:'Operations and algebraic thinking', NBT:'Number and place value', NF:'Fractions and decimals', MD:'Measurement and data', G:'Geometry', MP:'Reasoning', RL:'Reading stories', RI:'Reading information', RF:'Reading fluency', W:'Writing', SL:'Listening', L:'Language'};
+const strandOf = code => { const m = /^(?:\d\.)?([A-Z]+)/.exec(code); return m && STRAND[m[1]] ? STRAND[m[1]] : 'Other'; };
+function testStart(ela){
+  const g = allGrade((ela ? 'E' : '') + S.math.grade); if (!g) return; const items = [];
+  for (const i of shuffle(g.skills.map((x,k) => k))){ if (items.length >= 12) break; let p = null;
+    for (let k = 0; k < 30 && !p; k++){ const c = g.skills[i][2](true); if (!c.steps && !c.typed && !(c.listen && !canSpeak())) p = c; } if (!p) continue;
+    p.sig = sigOf(p, g); p.i = i; p.gid = g.id; p.list = choices(p); if (typable(p) && Math.random() < .5) p.num = 1; if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; p.tag = ''; items.push(p); }
+  if (items.length < 6){ toast('There are not enough skills for a test yet.'); return; }
+  showSkills = false; quick = {test:1, ela, items, k:0, known:[], res:[], t0:Date.now()}; prob = items[0]; mathLock = false; $('mplay').hidden = false; $('mlist').hidden = true; showProb();
+}
+function testEnd(){
+  const q = quick; quick = null; const m = S.math, n = q.items.length, right = q.res.filter(Boolean).length, secs = Math.round((Date.now() - q.t0)/1000), by = {};
+  q.items.forEach((p, k) => { const g = allGrade(p.gid), sd = strandOf(g.skills[p.i][0]); by[sd] = by[sd] || [0, 0]; by[sd][1]++; if (q.res[k]) by[sd][0]++; });
+  (m.tests = m.tests || []).push({d:today(), ela:q.ela ? 1 : 0, n, r:right, secs, by}); if (m.tests.length > 40) m.tests.shift();
+  S.bones += right; session += right; m.slate = null; chime(); save();
+  for (const id of ['mplay','mlist','slate','mlesson','mfix']) $(id).hidden = true; setReading(false); const box = $('msum-l'); box.textContent = ''; box.hidden = false; $('msum').hidden = false;
+  $('msum-h').textContent = 'Practice test: ' + right + ' of ' + n + ' right (' + Math.round(right/n*100) + '%) in ' + Math.max(1, Math.round(secs/60)) + ' min. +' + right + ' bones';
+  const row = (title, text) => { const r = el('div', 'item'), info = el('div'); info.appendChild(el('b', '', title)); info.appendChild(document.createTextNode(text)); r.appendChild(info); box.appendChild(r); };
+  row('By strand', Object.keys(by).map(k => k + ': ' + by[k][0] + ' of ' + by[k][1]).join(' \u00b7 '));
+  q.items.forEach((p, k) => { if (!q.res[k]) row('Question ' + (k + 1) + ': ' + p.q.slice(0, 140), 'Answer: ' + (p.multi ? p.ans.join(' / ') : p.partB ? fmt(p.ans) + ' / ' + p.partB.ans : fmt(p.ans)) + '. This kind will come back in practice.'); });
+  if (right === n) row('A clean sheet', 'Every answer was right.');
+  $('mnew').textContent = 'Back to practice'; renderProgress(); ui();
 }
 function quickEnd(){
   const q = quick; quick = null; S.math.placed = S.math.grade; S.math.deck = {}; S.math.slate = null; chime(); save();
   dayModal('Quick check done', 'You got ' + q.known.length + ' of ' + q.items.length + '.\n' + (q.known.length ? 'Granny Dot will go faster on: ' + q.known.slice(0, 6).join(', ') + (q.known.length > 6 ? ', and more' : '') + '.\nTwo more right answers on each and they are mastered.' : 'Good to know. We will take everything one step at a time.'), {t:'OK', f:() => { dayClose(); renderMath(); }});
 }
 function renderProgress(){
-  const g = probGrade(), done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = g.ela ? null : GRADES[GRADES.indexOf(g)+1];
+  const pg = probGrade(), g = pg && S.math.grade && pg.id.replace(/^E/, '') !== S.math.grade ? allGrade((pg.ela ? 'E' : '') + S.math.grade) || pg : pg, done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = g.ela ? null : GRADES[GRADES.indexOf(g)+1];
   $('mprog').textContent = 'Egg ' + S.egg.w + '/' + EGG_N + ' \u00b7 ' + done + ' of ' + g.skills.length + ' skills mastered'; $('mbar').firstElementChild.style.width = done/g.skills.length*100 + '%';
   $('mearn').textContent = earnText();
   const all = done === g.skills.length;
@@ -2014,7 +2079,9 @@ function renderProgress(){
 function renderSkills(){
   const g = probGrade(), box = $('mlist'); box.textContent = '';
   { const row = el('div', 'item'), info = el('div'), a = el('button', '', 'Fact Dash'), b = el('button', '', 'Quick check'); info.appendChild(el('b', '', 'Extra practice')); info.appendChild(document.createTextNode('One minute of number facts, or twelve questions to show what you know'));
-    a.type = b.type = 'button'; a.id = 'go-dash'; b.id = 'go-quick'; a.onclick = factDash; b.onclick = quickStart; row.appendChild(info); row.appendChild(a); row.appendChild(b); box.appendChild(row); }
+    a.type = b.type = 'button'; a.id = 'go-dash'; b.id = 'go-quick'; a.onclick = factDash; b.onclick = quickStart; row.appendChild(info); row.appendChild(a); row.appendChild(b); box.appendChild(row);
+    const r2 = el('div', 'item'), i2 = el('div'), c = el('button', '', 'Math test'), d2 = el('button', '', 'English test'); i2.appendChild(el('b', '', 'Practice test')); i2.appendChild(document.createTextNode('Twelve questions the way the real test asks them: no hints, and no marks until the end'));
+    c.type = d2.type = 'button'; c.id = 'go-test-m'; d2.id = 'go-test-e'; c.onclick = () => testStart(false); d2.onclick = () => testStart(true); r2.appendChild(i2); r2.appendChild(c); r2.appendChild(d2); box.appendChild(r2); }
   g.skills.forEach((s,i) => { const st = skState(g.id+':'+i), row = el('div', 'item'), info = el('div');
     info.appendChild(el('b','', s[1])); info.appendChild(document.createTextNode('CCSS ' + (g.ela ? 'ELA ' : '') + s[0] + ' · ' + (isMastered(st) ? 'Mastered' : !st.n ? 'Not started' : st.n ? st.n + ' answered' : 'New')));
     const lb = el('button', '', 'Lesson'); lb.type = 'button'; lb.id = 'lesson-' + i; lb.onclick = () => openLesson(s, 'list');
@@ -2336,6 +2403,75 @@ Object.assign(LESSON, {
   'Vocabulary: roots, sayings and word tools': ['Many words share a root that carries meaning: tele means far, graph means write, port means carry, bio means life. An idiom or saying means something different from its separate words. A dictionary gives meanings and how to say a word; a thesaurus gives words that mean the same; a glossary explains the special words in one book.', 'Telephone and telescope both deal with things far away. "A piece of cake" means easy.'],
   'Reading: point of view and kinds of writing': ['A first-person story is told by a character using I and me. A third-person story is told by a narrator outside it, using he, she and they. Poems have lines, stanzas and rhythm. Plays have a cast, scenes, dialogue and stage directions. A firsthand account is by someone who was there; a secondhand account is by someone who learned about it later.', '"I raced outside" is first person. "Lena raced outside" is third person.'],
   'Reading information: charts and diagrams': ['A chart is part of the text. Read its title, then the labels, then compare the bars against the numbers on the side. To find how many more, subtract the smaller number from the larger.', 'If one bar reaches 8 and another reaches 5, the first is 3 more.']});
+// ---- longer passages and deeper banks, so that English skills cannot be passed by remembering the answers
+Object.assign(PASSAGES, {
+  pie:{t:"One New Word", p:["For three generations, the women in Marisol's family had baked the same apple pie for the county fair. The recipe lived on a card so stained with butter that some of the words had nearly disappeared.", "This year, Abuela's hands were too stiff to roll the dough. \"It is your turn,\" she told Marisol, and she pressed the card into her palm as if it were made of glass.", "Marisol practiced all week. The pies were good. They tasted exactly like every pie she had ever eaten at Abuela's table. But on Thursday, squeezing limes for lemonade, she had an idea she could not shake. What if a little lime juice went in with the apples?", "She tried it while Abuela napped. The new pie was brighter, like a window had been opened in a warm room. Marisol loved it. Then her stomach sank. She had changed the recipe. She had changed three generations.", "On Saturday morning she carried the lime pie to the fair anyway, and all the way there she rehearsed how to confess.", "She did not have to. Abuela took one bite of the sample slice and raised her eyebrows. \"Lime,\" she said.", "\"I'm sorry,\" Marisol whispered. \"I should have asked.\"", "Abuela laughed. \"Mija, look at the card.\" She pointed to a line near the bottom, written in different ink. Cinnamon, it said, in handwriting Marisol had never seen. \"My mother added that. Her mother never used it. A recipe that nobody changes is a recipe nobody loves enough.\"", "The pie took second place. That evening, Marisol wrote one new word on the card, in her own handwriting, right below the cinnamon."], items:[
+    {k:1, q:"Why does Marisol's stomach sink in paragraph 4?", a:"She worries that she has been disloyal to her family's tradition.", w:["She thinks the pie tastes bad.", "She is afraid Abuela will wake up hungry.", "She has run out of apples."], why:"She loves the pie, but then thinks, \"She had changed three generations.\" Her worry is about the tradition, not the taste."},
+    {k:1, q:"Part A: Which sentence best states a theme of the passage?", a:"A tradition stays alive when each generation adds to it.", w:["Winning a contest is the best way to honor a family.", "Old recipes should never be changed.", "Children should not cook without permission."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"A recipe that nobody changes is a recipe nobody loves enough.\"", w:["\"The pies were good.\"", "\"The pie took second place.\"", "\"Marisol practiced all week.\""]}, why:"Abuela shows that her own mother changed the recipe too, and says a recipe nobody changes is not loved enough."},
+    {k:1, q:"How does Abuela react when she tastes the lime?", a:"She is pleased and explains that the recipe has changed before.", w:["She is angry that Marisol did not ask.", "She does not notice anything different.", "She tells Marisol to bake another pie."], why:"She laughs and points to the word cinnamon, which her own mother added."},
+    {k:1, multi:1, q:"Choose two details that show the recipe card is old and well used.", a:["It is stained with butter.", "Some of its words have nearly disappeared."], w:["Abuela laughs when she sees it.", "Marisol practiced all week.", "The pie took second place."], why:"Paragraph 1 describes the butter stains and the fading words."},
+    {k:2, q:"Read this sentence from paragraph 4: \"The new pie was brighter, like a window had been opened in a warm room.\" What does the comparison suggest?", a:"The lime gave the pie a fresh, lively taste.", w:["The pie had cooled too quickly.", "The kitchen was too hot for baking.", "The pie was lighter in color."], why:"Opening a window lets fresh air into a stuffy room. The lime does the same for the taste."},
+    {k:2, q:"In paragraph 2, Abuela hands over the card \"as if it were made of glass.\" What does this show?", a:"The card is precious to her.", w:["The card is see-through.", "The card is sharp.", "The card is brand new."], why:"People handle glass carefully because it can break. She treats the card as something valuable."},
+    {k:2, q:"From whose point of view is the story told?", a:"a narrator outside the story who tells Marisol's thoughts", w:["Marisol, using the word I", "Abuela, using the word I", "a judge at the county fair"], why:"The narrator says \"Marisol\" and \"she,\" and tells what Marisol thinks and feels."},
+    {k:2, q:"Why is the last sentence of the passage important?", a:"It shows that Marisol has taken her place in the family tradition.", w:["It shows that Marisol is still worried.", "It explains how to make the pie.", "It shows that the pie did not win."], why:"Like her great-grandmother, she writes her own change on the card, below the cinnamon."}]},
+  wolves:{t:"The Wolves Come Back", p:["For about seventy years, no wolves lived in Yellowstone National Park. People had hunted them until, by the 1920s, the last packs were gone. Then, in 1995, scientists brought wolves from Canada and set them free in the park.", "Many visitors expected the wolves to change one thing: the number of elk. Without wolves, the elk herds had grown very large. They spent their winters in the valleys, eating young willow and aspen trees down to the ground.", "The wolves did hunt elk. But scientists noticed something else as well. The elk began to behave differently. They stopped lingering in open valleys and along streams, where a wolf could surprise them. They kept moving.", "With fewer hungry elk standing in one place, the young trees along some streams finally had a chance to grow. In several valleys, willows that had been knee-high for decades grew taller than a person.", "Taller trees brought other changes. Beavers need willows for food and for building dams, and beaver colonies in the northern part of the park increased. Their ponds made homes for fish, frogs, and ducks. Songbirds nested in the new thickets.", "Scientists still argue about how much credit the wolves deserve. During the same years, the park had dry summers and hard winters, and bears and human hunters outside the park also reduced the elk herds. Most researchers agree that the wolves were one important cause, but not the only one.", "What the story of Yellowstone shows is that a change to one animal can ripple outward to many others, in ways that are hard to predict."], items:[
+    {k:1, q:"What is the main idea of the passage?", a:"Bringing wolves back to Yellowstone led to changes in many other plants and animals.", w:["Wolves are the most dangerous animals in Yellowstone.", "Elk are harmful and should be removed from parks.", "Beavers build dams out of willow branches."], why:"The passage follows the changes from wolves to elk to trees to beavers and birds."},
+    {k:1, q:"According to the passage, why were young trees unable to grow before 1995?", a:"Large elk herds ate them down to the ground.", w:["Beavers cut them all down.", "The summers were too dry.", "Wolves trampled them."], why:"Paragraph 2 says the elk ate young willow and aspen trees down to the ground."},
+    {k:1, q:"Part A: What happened after the elk changed their behavior?", a:"Trees along some streams grew taller.", w:["The elk left the park forever.", "The wolves stopped hunting.", "The streams dried up."], b:{q:"Part B: Which sentence from the passage best supports your answer in Part A?", a:"\"In several valleys, willows that had been knee-high for decades grew taller than a person.\"", w:["\"The wolves did hunt elk.\"", "\"Many visitors expected the wolves to change one thing: the number of elk.\"", "\"Scientists still argue about how much credit the wolves deserve.\""]}, why:"Paragraph 4 says that with fewer elk standing in one place, the young trees had a chance to grow."},
+    {k:1, multi:1, q:"Choose two animals that the passage says were helped by the taller trees.", a:["beavers", "songbirds"], w:["elk", "bears", "wolves"], why:"Paragraph 5 says beaver colonies increased and songbirds nested in the new thickets."},
+    {k:2, q:"What is the main purpose of paragraph 6?", a:"to explain that wolves were probably not the only cause of the changes", w:["to prove that wolves caused every change", "to describe how wolves hunt", "to argue that wolves should be removed again"], why:"The paragraph lists other causes: dry summers, hard winters, bears and hunters."},
+    {k:2, q:"What does the phrase \"ripple outward\" mean in paragraph 7?", a:"spread from one thing to many others", w:["disappear quickly", "move across water", "become smaller over time"], why:"A ripple spreads in widening circles, as the change spread from wolves to many other living things."},
+    {k:2, q:"How is the passage mainly organized?", a:"It describes a chain of causes and effects.", w:["It compares two national parks.", "It lists steps for bringing wolves to a park.", "It gives one person's opinion about wolves."], why:"Each paragraph tells what one change caused next."},
+    {k:2, q:"Which sentence shows that the author is being careful not to overstate the facts?", a:"\"Most researchers agree that the wolves were one important cause, but not the only one.\"", w:["\"They kept moving.\"", "\"Taller trees brought other changes.\"", "\"Then, in 1995, scientists brought wolves from Canada and set them free in the park.\""], why:"The author says the wolves were one cause among several, not the whole explanation."}]},
+});
+WPREC.push(
+  ["Smoke [[went]] up from the chimney into the cold air.", "drifted", ["fell", "ran", "jumped"]], ["The tired hikers [[walked]] slowly up the last steep hill.", "trudged", ["skipped", "dashed", "danced"]],
+  ["Lightning [[was]] across the dark sky.", "flashed", ["sat", "stayed", "rested"]], ["The lemonade was so [[cold]] that the glass was covered in frost.", "icy", ["cool", "wet", "sweet"]],
+  ["Ava [[looked]] at the tiny print, trying to read it.", "squinted", ["glanced", "smiled", "waved"]], ["The [[loud]] thunder shook the windows.", "booming", ["soft", "little", "nice"]],
+  ["The audience [[liked]] the play so much that they stood up and cheered.", "adored", ["watched", "saw", "noticed"]], ["The chick [[came]] out of its shell after hours of pecking.", "hatched", ["went", "moved", "stayed"]]);
+WORG.push(
+  ["A student is writing a report about frogs. Read the draft.\n\nA frog begins its life as an egg in the water. ______ Later, the tadpole grows legs and loses its tail.", "Which sentence best fits in the blank?", "Next, a tadpole with a long tail hatches from the egg.", ["Frogs can be green or brown.", "Finally, the adult frog hops onto land.", "Some people keep frogs as pets."]],
+  ["A student is writing an opinion piece. Read the draft.\n\nOur library should stay open on Sundays. Many families are busy during the week. ______", "Which sentence best supports the opinion?", "Sunday is the only day some children can visit to choose books.", ["The library has a red door.", "Libraries were invented long ago.", "Some books are very long."]],
+  ["A student is writing a story. Read the draft.\n\n\"I can't find my shoe,\" said Nico. ______ \"Did you look under the bed?\" she asked.", "Which sentence best fits in the blank?", "His sister looked up from her book.", ["Shoes come in many sizes.", "In conclusion, the shoe was lost.", "Nico is a boy."]],
+  ["A student is writing a report about the Sahara. Read the draft.\n\nThe Sahara is the largest hot desert in the world. [[It is big.]] It covers parts of eleven countries.", "Which sentence best replaces the underlined sentence?", "It is nearly as large as the United States.", ["It is really, really big.", "Deserts are dry places.", "I would not like to live there."]],
+  ["A student is writing a letter to the principal asking for a longer lunch period.", "Which sentence would be the best way to begin the letter?", "I am writing to ask you to consider making lunch ten minutes longer.", ["Hey, lunch is way too short!", "Lunch is a meal people eat at noon.", "Thank you for reading my letter."]],
+  ["A student is writing a report. Read the draft.\n\nBats are helpful animals. One bat can eat hundreds of insects in an hour. ______, bats spread the seeds of many fruit trees.", "Which words best connect the ideas?", "In addition", ["However", "Instead", "For this reason"]]);
+RSRC.push(
+  ["A student is writing a report about hurricanes and finds a book published in 1962 and a science website updated this year.", "Which is the best reason to use the website for facts about how hurricanes are tracked today?", "It has the most recent information.", ["Websites are always correct.", "Books cannot be trusted.", "It is shorter to read."]],
+  ["A student is writing about the first moon landing.", "Which source is a firsthand account?", "an interview with an astronaut who walked on the moon", ["a textbook chapter about space", "a movie about astronauts", "an encyclopedia entry about the moon"]],
+  ["A student wrote this note from a source: \"Sea otters use rocks to crack open shellfish.\"", "Which sentence uses the note without copying it word for word?", "To get at the food inside shells, sea otters break them with stones.", ["Sea otters use rocks to crack open shellfish.", "Sea otters are the cutest animals in the ocean.", "Shellfish live in the sea."]],
+  ["A student is researching whether her town should build a skate park.", "Which source is most likely to give only one side of the issue?", "a flyer made by a skateboard shop", ["a newspaper article that interviews people for and against", "the town's official meeting notes", "a map of the town's parks"]],
+  ["A student has these notes for a report on bees:\n\nNote 1: Bees carry pollen from flower to flower.\nNote 2: Many fruits cannot grow without pollination.\nNote 3: Bees live in hives.", "Which notes together best support the idea that bees help people grow food?", "Notes 1 and 2", ["Notes 1 and 3", "Notes 2 and 3", "Note 3 only"]],
+  ["A student wants to know what the word \"habitat\" means while reading a science book.", "Where in the book should the student look first?", "the glossary", ["the cover", "the table of contents", "the author's page"]]);
+L4P.push(
+  ['Read the lines.\n\nJAY: (whispering) Did you hear that?\nMIRA: (grabbing the flashlight) It came from the attic.\n\nWhat kind of writing is this?', 'a play', ['a poem', 'a news article', 'a diary'], 'The speakers\' names and the directions in parentheses show that it is a script for a play.'],
+  ['Read the lines.\n\nThe moon is a lantern\nhung on a hook of night.\n\nWhat kind of writing is this?', 'a poem', ['a play', 'a recipe', 'a report'], 'It is written in short lines and uses a comparison to make a picture.'],
+  ['In a play, what are the words in parentheses, such as (laughing) or (exits left), called?', 'stage directions', ['stanzas', 'captions', 'chapter titles'], 'Stage directions tell the actors what to do and how to speak.'],
+  ['A story is told by a narrator who is not in it and who knows what every character is thinking. Which point of view is this?', 'third person', ['first person', 'second person', 'a firsthand account'], 'A narrator outside the story who uses he, she and they is third person.'],
+  ['Two students write about the same field trip. One was on the trip. The other only read about it. Whose account is firsthand?', 'the student who was on the trip', ['the student who read about it', 'both students', 'neither student'], 'A firsthand account comes from someone who was there.'],
+  ['Lines in a poem that end with the same sound, such as "light" and "night," are said to', 'rhyme', ['repeat', 'narrate', 'exit'], 'Words that end with the same sound rhyme.']);
+L4V.push(
+  ['The words transport and transfer share the prefix "trans." What does "trans" mean?', 'across', ['under', 'again', 'not'], 'To transport is to carry across, and to transfer is to move across.'],
+  ['The words audience and audible share the root "aud." What does "aud" mean?', 'hear', ['see', 'speak', 'walk'], 'An audience hears a show, and something audible can be heard.'],
+  ['The words spectator and inspect share the root "spect." What does "spect" mean?', 'look', ['listen', 'build', 'break'], 'A spectator looks on, and to inspect is to look closely.'],
+  ['"After the long hike, I was ready to hit the hay." What does "hit the hay" mean?', 'go to bed', ['feed the horses', 'fall down', 'start working'], '"Hit the hay" is an idiom for going to sleep.'],
+  ['"Do not let the cat out of the bag about the party." What does "let the cat out of the bag" mean?', 'tell a secret', ['lose a pet', 'open a present', 'make a mess'], 'The idiom means to give away a secret.'],
+  ['What does the saying "Two heads are better than one" mean?', 'People solve problems better when they work together.', ['Tall people think faster.', 'It is good to change your mind twice.', 'One person should always be in charge.'], 'Two people thinking together can come up with more ideas than one alone.'],
+  ['What does the saying "Look before you leap" mean?', 'Think carefully before you act.', ['Jump as far as you can.', 'Watch other people first.', 'Never take a chance.'], 'The saying warns you to consider what might happen first.'],
+  ['Read the dictionary entry.\n\nlight (adjective) 1. not heavy 2. pale in color\n\nWhich meaning is used in this sentence? She painted her room a light blue.', 'meaning 2', ['meaning 1', 'both meanings', 'neither meaning'], 'Light blue is a pale blue, so the second meaning fits.']);
+L4G.push(
+  ['Choose the word that completes the sentence.\n\nThe teacher ______ I respect most taught me to read.', 'whom', ['which', 'whose', 'where'], 'Use whom for a person who receives the action: I respect the teacher.'],
+  ['Choose the word that completes the sentence.\n\nI do not know the reason ______ the game was canceled.', 'why', ['who', 'which', 'whose'], 'Why goes with a reason.'],
+  ['Choose the words that complete the sentence.\n\nBy the time you arrive, we ______ dinner.', 'will be eating', ['were eating', 'was eating', 'ate'], 'An action going on at a future time uses will be with an -ing verb.'],
+  ['Choose the word that completes the sentence.\n\n______ you please pass the salt?', 'Could', ['Must', 'Might', 'Should not'], 'Could is a polite way to ask someone to do something.'],
+  ['Which sentence puts the describing words in the correct order?', 'Dad bought two shiny new bikes.', ['Dad bought new shiny two bikes.', 'Dad bought shiny two new bikes.', 'Dad bought new two shiny bikes.'], 'Number comes first, then opinion, then age.'],
+  ['Which words are the prepositional phrase in this sentence?\n\nThe kite flew over the trees.', 'over the trees', ['The kite', 'flew over', 'kite flew'], '"Over the trees" starts with the preposition over and tells where.'],
+  ['Which is the best way to fix this sentence fragment?\n\nAfter the rain stopped.', 'After the rain stopped, we went outside.', ['After the rain stopped and.', 'After, the rain stopped.', 'The rain after stopped.'], 'The fragment needs the rest of the thought: what happened after the rain stopped.'],
+  ['Choose the word that completes the sentence.\n\nThe puppies wagged ______ tails.', 'their', ['there', "they're", 'thier'], 'Their shows that the tails belong to the puppies.']);
+MAZE.push(
+  "The library was quiet on Saturday morning. Jun walked slowly between the tall {shelves|rivers|engines}, running a finger along the spines of the books. He was looking for a story about {dragons|sandwiches|Tuesdays}, but every one he found had already been checked {out|up|under}. At last the librarian handed him a thick green {book|shoe|cloud} from the cart. Jun sat down by the window and began to {read|swim|bake}.",
+  "A volcano is an opening in the surface of the Earth. Deep underground, rock is so hot that it {melts|laughs|sleeps}. This melted rock is called magma. When pressure builds, the magma pushes {upward|quietly|yesterday} through cracks. If it reaches the surface, it is called {lava|juice|paper}. As lava cools, it hardens into new {rock|wood|glass}. Over thousands of years, layers of cooled lava can build a tall {mountain|kitchen|pencil}.",
+  "Ana's soccer team was losing by one goal with a minute left. The ball rolled toward her, and she took a deep {breath|blanket|window}. She dribbled past one defender and then {another|always|purple}. The goalie crouched, ready to {block|sing|read} the shot. Ana kicked the ball as hard as she {could|ate|slept}. It sailed into the corner of the net, and her teammates {cheered|melted|folded}.");
 let lessonOf = null, lessonBack = null, lessonAfter = null;
 function lessonTry(){
   let p; for (let k = 0; k < 30; k++){ p = lessonOf[2](false); if (!p.steps && !p.typed) break; }
@@ -2702,7 +2838,7 @@ function dayClock(dt){ if (!S.adopted || !G.cur || !$('splash').hidden || docume
       {t:'Save and stop', f:() => { dayClose(); $('math').hidden = true; oneShot = null; save(); showSplash(); }}, {t:'Keep going', f:() => { if (GL.pin && $('day-pin').value.trim() !== GL.pin){ $('day-fb').textContent = 'That is not the code.'; return; } D.more = true; dayClose(); }}, !!GL.pin); } }
 const TYPED_GAP = 10, SLATE_N = 8, single = () => !!oneShot || rescue > 0 || !!quick;      // gathering, stew and rescues ask one question at a time instead
 function makeProb(gid){
-  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), st = skState(g.id+':'+i), h = boxOf(st) >= 2, m0 = S.math, want = pickWant;
+  const g0 = gid ? allGrade(gid) : curGrade(), i = pickSkill(g0), g = pickG || g0, st = skState(g.id+':'+i), h = boxOf(st) >= 2, m0 = S.math, want = pickWant;
   const gen = hard => { const x = g.skills[i][2](hard); x.sig = sigOf(x, g); return x; }, key = x => (x.q + '|' + (x.lt || '') + (x.pass || '').slice(0, 60)).slice(0, 160);
   m0.seen = m0.seen || []; let p = null;
   if (want){ for (let k = 0; k < 200 && !p; k++){ const c = gen(k % 2 === 0 ? h : !h); if (c.sig === want) p = c; }
@@ -2788,7 +2924,7 @@ function showProb(){
   // a presentation's words stay hidden while it can be heard; they appear once the question is settled, or on a device with no voice
   const text = st ? essayPass(prob, done) : lis ? (done ? '**' + prob.lt + '**\n' + lis : canSpeak() ? '' : '**' + prob.lt + '**\n(This device cannot read aloud, so read the presentation instead.)\n' + lis) : prob.pass;
   setPass($('mpass'), text); setReading(!!text && text.length > 300); if (st && !prob.maze && (done || prob.sel.length)) $('mpass').scrollTop = 1e6;
-  prob.t0 = Date.now(); $('munsure').hidden = done || !!oneShot || rescue > 0 || !!quick || !!prob.tried; setPic('mpic', prob.pic); const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mskill').textContent = (quick ? 'Quick check ' + (quick.k + 1) + ' of ' + quick.items.length + ' · ' : prob.tag ? prob.tag + ' · ' : '') + s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
+  prob.t0 = Date.now(); $('munsure').hidden = done || !!oneShot || rescue > 0 || !!quick || !!prob.tried; setPic('mpic', prob.pic); const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mhow').hidden = !!(quick && quick.test); $('mskill').textContent = quick && quick.test ? 'Practice test \u00b7 question ' + (quick.k + 1) + ' of ' + quick.items.length : (quick ? 'Quick check ' + (quick.k + 1) + ' of ' + quick.items.length + ' · ' : prob.tag ? prob.tag + ' · ' : '') + s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
   $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + (st ? (prob.maze ? 'The right words are shown.' : 'The strong response is shown.') : prob.sol)) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
   if (prob.num) fillNum($('answers'), prob, done); else if (prob.typed) fillTyped($('answers'), prob, done); else if (prob.multi || prob.partB || st) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
   renderListen(done); readBtn(); $('mread').hidden = !canSpeak() || (!!prob.listen && !done); $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
@@ -2801,7 +2937,7 @@ function slateDone(){
   sl.items.forEach((p,j) => { if (p.st !== 2) return; const row = el('div','item'), info = el('div'); info.appendChild(el('b','', 'Question ' + (j+1) + ': ' + p.q)); info.appendChild(document.createTextNode(p.sol + ' This skill will come back for more practice.')); row.appendChild(info); box.appendChild(row); });
   box.hidden = right === n; renderStrip(); $('mearn').textContent = earnText(); ui();
 }
-$('mnew').onclick = () => { S.math.slate = null; nextProb(); };
+$('mnew').onclick = () => { $('mnew').textContent = 'New slate of questions'; S.math.slate = null; nextProb(); };
 // a wrong answer inside three seconds, on a question that takes reading, is a guess
 // The first miss on an ordinary question does not show the answer: the wrong choice is crossed out, a hint appears, and she picks again.
 // It still counts as a miss, so a second try cannot inflate her progress.
@@ -2827,6 +2963,7 @@ function notSure(){
 // after anything but a right answer, play stops for Granny Dot
 function toGate(g, verdict, wait){
   const m = S.math; m.fix = {gid:g.id, i:prob.i, s:g.skills[prob.i][1], sig:prob.sig, mode:verdict, k:0}; fixMissed = prob;
+  if (verdict === 'teach'){ const pre = prereqOf(g, prob.i); if (pre && !solid(skState(pre.g.id+':'+pre.i))) m.fix.pre = {gid:pre.g.id, s:pre.g.skills[pre.i][1], n:0, ok:0}; }
   if (verdict !== 'miss') (dayState().taught = dayState().taught || []).push(g.skills[prob.i][1]);
   if (oneShot){ const o = oneShot; oneShot = null; fixResume = () => { $('math').hidden = true; o.fn(true); ui(); }; }          // prove the skill and the gathering still pays
   else if (rescue > 0) fixResume = () => { rescue--; if (rescue > 0) nextProb(); else comeHome(); };
@@ -2838,8 +2975,8 @@ function settle(ok, b, how){
   const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB || prob.steps || prob.typed || prob.num;
   how = how || {}; const late = how.recorded && ok;
   prob.st = ok && !late ? 1 : 2; const verdict = quick ? (ok ? 'ok' : 'miss') : how.recorded ? prob.verdict : record(g, prob.i, ok, Object.assign({sig:prob.sig, ex:exOf(prob)}, how));
-  if (special){ if (prob.num) fillNum($('answers'), prob, true); else if (prob.typed) fillTyped($('answers'), prob, true); else fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
-  if (quick){ if (!special) b.classList.add(ok ? 'ok' : 'no'); quickStep(ok); return; }
+  if (special && !(quick && quick.test)){ if (prob.num) fillNum($('answers'), prob, true); else if (prob.typed) fillTyped($('answers'), prob, true); else fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
+  if (quick){ if (quick.test){ b.classList.add('on'); for (const x of $('answers').querySelectorAll('button')) x.disabled = true; } else if (!special) b.classList.add(ok ? 'ok' : 'no'); quickStep(ok); return; }
   if (late){      // right on the second try: no bones and no lesson, and the kind comes back later
     b.classList.add('ok'); $('fb').textContent = 'There it is. That kind will come back for another go.'; beep(660,.1,'triangle',.06); renderProgress(); renderStrip(); ui(); save();
     if (oneShot){ const o = oneShot; oneShot = null; setTimeout(() => { $('math').hidden = true; o.fn(true); ui(); }, 900); return; }
@@ -2975,6 +3112,13 @@ function openFix(){
   const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], mode = GSTEPS[f.mode] ? f.mode : 'miss', stages = GSTEPS[mode];
   f.k = Math.min(f.k || 0, stages.length - 1); const stage = stages[f.k], m0 = fixMissed, steps = m0 ? (explain(m0) || (m0.why ? ['Why: ' + m0.why] : null)) : null, soloAt = stages.indexOf('solo'), soloN = stages.filter(x => x === 'solo').length;
   for (const id of ['mplay','mlist','msum','slate','mlesson','mup','mgrown']) $(id).hidden = true; $('mfix').hidden = false; fixLocks(true); setReading(false); stopSpeak();
+  if (f.pre && f.pre.n < 3){      // WARM-UP: is the step before this one solid?
+    const lo = allGrade(f.pre.gid), k = lo ? lo.skills.findIndex(x => x[1] === f.pre.s) : -1, p0 = k >= 0 ? gateProb({i:k}, lo, lo.skills[k], null) : null;
+    if (!p0){ f.pre = null; openFix(); return; }
+    $('fx-h').textContent = 'Warm-up \u00b7 ' + f.pre.s + ', ' + (f.pre.n + 1) + ' of 3'; $('fx-steps').hidden = !m0 || f.pre.n > 0;
+    if (m0 && !f.pre.n) setPass($('fx-steps'), 'The question: ' + m0.q + '\n' + m0.sol);
+    $('fx-tip').hidden = false; $('fx-tip').textContent = 'First, three questions from the step before this one. If they go well, the trouble is in the new part.';
+    fixProb = p0; fixLock = false; readBtn(); setPic('fx-pic', p0.pic); setPass($('fx-pass'), p0.pass); $('fx-fb').textContent = ''; $('fx-q').textContent = p0.q; fillAnswers($('fx-answers'), p0, false, checkAnswer, 'fx-'); return; }
   $('fx-h').textContent = (mode === 'intro' ? "Granny Dot's lesson: something new" : mode === 'teach' ? 'Skill Builder' : mode === 'refresh' ? "Granny Dot's refresher" : "Granny Dot: let's work it out") + (stage === 'one' ? '' : ' \u00b7 ' + STAGE_NAME[stage] + (stage === 'solo' ? ', ' + (f.k - soloAt + 1) + ' of ' + soloN : ''));
   $('fx-steps').hidden = !m0; if (m0) setPass($('fx-steps'), (m0.listen ? '**What you heard: ' + m0.lt + '**\n' + m0.listen + '\n\n' : m0.pass && m0.pass.length < 260 ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (m0.typed && m0.pick ? 'You wrote: ' + m0.pick + '\n' : '') + (m0.why || !explain(m0) ? m0.sol + '\n' : '') + (steps ? steps.join('\n') : ''));
   $('fx-tip').hidden = stage === 'solo'; $('fx-tip').textContent = 'How it works: ' + L[0] + ((!steps || mode !== 'miss') && L[1] ? '\n\nExample: ' + L[1] : '');
@@ -2989,6 +3133,16 @@ function openFix(){
 }
 function checkAnswer(v, b){
   if (fixLock) return; fixLock = true; const m = S.math, f = m.fix, g = allGrade(f.gid), st = skState(f.gid+':'+f.i), mode = GSTEPS[f.mode] ? f.mode : 'miss', stages = GSTEPS[mode], stage = stages[f.k], p = fixProb, right = v === p.ans;
+  if (f.pre && f.pre.n < 3){
+    const lo = allGrade(f.pre.gid); record(lo, p.i, right, {sig:p.sig, ex:exOf(p)}); f.pre.n++; if (right) f.pre.ok++;
+    b.classList.add(right ? 'ok' : 'no'); if (!right) [...$('fx-answers').children].forEach((o,j) => { if (p.list[j] === p.ans) o.classList.add('ok'); }); beep(right ? 660 : 220, .12, right ? 'triangle' : 'sine', .06);
+    fixMissed = null;
+    if (f.pre.n < 3){ $('fx-fb').textContent = right ? 'Yes.' : 'Not this one. ' + whyOf(p); save(); setTimeout(openFix, right ? 1000 : 2800); return; }
+    if (f.pre.ok >= 2){ $('fx-fb').textContent = 'Those are solid. Now the new part.'; save(); setTimeout(openFix, 1500); return; }
+    // the earlier step is what is in the way: build that first, give it a place in her daily rounds, and rest the harder skill for today
+    st.rest = today(); m.support = (m.support || []).filter(x => !(x.g === f.pre.gid && x.s === f.pre.s)).concat({g:f.pre.gid, s:f.pre.s, need:f.s});
+    m.fix = {gid:f.pre.gid, i:p.i, s:f.pre.s, sig:null, mode:'teach', k:0, was:f.s}; (dayState().taught = dayState().taught || []).push(f.pre.s);
+    $('fx-fb').textContent = 'The step before this one needs building first. Granny Dot will start there, and come back to the new part another day.'; save(); setTimeout(openFix, 3200); return; }
   if (stage === 'solo') record(g, f.i, right, {sig:p.sig, ex:exOf(p)});
   if (right){
     f.k++; f.same = 0; const end = f.k >= stages.length; b.classList.add('ok'); celebrate(b, end && mode !== 'miss'); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
@@ -4235,6 +4389,8 @@ window.pupSim = (gid, weakN, total, acc) => { const keep = JSON.stringify(S.math
   const mastered = g.skills.filter((x,i) => skState(g.id+':'+i).M).length;
   S.math = JSON.parse(keep); S.day = dk; window.__dayShift = 0; const w = weak.reduce((a, nm) => a + (count[nm] || 0), 0), others = g.skills.map(x => x[1]).filter(nm => !weak.includes(nm));
   return {broke:[...new Set(broke)], retries, sameKindRetries:sameKind + ' of ' + wanted, mastered:mastered + ' of ' + g.skills.length, verdicts, weakShare:Math.round(w/(total || 300)*100) + '%', weak:weak.map(nm => nm + ': ' + (count[nm] || 0)), fewestOther:Math.min(...others.map(nm => count[nm] || 0)), missing:others.filter(nm => !count[nm])}; };
+// pupGate('teach'): for showing or checking the Skill Builder: sends the question on screen to Granny Dot as if it had kept going wrong
+window.pupGate = mode => { if (!prob || $('math').hidden || S.math.fix) return 'open a question first'; mathLock = true; prob.st = 2; toGate(probGrade(), mode || 'teach', 0); return JSON.stringify(S.math.fix); };
 // pupRules(): the teaching rules, each checked on a made-up answer history. Every line should say true.
 window.pupRules = () => { const keep = JSON.stringify(S.math), dk = S.day, g = allGrade('4'), out = {}, WP = g.skills.findIndex(x => x[1] === 'Multi-step word problems'); let k = 0, n = 0;
   // a made-up answer history on one skill: R right, M miss, Mf rushed miss, U not sure. Every answer is a different kind unless told otherwise.
@@ -4272,6 +4428,22 @@ window.pupRules = () => { const keep = JSON.stringify(S.math), dk = S.day, g = a
   // hints
   const H = (q, ans, picked) => hintFor({q, ans, i:0, list:[]}, picked, g);
   out['hints name the mistake'] = /add/.test(H('52 \u2212 17 = ?', 35, 69)) && /off by just 1/.test(H('What is 6 more?', 36, 37)) && /exactly 10/.test(H('What is it?', 45, 55)) && /too big/.test(H('What is it?', 45, 80));
+  // stepping back a grade
+  let preOK = true; for (const gid of Object.keys(PRE)) for (const nm of Object.keys(PRE[gid])){ const gg = allGrade(gid), i = gg.skills.findIndex(x => x[1] === nm); if (i < 0 || !prereqOf(gg, i)) preOK = false; }
+  out['every listed prerequisite is a real skill'] = preOK;
+  const mi = g.skills.findIndex(x => x[1] === 'Multiply by a one-digit number'), pr = prereqOf(g, mi); out['a Grade 4 skill can point back to Grade 3'] = !!pr && pr.g.id === '3' && pr.g.skills[pr.i][1] === 'Multiply within 100';
+  const e4 = allGrade('E4'), pe = prereqOf(e4, 0); out['an English skill steps back to the same skill a grade earlier'] = !!pe && pe.g.id === 'E3' && pe.g.skills[pe.i][1] === e4.skills[0][1];
+  S.math = Object.assign({}, fresh().math, {grade:'4', support:[{g:'3', s:'Multiply within 100', need:'Multiply by a one-digit number'}]}); S.day = null; let warm = 0, wrongG = 0;
+  for (let q = 0; q < 40; q++){ const i = pickSkill(g), gg = pickG || g; if (pickG){ warm++; if (pickG.id !== '3' || pickTag !== 'Warm-up' || gg.skills[i][1] !== 'Multiply within 100') wrongG++; } record(gg, i, q % 3 > 0, {sig:'s' + (n++)}); }
+  out['an earlier skill being built up takes turns in her rounds'] = warm >= 2 && !wrongG && !!S.math.sk['3|Multiply within 100'];
+  delete S.math.sk['3|Multiply within 100'].w;
+  for (let q = 0; q < 12; q++) record(allGrade('3'), allGrade('3').skills.findIndex(x => x[1] === 'Multiply within 100'), true, {sig:'w' + q}); S.math.deck = {}; for (let q = 0; q < 30; q++){ const i = pickSkill(g); record(pickG || g, i, true, {sig:'v' + (n++)}); }
+  out['and leaves them once it is mastered'] = !(S.math.support || []).length;
+  out['a skill is solid when mastered or going well'] = solid({M:true, n:1}) && solid({n:3, box:2}) && !solid({n:2, box:3}) && !solid({n:5, box:0});
+  // the day's log
+  S.math = Object.assign({}, fresh().math, {grade:'4'}); S.day = null; const lg = S.log, ad = S.adopted; S.log = []; S.adopted = true; for (let q = 0; q < 5; q++) record(g, 0, q !== 2, {sig:'d' + q}); logDay(); logDay();
+  out['each day is logged once, with its questions and right answers'] = S.log.length === 1 && S.log[0].n === 5 && S.log[0].r === 4; S.log = lg; S.adopted = ad;
+  out['a test gives no hints'] = (() => { const was = quick; quick = {test:1}; const r0 = canHint({list:[1,2,3,4]}); quick = was; return r0 === false && canHint({list:[1,2,3,4]}) === !was; })();
   S.math = JSON.parse(keep); S.day = dk; window.__dayShift = 0; return out; };
 /* ---------- HUD ---------- */
 let toastT;

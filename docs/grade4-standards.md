@@ -106,6 +106,16 @@ The game checks what she knows first and teaches only on a sign that teaching is
 
 **Practice report.** Behind the grown-up code: skills mastered, due for review, shaky and not started in each subject; an example, with its answer, of each kind of question missed and not yet fixed; the last and best Fact Dash and the slow facts; and whether the quick check has been done.
 
+## Stepping back, tests and history
+
+**Stepping back a grade.** Each skill can name the earlier skill it rests on (for example, multiplying by a one-digit number rests on Grade 3 multiplication facts; in English, the same skill a grade earlier). When a skill is sent to the Skill Builder and its earlier skill is not solid, three warm-up questions from the earlier skill come first. If two or three are right, the trouble is in the new part and the Skill Builder goes ahead. If not, the earlier skill is built first, the harder one is rested for the day, and the earlier skill takes a turn in her daily rounds, marked "Warm-up", until it is mastered. Her grade stays locked: only the engine can reach down, and only for the skill in the way.
+
+**Practice test.** Twelve questions, one from each of twelve skills, in the real formats, with no hints, no lessons and nothing marked until the end. Then a score, a breakdown by strand, and the answer to each question missed. The answers go in her record, so missed kinds come back in practice. Under Show skills, for math and for English.
+
+**History.** Every day played is logged: questions, percent right, minutes, lessons, and how many skills are mastered. The practice report shows the last two weeks, the change in mastered skills over the last seven days played, and recent practice tests.
+
+**Bank sizes.** English items are each their own kind, so a small bank can be learned by heart. The Grade 4 banks now hold 11 reading passages (two of them 300 words long) with about 90 questions, 9 fill-the-gap passages, and between 18 and 60 items in each language and writing skill.
+
 ## Checks
 
 In the browser console:

@@ -15,8 +15,8 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 10
-        versionName '1.8'
+        versionCode 11
+        versionName '1.8.1'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -60,9 +60,6 @@ tasks.register('copyGrader', Copy) {
     from('../../pupgrader.js')
     into(gameAssets)
 }
-// the reading voice: a neural voice and the runtime it needs, loaded by the page from https://populationpup.local/tts/
-tasks.register('copyVoice', Copy) {
-    from('../../docs/tts')
-    into(gameAssets.map { it.dir('tts') })
-}
-preBuild.dependsOn 'copyGame', 'copyGrader', 'copyVoice'
+// The story voice (docs/tts, 72 MB) is not packaged: the tablet's own text-to-speech voices read aloud.
+// To bundle it again, copy docs/tts into gameAssets/tts here; MainActivity already serves it at https://populationpup.local/tts/.
+preBuild.dependsOn 'copyGame', 'copyGrader'

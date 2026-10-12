@@ -2228,6 +2228,9 @@ function celebrate(btn, big){
 }
 // ---- read-aloud. The bundled voice reads by default; the device's own voice is the fallback.
 const ANDROID = /android_asset/.test(location.href);
+// The device's own voice reads by default. The story voice is a 72 MB download, so it is only on the web version, and only fetched
+// if a grown-up picks it on the pause screen or the device has no voice of its own. The tablet and iPad apps do not carry it.
+const STORY_VOICE = /^https?:$/.test(location.protocol) || location.hash === '#voicetest';
 const audioCtx = () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){} return AC; };
 // The game's own reading voice (shared with Last Bell): a natural-sounding neural voice (Piper) that runs on the device, off the main thread.
 // It needs no internet once the game is installed. If the device is too slow for it, Speak falls back to the device voice.
@@ -3625,7 +3628,7 @@ function playGame(id){
   switchGame(id); $('splash').hidden = true; pop();
   if (!S.adopted) openAdopt('first'); else if (S.at === 'quest' && scene !== 'quest') arrive('quest'); ui();   // Continue picks up where you stopped: at home or in the valley
   if (S.adopted) welcomeBack();
-  setTimeout(() => { audioCtx(); Voice.start(); }, 1500);
+  setTimeout(() => { audioCtx(); if (STORY_VOICE && (Speak.get(Speak.VKEY, '') === '*game' || !Speak.dev())) Voice.start(); }, 1500);
 }
 if (location.hash === '#voicetest') setTimeout(() => Voice.start(), 500);      // lets the app shells be checked without tapping through the game
 function deleteGame(id){
@@ -3646,8 +3649,8 @@ function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true
 $('pause').onclick = pauseGame;
 // Options: which voice reads aloud, and how fast
 const RATES = [['Slow', '0.8'], ['Normal', '0.95'], ['Fast', '1.1']];
-function renderOpts(){ $('opt-voice').textContent = Speak.label() + (Voice.state === 'loading' ? ' (story voice loading)' : ''); const r = Speak.get(Speak.RKEY, '0.95'); $('opt-rate').textContent = (RATES.find(x => x[1] === r) || RATES[1])[0]; }
-$('opt-voice').onclick = () => { const names = [''].concat(Voice.ready() ? ['*game'] : [], Speak.dev() ? Speak.voices().slice(0, 4).map(v => v.name) : []), cur = Speak.get(Speak.VKEY, ''), nx = names[(names.indexOf(cur) + 1) % names.length]; Speak.set(Speak.VKEY, nx); renderOpts(); };
+function renderOpts(){ const want = Speak.get(Speak.VKEY, ''); $('opt-voice').textContent = want === '*game' ? (Voice.ready() ? 'Story voice' : Voice.state === 'bad' ? 'Story voice did not load' : 'Story voice (downloading 72 MB)') : !want ? 'Automatic: ' + Speak.label() : Speak.label(); const r = Speak.get(Speak.RKEY, '0.95'); $('opt-rate').textContent = (RATES.find(x => x[1] === r) || RATES[1])[0]; }
+$('opt-voice').onclick = () => { const names = [''].concat(STORY_VOICE ? ['*game'] : [], Speak.dev() ? Speak.voices().slice(0, 4).map(v => v.name) : []), cur = Speak.get(Speak.VKEY, ''), nx = names[(names.indexOf(cur) + 1) % names.length]; Speak.set(Speak.VKEY, nx); if (nx === '*game'){ audioCtx(); Voice.start(); const t = setInterval(() => { renderOpts(); if (Voice.state !== 'loading') clearInterval(t); }, 700); } renderOpts(); };
 $('opt-rate').onclick = () => { const r = Speak.get(Speak.RKEY, '0.95'), k = RATES.findIndex(x => x[1] === r); Speak.set(Speak.RKEY, RATES[(k + 1) % RATES.length][1]); renderOpts(); };
 $('opt-test').onclick = () => { Speak.say('Hello, ' + S.name + '. This is how I sound when I read to you.'); };
 $('resume').onclick = () => { Speak.stop(); $('pausem').hidden = true; ui(); };

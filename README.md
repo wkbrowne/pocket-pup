@@ -36,7 +36,9 @@ Sentences a child types are marked on the device by a small sentence-meaning mod
 
 ## Reading voice
 
-Questions, lessons and listening passages are read aloud by a neural voice that runs on the device (Piper `en_US-hfc_female-medium`, CC BY-NC-SA 4.0, non-commercial use with credit; see `docs/tts/README.md`). The engine is shared with [Last Bell](https://github.com/wkbrowne/last-bell). If a device is too slow for it, the device's own voice is used. The voice and speed are set on the pause screen.
+Questions, lessons and listening passages are read aloud by the device's own voice: the Fire tablet's text-to-speech voices, the iPad's, or the browser's. The voice and speed are chosen on the pause screen.
+
+The web version can also use a neural story voice that runs on the device (Piper `en_US-hfc_female-medium`, CC BY-NC-SA 4.0, non-commercial use with credit; see `docs/tts/README.md`), shared with [Last Bell](https://github.com/wkbrowne/last-bell). It is a 72 MB download, so it is fetched only if someone picks "Story voice" on the pause screen, or if the device has no voice of its own. The tablet and iPad apps do not package it.
 
 ## Standards and self-checks
 

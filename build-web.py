@@ -44,6 +44,5 @@ web = 'ios/PopulationPup/Web'; os.makedirs(web + '/fonts', exist_ok=True)
 io.open(web + '/index.html', 'w', encoding='utf-8').write('<!doctype html>\n' + src.replace(font, head.split('\n')[0]))
 shutil.copyfile('pupgrader.js', web + '/pupgrader.js')
 for f in ['LilitaOne-Regular.ttf', 'Nunito.ttf']: shutil.copyfile('docs/fonts/' + f, web + '/fonts/' + f)
-os.makedirs(web + '/tts', exist_ok=True)
-for f in os.listdir('docs/tts'): shutil.copyfile('docs/tts/' + f, web + '/tts/' + f)
+shutil.rmtree(web + '/tts', ignore_errors=True)   # the story voice is not packaged in the app; the iPad's own voice reads aloud
 print('ios web built')

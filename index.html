@@ -306,7 +306,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <div class="grades" id="grades"></div>
         <div class="grades subs" id="gr-subs"></div>
         <label class="pinrow"><span id="gr-l"></span><input id="gr-pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></label>
-        <div class="pinrow" id="gr-dayrow"><span>Daily goal</span><select id="gr-goal"><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select><span>Play-time limit</span><select id="gr-limit"><option value="0">none</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></div>
+        <div class="pinrow" id="gr-dayrow"><span>Daily goal</span><select id="gr-goal"><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select><span>New skills a day</span><select id="gr-pace"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="99">no limit</option></select><span>Play-time limit</span><select id="gr-limit"><option value="0">none</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></div>
         <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:16px;letter-spacing:0"></label>
         <p id="gr-keyp" style="font-size:12px;margin:0;text-align:center"></p>
         <div class="fb" id="gr-fb"></div>
@@ -1772,7 +1772,9 @@ const isMastered = st => !!st.M;
 //  - A missed skill comes back three questions later ("One more try"). At most one question in three is a retry, and a skill has one retry waiting at a time.
 //  - Each round deals every skill that is due: box 0 and 1 every round (box 0 twice), box 2 every second round, box 3 every third, box 4 every fourth.
 //  - Mastery is four right in a row with at least five answered, or passing Granny Dot's proof questions. Two later misses take it away again.
-let pickTag = ''; const NEW_START = 6, NEW_DAY = 2;
+let pickTag = ''; const NEW_START = 6, newDay = () => (GL.pace || {})[G.cur] || 4;
+// while nothing she has started is shaky, the next new skill may come early: she sets the pace
+const steady = (g, all) => all.every(i => { const st = skState(g.id+':'+i); return !st.n || boxOf(st) >= 2; });
 function pickSkill(g){
   const m = S.math, name = i => g.skills[i][1], idx = nm => g.skills.findIndex(x => x[1] === nm), all = g.skills.map((x,i) => i);
   m.retry = (m.retry || []).filter(r => r && r.g); m.deck = m.deck || {}; m.cyc = m.cyc || {}; pickTag = '';
@@ -1781,12 +1783,12 @@ function pickSkill(g){
   m.gap = (m.gap || 0) + 1;
   let d = (m.deck[g.id] || []).filter(nm => idx(nm) >= 0);
   { const D = dayState(); m.deckDay = m.deckDay || {};      // on a new day the day's new skills join the round already under way
-    if (d.length && m.deckDay[g.id] !== D.d){ let room = NEW_DAY - ((D.newS || {})[g.id] || 0) - d.filter(nm => !skState(g.id+':'+idx(nm)).n).length; for (const i of all) if (room > 0 && !skState(g.id+':'+i).n && !d.includes(name(i))){ d.splice(Math.min(d.length, 1 + 2*(NEW_DAY - room)), 0, name(i)); room--; } }
+    if (d.length && m.deckDay[g.id] !== D.d){ let room = newDay() - ((D.newS || {})[g.id] || 0) - d.filter(nm => !skState(g.id+':'+idx(nm)).n).length; for (const i of all) if (room > 0 && !skState(g.id+':'+i).n && !d.includes(name(i))){ d.splice(Math.min(d.length, 1 + 2*(newDay() - room)), 0, name(i)); room--; } }
     m.deckDay[g.id] = D.d; }
   if (!d.length){
     const c = m.cyc[g.id] = (m.cyc[g.id] || 0) + 1;
-    // New skills come in a few at a time, in the order they are taught: enough to have six going, then two more a day in each subject.
-    const shaky = [], D = dayState(), started = all.filter(i => skState(g.id+':'+i).n > 0).length; let room = Math.max(NEW_START - started, NEW_DAY - ((D.newS || {})[g.id] || 0));
+    // New skills come in a few at a time, in the order they are taught: enough to have six going, then a set number more each day in each subject (four unless a grown-up changes it).
+    const shaky = [], D = dayState(), started = all.filter(i => skState(g.id+':'+i).n > 0).length; let room = Math.max(NEW_START - started, newDay() - ((D.newS || {})[g.id] || 0)); if (room <= 0 && steady(g, all)) room = 1;
     for (const i of all){ const st = skState(g.id+':'+i), b = boxOf(st); if (!st.n){ if (room-- > 0) d.push(name(i)); continue; } if (c % [1,1,2,3,4][b]) continue; d.push(name(i)); if (b === 0) shaky.push(name(i)); }
     if (shaky.length*2 <= (d.length + shaky.length)/3) d = d.concat(shaky);      // shaky skills are dealt twice in a round, unless that would let them crowd out the rest
     if (!d.length) d = all.filter(i => skState(g.id+':'+i).n > 0).map(name); if (!d.length) d = all.slice(0, NEW_START).map(name);
@@ -1861,7 +1863,7 @@ function renderGrown(){
     : m === 'setup' ? 'Pick the grade your child is in at school and the subjects to practice, then choose a 4-digit code that only you know. After that the grade is locked. It moves up by itself when every math skill in the grade is mastered. Any other change needs your code.'
     : 'Unlocked. Pick the grade and the subjects. Type a new code only if you want to change the code.';
   $('gr-l').textContent = m === 'unlock' ? 'Grown-up code' : m === 'setup' ? 'Choose a 4-digit code' : 'New code (optional)';
-  $('gr-keyrow').hidden = $('gr-keyp').hidden = $('gr-dayrow').hidden = m === 'unlock'; $('gr-goal').value = String(dayGoal()); $('gr-limit').value = String(dayLimit()); $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
+  $('gr-keyrow').hidden = $('gr-keyp').hidden = $('gr-dayrow').hidden = m === 'unlock'; $('gr-goal').value = String(dayGoal()); $('gr-pace').value = String(newDay()); $('gr-limit').value = String(dayLimit()); $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
   $('gr-keyp').textContent = 'Now and then your child types a sentence of their own. The tablet marks it by itself. With an Anthropic API key here, the sentence and its question are sent to Claude over the internet for better marking and feedback. Nothing else is sent. Leave it empty to keep everything on the tablet.';
   $('gr-pin').type = m === 'unlock' ? 'password' : 'tel'; $('gr-ok').textContent = m === 'unlock' ? 'Unlock' : 'Lock the grade'; $('gr-cancel').hidden = !S.math.grade;
 }
@@ -1874,7 +1876,7 @@ $('gr-ok').onclick = () => {
   }
   if (!grown.pick){ fb.textContent = 'Pick a grade first.'; return; }
   if (grown.mode === 'setup' ? !/^\d{4}$/.test(v) : v && !/^\d{4}$/.test(v)){ fb.textContent = 'The code must be 4 digits.'; return; }
-  if (v) GL.pin = v; (GL.goals = GL.goals || {})[G.cur] = +$('gr-goal').value; (GL.limits = GL.limits || {})[G.cur] = +$('gr-limit').value; { const k = $('gr-key').value.trim(); if (/^none$/i.test(k)) delete GL.key; else if (k) GL.key = k; } const pick = grown.pick; $('gr-pin').blur();
+  if (v) GL.pin = v; (GL.goals = GL.goals || {})[G.cur] = +$('gr-goal').value; (GL.pace = GL.pace || {})[G.cur] = +$('gr-pace').value; (GL.limits = GL.limits || {})[G.cur] = +$('gr-limit').value; { const k = $('gr-key').value.trim(); if (/^none$/i.test(k)) delete GL.key; else if (k) GL.key = k; } const pick = grown.pick; $('gr-pin').blur();
   if (grown.sub !== S.math.subject){ (GL.subjects = GL.subjects || {})[G.cur] = grown.sub; S.math.subject = grown.sub; S.math.mixNext = 'math'; S.math.slate = null; }
   if (pick === S.math.grade){ saveLock(); renderMath(); } else setGrade(pick);
 };
@@ -3890,7 +3892,7 @@ window.pupSim = (gid, weakN, total) => { const keep = JSON.stringify(S.math), g 
   for (let k = 0; k < (total || 300); k++){
     if (k % 20 === 0){ day++; dayState().newS = {}; S.math.deckDay = {}; newToday = 0; startedBefore = g.skills.filter((x,i) => skState(g.id+':'+i).n > 0).length; }      // a pretend day is 20 questions
     const i = pickSkill(g), nm = g.skills[i][1], st = skState(g.id+':'+i), wasM = st.M, cs0 = st.cs || 0, n0 = st.n, box0 = boxOf(st); count[nm] = (count[nm] || 0) + 1;
-    if (!n0){ newToday++; if (newToday > NEW_DAY + Math.max(0, NEW_START - startedBefore)) broke.push('too many new skills in a day'); }
+    if (!n0) newToday++;
     if (nm === last) broke.push('same skill twice in a row'); last = nm;
     if (pickTag === 'One more try'){ retries++; if (k - lastRetry < 3) broke.push('two retries within three questions'); lastRetry = k; }
     const ok = Math.random() < (weak.includes(nm) ? .45 : .92), v = record(g, i, ok); verdicts[v] = (verdicts[v] || 0) + 1;
@@ -3914,8 +3916,13 @@ window.pupRules = () => { const keep = JSON.stringify(S.math), dk = S.day, g = a
   r = run(['R','R','R','R','R','M','R','R','M']); out['a mastered skill that slips twice gets a refresher'] = r.vs[4] === 'ok' && r.vs[8] === 'refresh' && !r.st.M;
   r = run(['R','R','U']); out['"not sure yet" is taught with no penalty'] = r.vs[2] === 'intro' && !r.st.miss;
   r = run(['R','R','R','R','R']); out['mastery needs four in a row and five answered'] = r.st.M === true && run(['R','R','R','R']).st.M !== true;
-  S.math = Object.assign({}, fresh().math, {grade:'4'}); S.day = null; const seen = new Set(); for (let q = 0; q < 60; q++){ const i = pickSkill(g); seen.add(i); record(g, i, true); } out['a new game meets six skills on day one, not all of them'] = seen.size === NEW_START;
-  dayState().newS = {}; S.math.deckDay = {}; for (let q = 0; q < 12; q++){ const i = pickSkill(g); seen.add(i); record(g, i, true); } out['and two more early the next day'] = seen.size === NEW_START + NEW_DAY;
+  const play = (n, seen, okFor) => { for (let q = 0; q < n; q++){ const i = pickSkill(g); seen.add(i); record(g, i, okFor(i)); } };
+  S.math = Object.assign({}, fresh().math, {grade:'4'}); S.day = null; let seen = new Set(); play(60, seen, i => i !== 0);
+  out['while a skill is shaky, day one stays at six skills'] = seen.size === NEW_START;
+  dayState().newS = {}; S.math.deckDay = {}; play(4*newDay() + 4, seen, i => i !== 0);
+  out['the next day brings the day\'s new skills, and no more'] = seen.size === NEW_START + newDay();
+  S.math = Object.assign({}, fresh().math, {grade:'4'}); S.day = null; seen = new Set(); play(120, seen, () => true);
+  out['when everything is going well, new skills come early'] = seen.size > NEW_START;
   S.math = JSON.parse(keep); S.day = dk; return out; };
 /* ---------- HUD ---------- */
 let toastT;

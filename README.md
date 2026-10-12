@@ -43,3 +43,7 @@ The web version can also use a neural story voice that runs on the device (Piper
 ## Standards and self-checks
 
 `docs/grade4-standards.md` maps every Grade 4 standard to a skill and describes how practice adapts. In the browser console, `pupCheck()` generates hundreds of questions per skill and lists any with a missing, duplicate or wrong answer, and `pupSim()` simulates a weak student to show how questions are shared out.
+
+## Music
+
+Pup Radio plays original tunes made from a few synthesized instruments: Bubblegum Pop, Sparkle Beat, Cozy Island, Chill Beats and Dance Party. The Music button switches station; Auto picks one for where she is. The music drops back while a question is on screen and while anything is read aloud. `pupMusic()` in the browser console renders each track and reports its level.

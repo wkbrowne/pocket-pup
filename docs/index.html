@@ -924,10 +924,10 @@ function updateDog(dt){
       if (d.play){ hop = Math.abs(Math.sin(d.t0*7))*16; mouthT = 1; d.joy = Math.max(d.joy,.3); } else hdT = .3;
       if (d.t0 > 3) endSocial();
       break; }
-    case 'qsleep': lieT = 1; hdT = .9; d.asleep = true; mouthT = 0; d.zz -= dt;       // a nap at a rest stop: full energy, and the game is saved
+    case 'qsleep': lieT = 1; hdT = .9; d.asleep = true; mouthT = 0; d.zz -= dt;       // a nap at a rest stop: full energy, a wash, and the game is saved
       if (d.zz <= 0){ d.zz = .55; const h = dogHead(); parts.push({type:'zzz', text:'z', x:h.x-cam.x, y:h.y-cam.y-8*U, vx:14*d.dir, vy:-26, life:1.6, max:1.6, s:1, r:0}); }
-      if (d.t0 > 2.6){ S.energy = 100; setState('qidle'); d.joy = 1.5; chime(); save();
-        $('pause-h').textContent = 'Game saved'; $('pause-p').textContent = S.name + ' had a lovely nap. Energy is full and your game is saved, so it is safe to stop here.'; $('pausem').hidden = false; ui(); }
+      if (d.t0 > 2.6){ S.energy = 100; S.clean = Math.max(S.clean, 85); setState('qidle'); d.joy = 1.5; chime(); save();
+        $('pause-h').textContent = 'Game saved'; $('pause-p').textContent = S.name + ' had a lovely nap and a wash at the pump. Energy is full and your game is saved, so it is safe to stop here.'; $('pausem').hidden = false; ui(); }
       break;
     case 'qwalk': if (questStep(dt)){ mv = 1; d.phase += dt*15; } break;
     case 'dig': hdT = 1; mv = .9; d.phase += dt*30;
@@ -3507,6 +3507,7 @@ const CH = [
       ['Mochi',"You are the builder's apprentice, so you know what to do. Chop trees for wood and cut the reeds by the brook for thatch. Each one is a little math puzzle."],
       ['Mochi',"Then tap my plot and put each block where the outline shows. Paw-lease hurry, my tail is freezing."]],
     done:[['Mochi',"It is PAWFECT. Warm, dry and only slightly crooked."],
+      ['Mochi',"And my door is always open. Whenever you get scruffy or glum out here, {n}, tap my hut and come in for tea and a brushing."],
       ['Mochi',"The empty plot in the town square is yours now, by the way. Build anything you like on it."],
       ['Mochi',"Duke lives across Bone Brook, but the bridge blew away too. Follow the path east and look at the old crossing."]]},
   {id:'bridge', who:'duke', title:'Bone Brook Bridge', bridge:true, at:[28,18], npc:[31,17], cs:.36, reward:25, bp:['W.....W','WWWWWWW','S.S.S.S'],
@@ -3751,6 +3752,7 @@ function questTap(p){
 }
 function questTick(dt){
   for (const k in qr.cool) if (qr.cool[k] > 0) qr.cool[k] -= dt;
+  roadCare();
   const t = TS(), zk = zoneAt(Math.floor(dog.x/t), Math.floor(dog.y/t));
   if (zk !== qr.zone){ if (qr.zone && !cine && !trans) toast('\u2726 ' + ZONES[zk].n + ' \u2726', 2600); qr.zone = zk; }
   for (const n of QN){ const at = CH[npcChapter(n.who)].npc; updateNpc(n, dt); n.x = (at[0]+.5)*t; n.y = (at[1]+.7)*t; n.ds = .62; n.dir = dog.x >= n.x ? 1 : -1; }
@@ -3763,7 +3765,7 @@ function gather(g){
   const [x,y] = g.tiles[0], key = x + ',' + y, [res, verb] = NODE[g.c], q = QS();
   if (qr.cool[key] > 0){ toast('Nothing left here yet. It grows back soon.'); return; }
   if (unfit()) return;
-  if (S.energy < 12){ toast(S.name + ' is worn out. Head home for a nap.'); return; }
+  if (S.energy < 12){ toast(S.name + ' is worn out. Find a rest stop for a nap.'); return; }
   const base = 3 + (own(TOOL[res]) ? 2 : 0) + (own('barrow') ? 1 : 0) + Math.floor(Math.min(rankIdx(), 6)/2) + crewList().length;   // higher ranks carry more
   askOne(verb + ': answer to get ' + base + ' ' + res, ok => {
     if (!ok){ toast('Not this time. Tap it to try again.'); return; }
@@ -3773,6 +3775,22 @@ function gather(g){
     puff('star', dog.x-cam.x, dog.y-cam.y-50*U, 4, {spread:20}); toast('+' + n + ' ' + res + (hot ? ' (streak bonus!)' : '')); save(); });
 }
 
+// OPEN DOORS. "Come round for tea any time" is meant: every home she has built looks after her on the road.
+// A visit is free, with no question: a brushing, a game and a bite. Then that home's kettle needs a while.
+// So the more of the valley she rebuilds, the farther she can go without heading back to the yard.
+const TEA = ["Kettle is on, {n}! Sit by the fire while I get the burrs out of your coat.", "You built these walls, so my door is always open. A biscuit and a game of tug?", "Come in, come in! A brush, a bite and a tummy rub for the best builder in the valley.", "Look at the state of you, {n}. In you come: tea first, then a good brushing."];
+function tea(key, who){
+  if (qr.cool[key] > 0 || (S.fun > 80 && S.clean > 80)) return false;
+  bump('fun', 45); bump('clean', 45); bump('food', 15); gainXp(3); qr.cool[key] = 90; dog.joy = 1.8; chime(); puff('heart', dog.x-cam.x, dog.y-cam.y-60*U, 4, {spread:26});
+  say([[who, pickOf(TEA)]], () => toast('Tea at a home you built. ' + S.name + ' is brushed, fed and cheerful.', 3200)); save(); return true;
+}
+// a nudge when the pup is getting glum or scruffy out here, once each time it dips
+function roadCare(){
+  const low = S.fun < 30 || S.clean < 30; if (!low){ if (S.fun > 45 && S.clean > 45) qr.nudged = false; return; }
+  if (qr.nudged || cine || trans || paused()) return; qr.nudged = true;
+  const built = land === 'home' ? QS().ch > 0 : false, jobs = Object.values(JL().plots || {}).some(j => j && j.done);
+  toast(S.name + ' is getting ' + (S.fun < 30 ? 'glum' : 'scruffy') + '. ' + (built || jobs ? 'Tap any home you have built: they will have you in for tea.' : S.fun < 30 ? 'A bowl of stew at a food stall will cheer them up.' : 'A nap at a rest stop comes with a wash.'), 4800);
+}
 // towns: a free bowl of stew at every food stall
 function eatAt(g){
   const key = 'f' + g.tiles[0][0] + ',' + g.tiles[0][1];
@@ -3780,7 +3798,7 @@ function eatAt(g){
   if (S.food > 88){ toast(S.name + " isn't hungry yet."); return; }
   askOne('Order up: answer for a bowl of stew', ok => {
     if (!ok){ toast('The cook shakes her head. Tap the stall to try again.'); return; }
-    bump('food', 40); qr.cool[key] = 45; dog.joy = 1.5; note('Yum!', dog.x-cam.x, dog.y-cam.y-70*U); toast(S.name + ' wolfs down a bowl of stew.'); save(); });
+    bump('food', 40); bump('fun', 15); qr.cool[key] = 45; dog.joy = 1.5; note('Yum!', dog.x-cam.x, dog.y-cam.y-70*U); toast(S.name + ' wolfs down a bowl of stew.'); save(); });
 }
 function drawRest(x, y){
   const t = TS(), u = U, cx = (x+.5)*t, by = (y+.95)*t;
@@ -3808,7 +3826,7 @@ function drawStall(x, y, name){
 function plotTap(i){
   const q = QS(), c = CH[i];
   if (c.id === 'ship' && i < q.ch){ openWorld(); return; }
-  if (i < q.ch){ say([[WHO[c.who], pickOf(["I love it. Thank you, {n}!", "Best builder in the valley, that is what you are.", "Come round for tea any time, {n}."])]]); return; }
+  if (i < q.ch){ if (tea('t' + i, WHO[c.who])) return; say([[WHO[c.who], pickOf(["I love it. Thank you, {n}!", "Best builder in the valley, that is what you are.", "Come round for tea any time, {n}."])]]); return; }
   if (i > q.ch){ say([[WHO[c.who], "Hello, {n}! I hear you are helping " + WHO[CH[q.ch].who] + " first. Come back after."]]); return; }
   if (!q.st){ q.st = 1; save(); storyPlay([chapterCard(i)], () => say(c.intro, () => toast('New quest: ' + c.title, 3200))); return; }
   openBuild(i);
@@ -3841,7 +3859,7 @@ function newJob(){
 }
 function jobTap(k){
   const j = JL().plots[k], who = j.title.split("'")[0];
-  if (j.done){ say([[who, pickOf(["I love my " + j.kind + ". Thank you, {n}!", "Come round for tea any time, {n}.", "Best builder in the valley, that is what you are."])]]); return; }
+  if (j.done){ if (tea('tj' + k, who)) return; say([[who, pickOf(["I love my " + j.kind + ". Thank you, {n}!", "Come round for tea any time, {n}.", "Best builder in the valley, that is what you are."])]]); return; }
   if (!j.st){ j.st = 1; save(); say([[who, "Are you {n}, the builder everyone is talking about? I am new to the valley and I need a " + j.kind + " of my own. I can pay " + j.pay + " bones."], [who, "Tap my lot when you have the blocks."]], () => toast('New job: ' + j.title, 3200)); return; }
   openBuild('j' + k);
 }
@@ -4651,6 +4669,13 @@ function musicTick(){
   } catch(e){ MU.err = String(e && e.message || e); }
 }
 window.pupMusicLive = () => ({station:station(), track:MU.name, notesScheduled:MU.played || 0, round:MU.loop, effects:!!MU.wet, error:MU.err || null});
+// for checking a build: how many minutes of walking each need lasts in the yard and on a quest, whether a quest can make the pup sick, and what tea does. Changes nothing.
+window.pupRoad = () => { const keep = JSON.stringify(S), ks = scene, kc = qr.cool, out = {};
+  for (const sc of ['yard', 'quest']){ scene = sc; Object.assign(S, {food:100, fun:100, clean:100, energy:100, sick:false, neglect:0, away:false, adopted:true}); const at = {};
+    for (let t = 0; t < 3600; t += .5){ needsTick(.5); for (const k of ['food','fun','clean','energy']) if (at[k] == null && S[k] < 15) at[k] = +(t/60).toFixed(1); }
+    out[sc] = Object.assign(at, {sick:!!S.sick, away:!!S.away}); }
+  scene = 'quest'; qr.cool = {}; Object.assign(S, {food:50, fun:20, clean:20, sick:false, away:false}); const first = tea('test', 'Mochi'); out.tea = {first, fun:S.fun, clean:S.clean, food:S.food, againTooSoon:tea('test', 'Mochi') === false};
+  dq = []; dthen = null; $('dlg').hidden = true; S = JSON.parse(keep); scene = ks; qr.cool = kc; save(); return out; };
 // for listening to one song wherever she is: pupMusicPlay('lfSnow'); pupMusicPlay() goes back to following the place
 window.pupMusicPlay = k => { MU.force = k || null; return Object.keys(TRACKS); };
 setInterval(musicTick, 180);
@@ -4810,17 +4835,23 @@ $('reset').onclick = () => {
 /* ---------- main loop ---------- */
 let prev = 0, uiT = 0, saveT = 0;
 function stepTrans(dt){ if (trans){ const b = trans.t; trans.t += dt/.4; if (b < 1 && trans.t >= 1){ arrive(trans.to); toast(trans.msg, 3600); } if (trans.t >= 2) trans = null; } }
-function tick(dt){
-  time += dt;
-  if (S.adopted && !S.away && S.mode !== 'quest'){ neglectTick(dt); }
+// the clock, growing up, and the four needs
+function needsTick(dt){
+  if (S.adopted && !S.away && scene !== 'quest'){ neglectTick(dt); }      // out on a quest nobody gets sick or runs away: a builder at work is looked after by the valley
   if (S.adopted && !S.away){
     const asleep = dog.state === 'sleep', r = asleep ? .3 : 1, n = nightAmt(S.clock);
     S.clock = (S.clock + dt/DAY) % 1; S.age += dt/DAY;
     const avg = (S.food+S.energy+S.fun+S.clean)/4;
     S.grow = Math.min(1, S.grow + dt/DAY/6*(S.sick ? 0 : avg > 45 ? 1 : .2));
-    if (S.mode !== 'quest'){ bump('food', -.42*dt*r); bump('fun', -.3*dt*r); bump('clean', -(.13 + .22*poops.length)*dt*(worn('bandana') ? .6 : 1));
-    if (!asleep) bump('energy', -(.2 + .2*n)*dt*(scene === 'park' && own('bottle') ? .5 : 1)); }
+    // On a quest the story comes first: needs drop at a quarter of the yard's pace (energy at half), so a long outing is fine.
+    const w = scene === 'quest' ? .25 : 1;
+    bump('food', -.42*dt*r*w); bump('fun', -.3*dt*r*w); bump('clean', -(.13 + .22*poops.length)*dt*w*(worn('bandana') ? .6 : 1));
+    if (!asleep) bump('energy', -(.2 + .2*n)*dt*(scene === 'quest' ? .5 : 1)*(scene === 'park' && own('bottle') ? .5 : 1));
   }
+}
+function tick(dt){
+  time += dt;
+  needsTick(dt);
   stepTrans(dt);
   updateDog(dt); budTick(dt); updateBall(dt); for (const n of npcs) updateNpc(n, dt);
   if (scene === 'quest') questTick(dt);

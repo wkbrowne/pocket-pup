@@ -481,6 +481,7 @@ function load(extra){
     c.n = m.n || 0; c.support = (m.support || []).map(x => ({group:x.g, id:x.s, need:x.need})).filter(x => x.group && x.id);
     for (const k of ['retry','deck','cyc','gap','lastS','deckDay','fwd','support']) delete m[k]; m.slate = null; m.core1 = 1; }
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
+  if (!S.lofi){ S.lofi = 1; if (S.station) S.station = 'auto'; }      // the lo-fi songs arrive as the station everyone is on; music that was off stays off
   S.math.subject = lockSub();
   // time away: needs drift down gently, never to zero
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
@@ -1824,7 +1825,7 @@ const probGrade = () => (prob && allGrade(prob.gid)) || curGrade();
  */
 var LearnCore = (function () {
   'use strict';
-  var VERSION = '1.0.1';
+  var VERSION = '1.1.0';
   var GAPS = [1, 3, 7, 14, 30, 60];      // REVIEW BY DAYS: a mastered skill comes back after 1 day, then 3, 7, 14, 30 and 60
   // SKILL BUILDER: the steps Granny Dot or the Guide takes, by why play stopped
   var STEPS = { miss: ['one'], intro: ['watch', 'two', 'all'], teach: ['watch', 'two', 'all', 'solo', 'solo'], refresh: ['watch', 'solo', 'solo'] };
@@ -1832,6 +1833,9 @@ var LearnCore = (function () {
     newStart: 6,        // new skills arrive a few at a time: enough to have this many going in a group...
     newPerDay: 4,       // ...then this many more a day (99 for no limit)
     early: true,        // while nothing started is shaky, the next new skill may come early
+    inPlay: 8,          // ...but new skills wait while this many started skills are not yet mastered (99 for no limit)
+    liftBelow: 0.75,    // when fewer than this share of the last ten answers were right, a strong skill is asked and new skills wait (0 for never)
+    liftGap: 2,         // at least this many other questions between those
     retryAfter: 3,      // a missed skill comes back this many questions later
     retryGap: 2,        // at least this many other questions between retries (so at most one in three is a retry)
     retryCap: 6,        // retries waiting at once
@@ -1868,7 +1872,7 @@ var LearnCore = (function () {
     function cfg(k) { var c = host.config || {}, v = c[k] === undefined ? DEFAULTS[k] : c[k]; return typeof v === 'function' ? v() : v; }
     function shuffle(a) { return a.map(function (v) { return [rnd(), v]; }).sort(function (x, y) { return x[0] - y[0]; }).map(function (v) { return v[1]; }); }
     function pickOf(a) { return a[Math.floor(rnd() * a.length)]; }
-    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
+    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; c.recent = c.recent || []; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
     function rec(group, id) { var s = host.state(), k = host.key(group, id); s.sk = s.sk || {}; return s.sk[k] || (s.sk[k] = { n: 0, r: 0, cs: 0, miss: 0 }); }
     function ids(group) { var all = host.skills(group) || []; return host.live ? all.filter(function (id) { return host.live(group, id) !== false; }) : all; }
     function has(group, id) { return (host.skills(group) || []).indexOf(id) >= 0; }
@@ -1881,8 +1885,10 @@ var LearnCore = (function () {
     //  - A missed skill comes back a few questions later as the same kind ("One more try"); at most one question in three is a retry.
     //  - Each round deals every skill still being learned (a shaky one twice, unless that would crowd out the rest),
     //    every mastered skill whose review day has come, and any earlier skill being built up ("Warm-up").
-    //  - New skills join a few at a time, in teaching order. The same skill is never asked twice in a row.
+    //  - New skills join a few at a time, in teaching order, and wait while enough are already in play. The same skill is never asked twice in a row.
+    //  - After a run of misses new skills wait, and now and then a skill she is good at is asked ("lift"), so most answers stay right.
     // Returns {group, id, tag, want}: tag is '', 'One more try', 'Review', 'Warm-up' or 'Stretch'; want is a kind to ask for, or null.
+    // A lift also carries lift: true; its tag is 'Review' for a mastered skill and '' otherwise.
     function pick(group) {
       var c = core(), now = host.today(), all = ids(group), lane = host.lane(group);
       var st = function (id) { return rec(group, id); }, rested = function (g, id) { return rec(g, id).rest === now; };
@@ -1891,6 +1897,17 @@ var LearnCore = (function () {
       // where a waiting retry lives: this group, or an earlier group's skill that is being built up
       var home = function (r) { if (r.g === group) return all.indexOf(r.s) >= 0 ? group : null; return sup.some(function (x) { return x.group === r.g && x.id === r.s; }) ? r.g : null; };
       c.retry = c.retry.filter(function (r) { return r && r.g && r.s && c.n - r.at < cfg('retryKeep'); });
+      // room for new skills: started skills not yet mastered count against the limit
+      var slots = cfg('inPlay') - all.filter(function (id) { var s2 = st(id); return s2.n > 0 && !s2.m; }).length;
+      var low = c.recent.length >= 6 && c.recent.filter(function (x) { return x; }).length / c.recent.length < cfg('liftBelow');
+      // new skills wait after a run of misses, unless so few are in play that one hard skill would hold everything up
+      var hold = low && slots <= cfg('inPlay') / 2;
+      if (low && (c.sinceLift == null ? 99 : c.sinceLift) >= cfg('liftGap')) {
+        var strong = all.filter(function (id) { var s2 = st(id); return id !== c.lastS && s2.n > 0 && box(s2) >= 3 && !rested(group, id); }), going = strong.filter(function (id) { return !st(id).m; });
+        if (strong.length) { var e = pickOf(going.length ? going : strong), o = out(group, e, st(e).m ? 'Review' : '', null);
+          c.sinceLift = 0; c.gap = (c.gap || 0) + 1; if (c.deck[group]) c.deck[group] = c.deck[group].filter(function (x) { return x !== e; }); o.lift = true; return o; }
+      }
+      c.sinceLift = (c.sinceLift || 0) + 1;
       if ((c.gap || 0) >= cfg('retryGap')) {
         for (var q = 0; q < c.retry.length; q++) { var r = c.retry[q], g0 = r.at <= c.n && r.s !== c.lastS ? home(r) : null;
           if (g0 && !rested(g0, r.s)) { c.retry.splice(q, 1); c.gap = 0; return out(g0, r.s, g0 === group ? 'One more try' : 'Warm-up', r.sig); } }
@@ -1900,7 +1917,7 @@ var LearnCore = (function () {
       var d = (c.deck[group] || []).filter(function (x) { return mine(x) ? all.indexOf(x) >= 0 : true; });
       var unseen = function (list) { return list.filter(function (x) { var s2 = cst(x); return s2 && !s2.n; }).length; };
       // on a new day the day's new skills join the round already under way
-      if (d.length && c.seenDay[group] !== now) { var room0 = cfg('newPerDay') - (c.nd.c[group] || 0) - unseen(d), at = 1;
+      if (d.length && c.seenDay[group] !== now) { var room0 = hold ? 0 : Math.min(cfg('newPerDay') - (c.nd.c[group] || 0), slots) - unseen(d), at = 1;
         all.forEach(function (id) { if (room0 > 0 && !st(id).n && d.indexOf(id) < 0 && !rested(group, id)) { d.splice(Math.min(d.length, at), 0, id); at += 2; room0--; } }); }
       c.seenDay[group] = now;
       // a skill mastered part-way through a round does not get its second turn: it waits for its review day
@@ -1910,6 +1927,7 @@ var LearnCore = (function () {
         var started = all.filter(function (id) { return st(id).n > 0; }).length, room = Math.max(cfg('newStart') - started, cfg('newPerDay') - (c.nd.c[group] || 0)), shaky = [];
         var steady = all.every(function (id) { var s2 = st(id); return !s2.n || s2.m || box(s2) >= 2; });
         if (room <= 0 && cfg('early') && steady) room = 1;
+        room = hold ? 0 : Math.min(room, slots);
         all.forEach(function (id, i) { var s2 = st(id); if (rested(group, id)) return;
           if (!s2.n) { if (room-- > 0) d.push(id); return; }
           if (s2.m) { if (s2.due == null) s2.due = now + i % 4; if (s2.due <= now) d.push(id); return; }
@@ -1953,6 +1971,7 @@ var LearnCore = (function () {
     // how: {sig, ex, fast, unsure}: the kind of question, an example of it for the report, a rushed answer, "not sure".
     function record(group, id, ok, how) {
       how = how || {}; var c = core(), st = rec(group, id), first = !st.n, h = how.sig, now = host.today(); c.n++;
+      c.recent = c.recent.concat(ok && !how.unsure ? 1 : 0).slice(-10);
       var again = function () { if ((st.miss || 0) < cfg('retryStop') && c.retry.length < cfg('retryCap') && !c.retry.some(function (r) { return r.g === group && r.s === id; })) c.retry.push({ g: group, s: id, at: c.n + cfg('retryAfter'), sig: h }); };
       // a missed kind has to be answered right twice before it is cleared; one example is kept for the grown-up report
       var open = function () { if (!h) return; st.w = st.w || {}; st.w[h] = 2; var ks = Object.keys(st.w); if (ks.length > 5) { delete st.w[ks[0]]; if (st.wx) delete st.wx[ks[0]]; } if (how.ex) (st.wx = st.wx || {})[h] = how.ex; };
@@ -2045,8 +2064,15 @@ var LearnCore = (function () {
     H.fresh(); seen = {}; play(60, seen, function (p) { return p.id !== 'm0'; }); out['while a skill is shaky, day one stays at six skills'] = size(seen) === 6;
     H.nextDay(); play(20, seen, function (p) { return p.id !== 'm0'; }); out["the next day brings the day's new skills, and no more"] = size(seen) === 6 + 4;
     H.fresh(); seen = {}; play(120, seen, function () { return true; }); out['when everything is going well, new skills come early'] = size(seen) > 6;
-    H.fresh(); for (var q0 = 0; q0 < 8; q0++) E.record('m4', 'm0', true, { sig: 'x' + q0 }); var got = 0; for (var q1 = 0; q1 < 40; q1++) { var p1 = E.pick('m4'); if (p1.id === 'm0') got++; E.record(p1.group, p1.id, false, { sig: 'z' + q1 }); }
+    H.fresh(); for (var q0 = 0; q0 < 8; q0++) E.record('m4', 'm0', true, { sig: 'x' + q0 }); var got = 0; for (var q1 = 0; q1 < 40; q1++) { var p1 = E.pick('m4'); if (p1.id === 'm0') got++; E.record(p1.group, p1.id, q1 % 5 > 0, { sig: 'z' + q1 }); }
     out['a mastered skill stays out of the rounds until its review day'] = E.rec('m4', 'm0').m === true && got === 0;
+    H.fresh(); seen = {}; for (var q6 = 0; q6 < 200; q6++) { if (q6 && q6 % 20 === 0) H.nextDay(); var p6 = E.pick('m4'); seen[p6.id] = 1; E.record(p6.group, p6.id, true, { sig: 'same' }); }
+    out['new skills wait while eight are in play and not yet mastered'] = size(seen) === 8;
+    H.fresh(); for (var q7 = 0; q7 < 8; q7++) E.record('m4', 'm0', true, { sig: 'x' + q7 }); for (var q8 = 0; q8 < 8; q8++) E.record('m4', 'm' + (1 + q8 % 4), false, { sig: 'y' }); seen = {}; var lifts = 0, pl = E.pick('m4'), pl2 = E.pick('m4');
+    out['after a run of misses a strong skill is asked, but not twice running'] = pl.lift === true && pl.id === 'm0' && pl.tag === 'Review' && !pl2.lift;
+    for (var q9 = 0; q9 < 12; q9++) { var p9 = E.pick('m4'); if (p9.lift) lifts++; seen[p9.id] = 1; E.record(p9.group, p9.id, !!p9.lift, { sig: 'y' }); }
+    out['and new skills wait until answers are going right again'] = lifts === 4 && size(seen) === 5;
+    H.fresh(); lifts = 0; for (var q10 = 0; q10 < 60; q10++) { var p10 = E.pick('m4'); if (p10.lift) lifts++; E.record(p10.group, p10.id, q10 % 5 > 0, { sig: 'g' + q10 }); } out['with four answers in five right there is no lift'] = lifts === 0;
     H.fresh(); var w = E.warmupFor('m4', 'm2'); out['a skill can point back to an earlier one that is not solid'] = !!w && w.group === 'm3' && w.id === 'p2' && E.warmupFor('m4', 'm9') === null;
     out['two of three warm-ups right means the trouble is in the new part'] = E.warmupDone('m4', 'm2', w, 2) === 'on' && !E.support().length;
     out['otherwise the earlier skill is built first and the harder one rests'] = E.warmupDone('m4', 'm2', w, 1) === 'back' && E.support().length === 1 && E.rec('m4', 'm2').rest === H.today();
@@ -2066,17 +2092,18 @@ var LearnCore = (function () {
   // opts: {skills, weak, total, acc, weakAcc, seed}. On a real host pass {host, engine, group, sigOf}.
   function simulate(opts) {
     opts = opts || {}; var H = opts.host || fakeHost({ skills: opts.skills || 28, seed: opts.seed }), E = opts.engine || create(H), group = opts.group || 'm4', total = opts.total || 300;
-    var all = H.skills(group), weak = all.slice(0, opts.weak == null ? 3 : opts.weak), count = {}, broke = {}, verdicts = {}, last = null, lastRetry = -9, retries = 0, n = 0, rnd = H.random || Math.random;
+    var all = H.skills(group), weak = all.slice(0, opts.weak == null ? 3 : opts.weak), count = {}, broke = {}, verdicts = {}, last = null, lastRetry = -9, retries = 0, lifts = 0, lastRefresh = -99, n = 0, rnd = H.random || Math.random, cap = (H.config || {}).inPlay || DEFAULTS.inPlay;
     var bad = function (t) { broke[t] = 1; };
     for (var k = 0; k < total; k++) {
       if (k % 20 === 0 && k && opts.nextDay) opts.nextDay(); else if (k % 20 === 0 && k && H.nextDay) H.nextDay();
-      var p = E.pick(group), st = E.rec(p.group, p.id), wasM = st.m, cs0 = st.cs || 0, n0 = st.n, home = p.group === group;
+      var open0 = all.filter(function (x) { var s2 = E.rec(group, x); return s2.n && !s2.m; }).length, p = E.pick(group), st = E.rec(p.group, p.id), wasM = st.m, cs0 = st.cs || 0, n0 = st.n, home = p.group === group;
+      if (home && !n0 && open0 >= cap && k - lastRefresh > 40) bad('a new skill started with too many in play'); if (p.lift) lifts++;
       if (home) count[p.id] = (count[p.id] || 0) + 1;
-      if (home && wasM && st.due > H.today() && p.tag !== 'One more try' && !E.core().fwd[group] && all.some(function (x) { var s2 = E.rec(group, x); return x !== p.id && x !== last && s2.n && !s2.m && s2.rest !== H.today(); })) bad('a mastered skill came back before its review day');
+      if (home && wasM && st.due > H.today() && p.tag !== 'One more try' && !p.lift && !E.core().fwd[group] && all.some(function (x) { var s2 = E.rec(group, x); return x !== p.id && x !== last && s2.n && !s2.m && s2.rest !== H.today(); })) bad('a mastered skill came back before its review day');
       if (p.id === last) bad('same skill twice in a row'); last = p.id;
       if (p.tag === 'One more try') { retries++; if (k - lastRetry < 3) bad('two retries within three questions'); lastRetry = k; }
       var sig = opts.sigOf ? opts.sigOf(p) : (p.want && rnd() < .9 ? p.want : 'k' + Math.floor(rnd() * 8)), ok = rnd() < (home && weak.indexOf(p.id) >= 0 ? (opts.weakAcc == null ? .45 : opts.weakAcc) : (opts.acc == null ? .92 : opts.acc)), v = E.record(p.group, p.id, ok, { sig: sig });
-      verdicts[v] = (verdicts[v] || 0) + 1; n++;
+      verdicts[v] = (verdicts[v] || 0) + 1; n++; if (v === 'refresh') lastRefresh = k;
       var keys = {}; E.retries().forEach(function (x) { if (keys[x.g + x.s]) bad('two retries waiting for one skill'); keys[x.g + x.s] = 1; });
       if (!wasM && st.m && !(cs0 + 1 >= 4 && n0 + 1 >= 5)) bad('mastered too early');
       if (!wasM && st.m && openKinds(st).length) bad('mastered with a missed kind still open');
@@ -2085,7 +2112,7 @@ var LearnCore = (function () {
       if (!ok && v !== 'intro' && st.box !== 0) bad('a miss did not go to box 0'); if (st.box > 4) bad('box above 4');
     }
     var w = weak.reduce(function (a, id) { return a + (count[id] || 0); }, 0), others = all.filter(function (id) { return weak.indexOf(id) < 0; });
-    return { broke: Object.keys(broke), retries: retries, verdicts: verdicts, mastered: all.filter(function (id) { return E.rec(group, id).m; }).length + ' of ' + all.length, weakShare: Math.round(w / total * 100) + '%',
+    return { broke: Object.keys(broke), retries: retries, lifts: lifts, verdicts: verdicts, mastered: all.filter(function (id) { return E.rec(group, id).m; }).length + ' of ' + all.length, weakShare: Math.round(w / total * 100) + '%',
       fewestOther: Math.min.apply(null, others.map(function (id) { return count[id] || 0; })), missing: others.filter(function (id) { return !count[id]; }) };
   }
 
@@ -4439,13 +4466,58 @@ const SEMI = {C:0, D:2, E:4, F:5, G:7, A:9, B:11};
 const midi = s => { const m = /^([A-G])([#b]?)(\d)$/.exec(s); return 12*(+m[3]+1) + SEMI[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); };
 // "C4:1 D4:.5 | R:1" -> timed notes; | is only for reading, R is a rest
 function line(str, voice, vol){ const out = []; let t = 0; for (const tok of str.split(/\s+/)){ if (!tok || tok === '|') continue; const [n,d] = tok.split(':'); if (n !== 'R') out.push({t, n:midi(n), d:+d, v:voice, g:vol}); t += +d; } return out; }
-// ---- Pup Radio: original tunes with a beat, built from a few synthesized instruments. She picks the station; Auto follows where she is.
-const QUAL = {'':[0,4,7], m:[0,3,7], maj7:[0,4,7,11], m7:[0,3,7,10], '7':[0,4,7,10]};
+// ---- Pup Radio: original tunes built from a few synthesized instruments. The first station is lo-fi, with its own song for each place; she can pick another.
+const QUAL = {'':[0,4,7], m:[0,3,7], maj7:[0,4,7,11], m7:[0,3,7,10], '7':[0,4,7,10], maj9:[0,4,7,11,14], m9:[0,3,7,10,14]};
 const chordOf = (name, oct) => { const m = /^([A-G][b#]?)(.*)$/.exec(name), r = midi(m[1] + oct); return QUAL[m[2]].map(x => r + x); };
 const hit = (ev, t, v, g) => ev.push({t, n:0, d:.1, v, g});
 const sortEv = ev => ev.sort((a,b) => a.t - b.t);
-const STATIONS = [['auto','Auto'], ['pop','Bubblegum Pop'], ['sparkle','Sparkle Beat'], ['cozy','Cozy Island'], ['chill','Chill Beats'], ['dance','Dance Party'], ['off','Off']];
+const STATIONS = [['auto','Lo-fi'], ['pop','Bubblegum Pop'], ['sparkle','Sparkle Beat'], ['cozy','Cozy Island'], ['chill','Chill Beats'], ['dance','Dance Party'], ['off','Off']];
+// LO-FI: slow, warm and a little dusty. Every place has its own song, and all of them are built the same way:
+// jazzy chords on a soft electric piano, a round bass, a lazy beat, vinyl crackle, and a small tune on top.
+// o: {key:[root note, third], bpm, chords (one a bar), tune, lead (the voice of the tune), beat: 'lazy' | 'boom' | 'bossa' | 'sparse'}
+function lofi(o){ const lead = o.lead || 'keys', ev = line(o.tune, lead, .8), beats = ev.length ? Math.round(ev.reduce((m, e) => Math.max(m, e.t + e.d), 0)) : 0, beat = o.beat || 'lazy';
+  o.chords.forEach((c, i) => { const t = i*4, ch = chordOf(c, 3).map(n => n < 55 ? n + 12 : n), r = chordOf(c, 2)[0], odd = i % 2;
+    // the chord, rolled a little like a hand on the keys, then again more softly late in the bar
+    ch.forEach((n, k) => { ev.push({t:t + k*.06, n, d:2.4, v:'keys', g:.5}); ev.push({t:t + 2.5 + k*.05, n, d:1.2, v:'keys', g:.3}); });
+    ev.push({t, n:r, d:1.5, v:'bass', g:.9}); ev.push({t:t + 2.5, n:r + (odd ? 7 : 0), d:1.1, v:'bass', g:.75}); if (odd) ev.push({t:t + 3.67, n:r + 7, d:.3, v:'bass', g:.5});
+    hit(ev, t, 'crackle', 1);
+    if (beat === 'sparse'){ hit(ev, t, 'kick', .6); hit(ev, t + 2, 'rim', .7); hit(ev, t + 1, 'hat', .4); hit(ev, t + 3, 'hat', .4); if (odd) hit(ev, t + 3.67, 'hat', .3); }
+    else if (beat === 'bossa'){ for (const b of [0, 1.5, 2, 3.5]) hit(ev, t + b, 'kick', b % 2 ? .45 : .65); for (const b of (odd ? [1, 2.5] : [0, 1.5, 3])) hit(ev, t + b, 'rim', .7); for (let k = 0; k < 8; k++) hit(ev, t + k*.5, 'hat', k % 2 ? .45 : .3); }
+    else { hit(ev, t, 'kick', .8); hit(ev, t + 2.5, 'kick', .7); if (beat === 'boom') hit(ev, t + .75, 'kick', .5); else if (odd) hit(ev, t + 1.67, 'kick', .4);
+      hit(ev, t + 1, 'brush', 1); hit(ev, t + 3, 'brush', 1);
+      for (let b = 0; b < 4; b++){ hit(ev, t + b, 'hat', .35); hit(ev, t + b + (beat === 'boom' ? .5 : .67), 'hat', .55); } } });
+  return {ev:sortEv(ev), len:o.chords.length*4, bpm:o.bpm, vol:1.8, lofi:1, lead, key:o.key, tuneBeats:beats}; }
 const TRACKS = {
+  // the yard: the warmest and simplest of them, like a music box in the next room
+  lfHome(){ return lofi({key:[72,4], bpm:74, chords:['Cmaj7','Am7','Fmaj7','G7','Cmaj7','Em7','Fmaj7','G7'],
+    tune:'E5:1.5 G5:.5 B5:2 | A5:1 G5:.5 E5:.5 C5:2 | A4:.5 C5:.5 E5:1 A5:1.5 G5:.5 | F5:1 D5:1 B4:1 R:1 | E5:1.5 G5:.5 C6:2 | B5:1 G5:.5 E5:.5 D5:2 | C5:.5 E5:.5 A5:1 G5:1 E5:1 | D5:1.5 E5:.5 D5:1 R:1'}); },
+  // the park: lighter on its feet, with the tune on bells
+  lfPark(){ return lofi({key:[67,4], bpm:82, lead:'bell', chords:['Gmaj7','Em7','Cmaj7','D7','Gmaj7','Bm7','Cmaj7','D7'],
+    tune:'D5:.5 G5:.5 B5:1 A5:.5 G5:.5 D5:1 | E5:.5 G5:.5 B5:1 G5:2 | E5:.5 G5:.5 C6:1 B5:.5 G5:.5 E5:1 | F#5:1 A5:1 D5:1 R:1 | B5:1 D6:.5 B5:.5 A5:1 G5:1 | F#5:1 A5:.5 F#5:.5 D5:2 | E5:.5 G5:.5 C6:.5 E6:.5 D6:1 B5:1 | A5:1.5 F#5:.5 A5:1 R:1'}); },
+  // Sunny Meadow: an easy walking pace
+  lfMeadow(){ return lofi({key:[65,4], bpm:80, chords:['Fmaj7','Dm7','Bbmaj7','C7','Am7','Dm7','Gm7','C7'],
+    tune:'A5:1 C6:1 A5:.5 G5:.5 F5:1 | F5:1 A5:.5 F5:.5 D5:2 | D5:.5 F5:.5 Bb5:1 A5:1 F5:1 | G5:1.5 E5:.5 C5:1 R:1 | E5:1 G5:1 C6:1.5 A5:.5 | A5:1 F5:.5 D5:.5 F5:2 | Bb5:.5 A5:.5 G5:1 D5:1 G5:1 | E5:1 G5:1 E5:1 R:1'}); },
+  // Maple Hollow: minor and mellow, like leaves coming down
+  lfMaple(){ return lofi({key:[69,3], bpm:72, chords:['Am7','Fmaj7','Dm7','E7','Am7','Fmaj7','Dm7','Em7'],
+    tune:'E5:2 C5:1 A4:1 | A4:.5 C5:.5 E5:1 F5:2 | F5:1 D5:.5 F5:.5 A5:2 | G#5:1 E5:1 B4:1 R:1 | A5:1.5 G5:.5 E5:2 | C5:.5 E5:.5 A5:1 G5:1 E5:1 | D5:1 F5:1 A5:1 F5:1 | E5:1.5 D5:.5 B4:2'}); },
+  // Sandy Paws Beach: a slow bossa on the marimba
+  lfBeach(){ return lofi({key:[74,4], bpm:84, lead:'mar', beat:'bossa', chords:['Dmaj7','Bm7','Em7','A7','Dmaj7','F#m7','Em7','A7'],
+    tune:'F#5:1 A5:.5 F#5:.5 D5:1 F#5:1 | D5:.5 F#5:.5 B5:1 A5:2 | G5:1 B5:.5 G5:.5 E5:1 G5:1 | E5:1 C#5:1 A4:1 R:1 | A5:1 D6:.5 A5:.5 F#5:2 | A5:.5 C#6:.5 A5:1 F#5:1 E5:1 | G5:.5 B5:.5 D6:1 B5:1 G5:1 | A5:1.5 G5:.5 E5:1 R:1'}); },
+  // Coconut Cove: the same sway with more swing in it
+  lfCove(){ return lofi({key:[69,4], bpm:86, lead:'mar', beat:'bossa', chords:['Amaj7','F#m7','Dmaj7','E7','Amaj7','F#m7','Dmaj7','E7'],
+    tune:'C#5:.67 E5:.33 A5:1 G#5:1 E5:1 | F#5:1 A5:.67 F#5:.33 C#5:2 | D5:.67 F#5:.33 A5:1 F#5:1 D5:1 | E5:1 G#5:1 B5:1 R:1 | A5:1 C#6:.67 A5:.33 E5:2 | C#6:1 A5:.67 F#5:.33 A5:2 | F#5:.67 A5:.33 D6:1 C#6:1 A5:1 | B5:1 G#5:1 E5:2'}); },
+  // Dune Harbour: a desert color, from the chord a half step above home
+  lfDune(){ return lofi({key:[62,3], bpm:76, chords:['Dm7','Ebmaj7','Dm7','Cm7','Dm7','Ebmaj7','Gm7','A7'],
+    tune:'D5:1.5 F5:.5 A5:2 | G5:1 Bb5:.5 G5:.5 D5:2 | F5:.5 A5:.5 D6:1 C6:1 A5:1 | G5:1 Eb5:1 C5:1 R:1 | A5:1 D6:1 C6:.5 A5:.5 F5:1 | G5:1.5 Bb5:.5 D6:2 | Bb5:1 G5:.5 Bb5:.5 D5:2 | E5:1 G5:.5 E5:.5 C#5:2'}); },
+  // Frostbite Peak and Glacier Bay: the slowest, with long bell notes and almost no drums
+  lfSnow(){ return lofi({key:[63,4], bpm:68, lead:'bell', beat:'sparse', chords:['Ebmaj7','Cm7','Abmaj7','Bb7','Ebmaj7','Cm7','Abmaj7','Bb7'],
+    tune:'G5:2 Bb5:2 | Eb5:1 G5:1 C6:2 | C6:1.5 Ab5:.5 Eb5:2 | D5:1 F5:1 Bb5:1 R:1 | Bb5:2 D6:1 Bb5:1 | G5:1 Eb5:1 G5:2 | Ab5:1 C6:1 Eb6:1.5 C6:.5 | Bb5:2 F5:1 R:1'}); },
+  // Mushroom Glade and Lantern Coast: night music, bells over a minor key
+  lfGlade(){ return lofi({key:[64,3], bpm:70, lead:'bell', chords:['Em7','Cmaj7','Am7','B7','Em7','Cmaj7','Am7','Bm7'],
+    tune:'B5:1.5 G5:.5 E5:2 | E5:.5 G5:.5 B5:1 C6:2 | A5:1 C6:.5 A5:.5 E5:2 | D#5:1 F#5:1 B5:1 R:1 | E6:1.5 D6:.5 B5:2 | G5:.5 B5:.5 E6:1 D6:1 B5:1 | C6:1 A5:1 E5:1 A5:1 | F#5:1.5 A5:.5 B5:2'}); },
+  // Barkopolis: jazzier chords and a beat with more push
+  lfCity(){ return lofi({key:[72,4], bpm:88, beat:'boom', chords:['Dm7','G7','Cmaj7','Am7','Dm7','G7','Em7','A7'],
+    tune:'F5:.5 A5:.5 C6:1 A5:.5 F5:.5 D5:1 | B4:.5 D5:.5 F5:1 E5:1 D5:1 | E5:1 G5:.5 B5:.5 G5:2 | A5:.5 G5:.5 E5:1 C5:1 R:1 | A5:1 C6:.5 D6:.5 C6:1 A5:1 | G5:.5 B5:.5 D6:1 F5:1 D5:1 | G5:1 B5:.5 G5:.5 E5:2 | C#5:.5 E5:.5 G5:1 A5:1 R:1'}); },
   // bright four-chord pop: bouncing bass, a plucked arpeggio, claps on two and four, and a tune to hum
   pop(){ const chords = ['C','G','Am','F','C','G','F','G','Am','F','C','G','F','G','C','C'];
     const ev = line('E5:.5 G5:.5 G5:1 E5:.5 G5:.5 A5:1 | G5:1 E5:.5 D5:.5 D5:2 | C5:.5 E5:.5 E5:1 C5:.5 E5:.5 G5:1 | F5:1 E5:.5 D5:.5 C5:2 | E5:.5 G5:.5 G5:1 E5:.5 G5:.5 C6:1 | B5:1 A5:.5 G5:.5 G5:2 | A5:.5 A5:.5 G5:1 F5:.5 E5:.5 D5:1 | D5:.5 E5:.5 G5:1 R:2 | '
@@ -4508,6 +4580,9 @@ function voice(e, when, spb, ctx, out){
   const side = Math.round(e.t*4) % 2 ? .35 : -.35;
   if (v === 'hat'){ noise('highpass', 7000, .045*e.g, .05, 0, side); return; }
   if (v === 'ohat'){ noise('highpass', 6000, .04*e.g, .18, .1, .3); return; }
+  if (v === 'brush'){ noise('bandpass', 1500, .1*e.g, .13, .25, .1); noise('highpass', 4500, .03*e.g, .09, .2, .1); return; }
+  // vinyl crackle: a bar of tiny ticks at random moments, so it never repeats
+  if (v === 'crackle'){ for (let k = 0; k < 12; k++){ const at = when + Math.random()*spb*4, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = MU.noise; f.type = 'highpass'; f.frequency.value = 2500 + Math.random()*3000; g.gain.setValueAtTime((.006 + Math.random()*.016)*e.g, at); g.gain.exponentialRampToValueAtTime(.0001, at + .012); src.connect(f); f.connect(g); g.connect(out); src.start(at, Math.random()*.3); src.stop(at + .02); } return; }
   if (v === 'rim'){ noise('bandpass', 2400, .09*e.g, .05, .2, -.2); return; }
   if (v === 'snare'){ noise('bandpass', 1900, .2*e.g, .13, .2); return; }
   if (v === 'clap'){ noise('bandpass', 1500, .17*e.g, .1, .25); noise('highpass', 2500, .06*e.g, .16, .25); return; }
@@ -4521,6 +4596,11 @@ function voice(e, when, spb, ctx, out){
     // a held note gets a little vibrato, the way a singer would
     if (dur > .45){ const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 5.5; lg.gain.setValueAtTime(0, when + .12); lg.gain.linearRampToValueAtTime(f*.011, when + .4); l.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); l.start(when); l.stop(end); }
     return; }
+  // a warm electric piano, a touch out of tune and slowly wavering, like an old tape
+  if (v === 'keys'){ const end = when + dur*1.3 + .4, peak = .075*e.g*hv, g = ctx.createGain(), b = lp(1500); g.gain.setValueAtTime(.0001, when); g.gain.exponentialRampToValueAtTime(peak, when + .015); g.gain.exponentialRampToValueAtTime(peak*.4, when + Math.min(dur, .5)); g.gain.exponentialRampToValueAtTime(.0001, end); to(g, .3, 0, true); b.connect(g);
+    const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = .7; lg.gain.value = 9; l.connect(lg); l.start(when); l.stop(end + .02);
+    for (const [type, mult, vol, det] of [['sine',1,1,-5],['triangle',1,.5,6],['sine',2,.18,0]]){ const og = ctx.createGain(); og.gain.value = vol; og.connect(b); const o = osc(type, f*mult, og, end + .02, det); lg.connect(o.detune); }
+    return; }
   if (v === 'pad'){ const g = G(.022*e.g, .12, Math.max(.05, dur - .15), .35, .25, 0, true), b = lp(1100); b.connect(g); const end = when + dur + .4; osc('sawtooth', f, b, end, -8); osc('sawtooth', f, b, end, 8); return; }
   if (v === 'bell'){ const g = G(.04*e.g, .004, .01, .9, .4, -side); osc('sine', f, g, when + 1); const g2 = ctx.createGain(); g2.gain.value = .3; g2.connect(g); osc('sine', f*3, g2, when + 1); return; }
   if (v === 'mar'){ const g = G(.1*e.g, .004, .02, .32, .3); osc('sine', f, g, when + .4); const g2 = ctx.createGain(); g2.gain.value = .22; g2.connect(g); osc('sine', f*4, g2, when + .12); return; }
@@ -4530,26 +4610,27 @@ function voice(e, when, spb, ctx, out){
 }
 // Every track gets an extra layer made from its own tune: the melody doubled an octave up on bells, and busier hats on the straight-time tracks.
 const KEYS = {pop:[72,4], sparkle:[69,3], cozy:[72,4], chill:[65,4], dance:[65,4]};
-function trackOf(k){ if (MU.cache[k]) return MU.cache[k]; const tr = TRACKS[k](), tune = k === 'chill' ? 'ep' : k === 'cozy' ? 'mar' : 'lead', add = [];
-  for (const e of tr.ev){ if (e.v === tune && e.g >= .7) add.push({t:e.t, n:e.n + 12, d:e.d, v:'bell', g:.3, x:1}); if (e.v === 'kick' && k !== 'cozy' && k !== 'chill'){ add.push({t:e.t + .25, n:0, d:.1, v:'hat', g:.45, x:1}); add.push({t:e.t + .75, n:0, d:.1, v:'hat', g:.45, x:1}); } }
+function trackOf(k){ if (MU.cache[k]) return MU.cache[k]; const tr = TRACKS[k](), tune = tr.lead || (k === 'chill' ? 'ep' : k === 'cozy' ? 'mar' : 'lead'), add = [];
+  for (const e of tr.ev){ if (e.v === tune && e.g >= .7) add.push({t:e.t, n:e.n + 12, d:e.d, v:'bell', g:tr.lofi ? .16 : .3, x:1}); if (e.v === 'kick' && !tr.lofi && k !== 'cozy' && k !== 'chill'){ add.push({t:e.t + .25, n:0, d:.1, v:'hat', g:.45, x:1}); add.push({t:e.t + .75, n:0, d:.1, v:'hat', g:.45, x:1}); } }
   tr.ev = sortEv(tr.ev.concat(add)); return MU.cache[k] = tr; }
 const onStreak = () => !$('math').hidden && S.math.streak >= 3;
 // Which notes sit out this time round. Rounds go: plain, with the extra layer, a breakdown (the beat drops out for the first half, then comes back), with the extra layer.
 function sitsOut(e, loop, tr){ const sec = loop % 4, firstHalf = e.t < tr.len/2;
   if (e.x) return !(sec % 2 === 1 || onStreak());
-  if (sec === 2 && firstHalf && (e.v === 'kick' || e.v === 'sbass' || e.v === 'bass' || e.v === 'clap' || e.v === 'snare' || e.v === 'rim')) return true;
+  if (sec === 2 && firstHalf && (e.v === 'kick' || e.v === 'sbass' || e.v === 'bass' || e.v === 'clap' || e.v === 'snare' || e.v === 'rim' || e.v === 'brush')) return true;
   return false; }
 // a right answer rings out in the key of whatever is playing
-function rightSound(){ if (!S.sound) return; if (station() === 'off' || !MU.out || !MU.tr || !KEYS[MU.name]){ beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1); return; }
-  const [root, third] = KEYS[MU.name]; [0, third, 7, 12].forEach((iv, k) => voice({t:k, n:root + iv, d:.3, v:'bell', g:1.1}, AC.currentTime + .02 + k*.07, .5)); }
+function rightSound(){ if (!S.sound) return; if (station() === 'off' || !MU.out || !MU.tr || !(KEYS[MU.name] || MU.tr.key)){ beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1); return; }
+  const [root, third] = KEYS[MU.name] || MU.tr.key; [0, third, 7, 12].forEach((iv, k) => voice({t:k, n:root + iv, d:.3, v:'bell', g:1.1}, AC.currentTime + .02 + k*.07, .5)); }
 const station = () => S.music === false ? 'off' : S.station || 'auto';
-// Auto: a cozy tune at home and in the park, pop in the valley, a sparkly beat in the city, a dance tune on the islands
-const wantTrack = () => { const s = station(); return s !== 'auto' ? s : scene !== 'quest' ? 'cozy' : land !== 'home' ? 'dance' : qr.zone === 'city' ? 'sparkle' : 'pop'; };
+// Lo-fi: the song follows where she is. The yard and the park have their own, and so does each kind of country in the valley and on the islands.
+const AREA = {meadow:'lfMeadow', maple:'lfMaple', beach:'lfBeach', tropic:'lfCove', dune:'lfDune', snow:'lfSnow', shroom:'lfGlade', city:'lfCity'};
+const wantTrack = () => { const s = station(); return MU.force && TRACKS[MU.force] ? MU.force : s !== 'auto' ? s : scene === 'yard' ? 'lfHome' : scene === 'park' ? 'lfPark' : AREA[qr.zone] || 'lfMeadow'; };
 function musicTick(){
   if (!MU.ok || station() === 'off' || !S.adopted || document.hidden) return;
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
-    if (!MU.out){ MU.out = AC.createGain(); MU.out.gain.value = .5; const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; MU.out.connect(comp); comp.connect(AC.destination);
+    if (!MU.out){ MU.out = AC.createGain(); MU.out.gain.value = .5; const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; MU.tone = AC.createBiquadFilter(); MU.tone.type = 'lowpass'; MU.tone.frequency.value = 16000; MU.out.connect(MU.tone); MU.tone.connect(comp); comp.connect(AC.destination);
       MU.pump = AC.createGain(); MU.pump.connect(MU.out); MU.wet = AC.createGain(); MU.wet.gain.value = .8;
       // a small room: reverb from a burst of fading noise, and a soft echo
       const sr = AC.sampleRate, len = Math.floor(sr*1.5), ir = AC.createBuffer(2, len, sr); for (let c = 0; c < 2; c++){ const ch = ir.getChannelData(c); for (let k = 0; k < len; k++) ch[k] = (Math.random()*2 - 1)*Math.pow(1 - k/len, 2.6); }
@@ -4557,8 +4638,10 @@ function musicTick(){
       MU.wet.connect(rv); rv.connect(rg); rg.connect(MU.out); MU.wet.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dg); dg.connect(MU.out);
       MU.noise = AC.createBuffer(1, 8820, 22050); const d = MU.noise.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = Math.random()*2-1; }
     // the music steps back while a question is on screen, and right back while something is read aloud
-    const want = wantTrack();
-    if (MU.name !== want){ MU.name = want; MU.tr = trackOf(want); MU.i = 0; MU.loop = 0; MU.t0 = AC.currentTime + .4; }
+    // a new place brings its own song, but only once she has been there a few seconds, so walking along a border does not flip it back and forth
+    const want = wantTrack(); if (want !== MU.want){ MU.want = want; MU.wantAt = AC.currentTime; }
+    if (MU.name !== want && (!MU.name || MU.force || station() !== 'auto' || AC.currentTime - MU.wantAt > 3)){ MU.name = want; MU.tr = trackOf(want); MU.i = 0; MU.loop = 0; MU.t0 = AC.currentTime + .9; }
+    MU.tone.frequency.setTargetAtTime(MU.tr.lofi ? 3600 : 16000, AC.currentTime, .3);      // lo-fi is played with the treble rolled off
     MU.out.gain.setTargetAtTime(.5*(MU.tr.vol || 1)*(MU.duck ? .15 : !$('math').hidden ? .5 : 1), AC.currentTime, .15);
     const spb = 60/MU.tr.bpm, horizon = AC.currentTime + .7;
     for (let guard = 0; guard < 300; guard++){ const e = MU.tr.ev[MU.i], when = MU.t0 + (MU.loop*MU.tr.len + e.t)*spb;
@@ -4568,6 +4651,8 @@ function musicTick(){
   } catch(e){ MU.err = String(e && e.message || e); }
 }
 window.pupMusicLive = () => ({station:station(), track:MU.name, notesScheduled:MU.played || 0, round:MU.loop, effects:!!MU.wet, error:MU.err || null});
+// for listening to one song wherever she is: pupMusicPlay('lfSnow'); pupMusicPlay() goes back to following the place
+window.pupMusicPlay = k => { MU.force = k || null; return Object.keys(TRACKS); };
 setInterval(musicTick, 180);
 // for checking a build: renders each track for a few bars and reports how loud it gets and whether its tune fits its bars
 window.pupMusic = async () => { const out = {};
@@ -4575,11 +4660,11 @@ window.pupMusic = async () => { const out = {};
     if (!MU.noise){ MU.noise = ctx.createBuffer(1, 8820, 22050); const d = MU.noise.getChannelData(0); for (let q = 0; q < d.length; q++) d[q] = Math.random()*2-1; }
     for (const e of tr.ev) if (e.t*spb < secs - .5) voice(e, e.t*spb + .05, spb, ctx, g);
     const buf = (await ctx.startRendering()).getChannelData(0); let pk = 0, sq = 0; for (let q = 0; q < buf.length; q++){ const a = Math.abs(buf[q]); if (a > pk) pk = a; sq += a*a; }
-    const voices = {}; let lastEnd = 0; for (const e of tr.ev){ voices[e.v] = (voices[e.v] || 0) + 1; if (e.v === 'lead' || e.v === 'mar' || (k === 'chill' && e.v === 'ep')) lastEnd = Math.max(lastEnd, e.t + e.d); }
-    out[k] = {bpm:tr.bpm, bars:tr.len/4, notes:tr.ev.length, peak:+pk.toFixed(2), loudness:+Math.sqrt(sq/buf.length).toFixed(3), tuneEndsAtBeat:+lastEnd.toFixed(2), voices:Object.keys(voices).join(' ')}; }
+    const voices = {}; let lastEnd = 0; for (const e of tr.ev){ voices[e.v] = (voices[e.v] || 0) + 1; if (tr.lead ? e.v === tr.lead && e.g >= .7 && !e.x : e.v === 'lead' || e.v === 'mar' || (k === 'chill' && e.v === 'ep')) lastEnd = Math.max(lastEnd, e.t + e.d); }
+    out[k] = {bpm:tr.bpm, bars:tr.len/4, notes:tr.ev.length, peak:+pk.toFixed(2), loudness:+Math.sqrt(sq/buf.length).toFixed(3), tuneEndsAtBeat:+lastEnd.toFixed(2), fits:tr.tuneBeats == null || tr.tuneBeats === tr.len || tr.tuneBeats === tr.len - 1, voices:Object.keys(voices).join(' ')}; }
   return out; };
 document.addEventListener('pointerdown', () => { MU.ok = true; }, {once:true});
-$('mus').onclick = () => { const k = STATIONS.findIndex(x => x[0] === station()), nx = STATIONS[(k + 1) % STATIONS.length]; S.station = nx[0]; S.music = nx[0] !== 'off'; MU.ok = true; ui(); save(); toast(nx[0] === 'off' ? 'Music off' : nx[0] === 'auto' ? 'Pup Radio: Auto picks the tune for where you are' : 'Pup Radio: ' + nx[1], 2200); };
+$('mus').onclick = () => { const k = STATIONS.findIndex(x => x[0] === station()), nx = STATIONS[(k + 1) % STATIONS.length]; S.station = nx[0]; S.music = nx[0] !== 'off'; MU.ok = true; ui(); save(); toast(nx[0] === 'off' ? 'Music off' : nx[0] === 'auto' ? 'Pup Radio: Lo-fi, with a song for every place' : 'Pup Radio: ' + nx[1], 2200); };
 
 // Self-check for grown-ups and for testing: pupCheck() makes many questions per skill and lists anything wrong with them.
 window.pupCheck = (n, only) => { const bad = [], seen = {}; n = n || 300;
@@ -4632,7 +4717,7 @@ window.pupRules = () => { const out = LearnCore.checks(), keep = JSON.stringify(
     const S0 = S; load({S:Object.assign({}, S0, {math:old})}); out['an older save keeps its mastery and its earlier-skill list'] = S.math.sk['4|Round multi-digit numbers'].m === true && !('M' in S.math.sk['4|Round multi-digit numbers']) && S.math.sk['4|Angles'].n === 2 && ENG.support().length === 1 && ENG.support()[0].id === 'Multiply within 100' && ENG.total() === 9 && !S.math.deck; S = S0;
   } finally { S.math = JSON.parse(keep); S.day = dk; window.__dayShift = 0; }
   return out; };
-const CORE_WANT = '1.0.1';
+const CORE_WANT = '1.1.0';
 /* ---------- HUD ---------- */
 let toastT;
 function toast(msg, ms){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms || 2600); }

@@ -46,4 +46,4 @@ The web version can also use a neural story voice that runs on the device (Piper
 
 ## Music
 
-Pup Radio plays original tunes made from a few synthesized instruments: Bubblegum Pop, Sparkle Beat, Cozy Island, Chill Beats and Dance Party. The Music button switches station; Auto picks one for where she is. The music drops back while a question is on screen and while anything is read aloud. `pupMusic()` in the browser console renders each track and reports its level.
+Pup Radio plays original tunes made from a few synthesized instruments. The first station is Lo-fi: slow, warm songs with a different one for each place (the yard, the park, and each kind of country in the valley and on the islands). The Music button switches to the others: Bubblegum Pop, Sparkle Beat, Cozy Island, Chill Beats and Dance Party. The music drops back while a question is on screen and while anything is read aloud. `pupMusic()` in the browser console renders each track and reports its level.

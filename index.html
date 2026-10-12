@@ -1816,7 +1816,7 @@ const probGrade = () => (prob && allGrade(prob.gid)) || curGrade();
  */
 var LearnCore = (function () {
   'use strict';
-  var VERSION = '1.0.1';
+  var VERSION = '1.1.0';
   var GAPS = [1, 3, 7, 14, 30, 60];      // REVIEW BY DAYS: a mastered skill comes back after 1 day, then 3, 7, 14, 30 and 60
   // SKILL BUILDER: the steps Granny Dot or the Guide takes, by why play stopped
   var STEPS = { miss: ['one'], intro: ['watch', 'two', 'all'], teach: ['watch', 'two', 'all', 'solo', 'solo'], refresh: ['watch', 'solo', 'solo'] };
@@ -1824,6 +1824,9 @@ var LearnCore = (function () {
     newStart: 6,        // new skills arrive a few at a time: enough to have this many going in a group...
     newPerDay: 4,       // ...then this many more a day (99 for no limit)
     early: true,        // while nothing started is shaky, the next new skill may come early
+    inPlay: 8,          // ...but new skills wait while this many started skills are not yet mastered (99 for no limit)
+    liftBelow: 0.75,    // when fewer than this share of the last ten answers were right, a strong skill is asked and new skills wait (0 for never)
+    liftGap: 2,         // at least this many other questions between those
     retryAfter: 3,      // a missed skill comes back this many questions later
     retryGap: 2,        // at least this many other questions between retries (so at most one in three is a retry)
     retryCap: 6,        // retries waiting at once
@@ -1860,7 +1863,7 @@ var LearnCore = (function () {
     function cfg(k) { var c = host.config || {}, v = c[k] === undefined ? DEFAULTS[k] : c[k]; return typeof v === 'function' ? v() : v; }
     function shuffle(a) { return a.map(function (v) { return [rnd(), v]; }).sort(function (x, y) { return x[0] - y[0]; }).map(function (v) { return v[1]; }); }
     function pickOf(a) { return a[Math.floor(rnd() * a.length)]; }
-    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
+    function core() { var s = host.state(), c = s.core || (s.core = {}); c.n = c.n || 0; c.retry = c.retry || []; c.deck = c.deck || {}; c.fwd = c.fwd || {}; c.seenDay = c.seenDay || {}; c.support = c.support || []; c.recent = c.recent || []; if (!c.nd || c.nd.d !== host.today()) c.nd = { d: host.today(), c: {} }; return c; }
     function rec(group, id) { var s = host.state(), k = host.key(group, id); s.sk = s.sk || {}; return s.sk[k] || (s.sk[k] = { n: 0, r: 0, cs: 0, miss: 0 }); }
     function ids(group) { var all = host.skills(group) || []; return host.live ? all.filter(function (id) { return host.live(group, id) !== false; }) : all; }
     function has(group, id) { return (host.skills(group) || []).indexOf(id) >= 0; }
@@ -1873,8 +1876,10 @@ var LearnCore = (function () {
     //  - A missed skill comes back a few questions later as the same kind ("One more try"); at most one question in three is a retry.
     //  - Each round deals every skill still being learned (a shaky one twice, unless that would crowd out the rest),
     //    every mastered skill whose review day has come, and any earlier skill being built up ("Warm-up").
-    //  - New skills join a few at a time, in teaching order. The same skill is never asked twice in a row.
+    //  - New skills join a few at a time, in teaching order, and wait while enough are already in play. The same skill is never asked twice in a row.
+    //  - After a run of misses new skills wait, and now and then a skill she is good at is asked ("lift"), so most answers stay right.
     // Returns {group, id, tag, want}: tag is '', 'One more try', 'Review', 'Warm-up' or 'Stretch'; want is a kind to ask for, or null.
+    // A lift also carries lift: true; its tag is 'Review' for a mastered skill and '' otherwise.
     function pick(group) {
       var c = core(), now = host.today(), all = ids(group), lane = host.lane(group);
       var st = function (id) { return rec(group, id); }, rested = function (g, id) { return rec(g, id).rest === now; };
@@ -1883,6 +1888,17 @@ var LearnCore = (function () {
       // where a waiting retry lives: this group, or an earlier group's skill that is being built up
       var home = function (r) { if (r.g === group) return all.indexOf(r.s) >= 0 ? group : null; return sup.some(function (x) { return x.group === r.g && x.id === r.s; }) ? r.g : null; };
       c.retry = c.retry.filter(function (r) { return r && r.g && r.s && c.n - r.at < cfg('retryKeep'); });
+      // room for new skills: started skills not yet mastered count against the limit
+      var slots = cfg('inPlay') - all.filter(function (id) { var s2 = st(id); return s2.n > 0 && !s2.m; }).length;
+      var low = c.recent.length >= 6 && c.recent.filter(function (x) { return x; }).length / c.recent.length < cfg('liftBelow');
+      // new skills wait after a run of misses, unless so few are in play that one hard skill would hold everything up
+      var hold = low && slots <= cfg('inPlay') / 2;
+      if (low && (c.sinceLift == null ? 99 : c.sinceLift) >= cfg('liftGap')) {
+        var strong = all.filter(function (id) { var s2 = st(id); return id !== c.lastS && s2.n > 0 && box(s2) >= 3 && !rested(group, id); }), going = strong.filter(function (id) { return !st(id).m; });
+        if (strong.length) { var e = pickOf(going.length ? going : strong), o = out(group, e, st(e).m ? 'Review' : '', null);
+          c.sinceLift = 0; c.gap = (c.gap || 0) + 1; if (c.deck[group]) c.deck[group] = c.deck[group].filter(function (x) { return x !== e; }); o.lift = true; return o; }
+      }
+      c.sinceLift = (c.sinceLift || 0) + 1;
       if ((c.gap || 0) >= cfg('retryGap')) {
         for (var q = 0; q < c.retry.length; q++) { var r = c.retry[q], g0 = r.at <= c.n && r.s !== c.lastS ? home(r) : null;
           if (g0 && !rested(g0, r.s)) { c.retry.splice(q, 1); c.gap = 0; return out(g0, r.s, g0 === group ? 'One more try' : 'Warm-up', r.sig); } }
@@ -1892,7 +1908,7 @@ var LearnCore = (function () {
       var d = (c.deck[group] || []).filter(function (x) { return mine(x) ? all.indexOf(x) >= 0 : true; });
       var unseen = function (list) { return list.filter(function (x) { var s2 = cst(x); return s2 && !s2.n; }).length; };
       // on a new day the day's new skills join the round already under way
-      if (d.length && c.seenDay[group] !== now) { var room0 = cfg('newPerDay') - (c.nd.c[group] || 0) - unseen(d), at = 1;
+      if (d.length && c.seenDay[group] !== now) { var room0 = hold ? 0 : Math.min(cfg('newPerDay') - (c.nd.c[group] || 0), slots) - unseen(d), at = 1;
         all.forEach(function (id) { if (room0 > 0 && !st(id).n && d.indexOf(id) < 0 && !rested(group, id)) { d.splice(Math.min(d.length, at), 0, id); at += 2; room0--; } }); }
       c.seenDay[group] = now;
       // a skill mastered part-way through a round does not get its second turn: it waits for its review day
@@ -1902,6 +1918,7 @@ var LearnCore = (function () {
         var started = all.filter(function (id) { return st(id).n > 0; }).length, room = Math.max(cfg('newStart') - started, cfg('newPerDay') - (c.nd.c[group] || 0)), shaky = [];
         var steady = all.every(function (id) { var s2 = st(id); return !s2.n || s2.m || box(s2) >= 2; });
         if (room <= 0 && cfg('early') && steady) room = 1;
+        room = hold ? 0 : Math.min(room, slots);
         all.forEach(function (id, i) { var s2 = st(id); if (rested(group, id)) return;
           if (!s2.n) { if (room-- > 0) d.push(id); return; }
           if (s2.m) { if (s2.due == null) s2.due = now + i % 4; if (s2.due <= now) d.push(id); return; }
@@ -1945,6 +1962,7 @@ var LearnCore = (function () {
     // how: {sig, ex, fast, unsure}: the kind of question, an example of it for the report, a rushed answer, "not sure".
     function record(group, id, ok, how) {
       how = how || {}; var c = core(), st = rec(group, id), first = !st.n, h = how.sig, now = host.today(); c.n++;
+      c.recent = c.recent.concat(ok && !how.unsure ? 1 : 0).slice(-10);
       var again = function () { if ((st.miss || 0) < cfg('retryStop') && c.retry.length < cfg('retryCap') && !c.retry.some(function (r) { return r.g === group && r.s === id; })) c.retry.push({ g: group, s: id, at: c.n + cfg('retryAfter'), sig: h }); };
       // a missed kind has to be answered right twice before it is cleared; one example is kept for the grown-up report
       var open = function () { if (!h) return; st.w = st.w || {}; st.w[h] = 2; var ks = Object.keys(st.w); if (ks.length > 5) { delete st.w[ks[0]]; if (st.wx) delete st.wx[ks[0]]; } if (how.ex) (st.wx = st.wx || {})[h] = how.ex; };
@@ -2037,8 +2055,15 @@ var LearnCore = (function () {
     H.fresh(); seen = {}; play(60, seen, function (p) { return p.id !== 'm0'; }); out['while a skill is shaky, day one stays at six skills'] = size(seen) === 6;
     H.nextDay(); play(20, seen, function (p) { return p.id !== 'm0'; }); out["the next day brings the day's new skills, and no more"] = size(seen) === 6 + 4;
     H.fresh(); seen = {}; play(120, seen, function () { return true; }); out['when everything is going well, new skills come early'] = size(seen) > 6;
-    H.fresh(); for (var q0 = 0; q0 < 8; q0++) E.record('m4', 'm0', true, { sig: 'x' + q0 }); var got = 0; for (var q1 = 0; q1 < 40; q1++) { var p1 = E.pick('m4'); if (p1.id === 'm0') got++; E.record(p1.group, p1.id, false, { sig: 'z' + q1 }); }
+    H.fresh(); for (var q0 = 0; q0 < 8; q0++) E.record('m4', 'm0', true, { sig: 'x' + q0 }); var got = 0; for (var q1 = 0; q1 < 40; q1++) { var p1 = E.pick('m4'); if (p1.id === 'm0') got++; E.record(p1.group, p1.id, q1 % 5 > 0, { sig: 'z' + q1 }); }
     out['a mastered skill stays out of the rounds until its review day'] = E.rec('m4', 'm0').m === true && got === 0;
+    H.fresh(); seen = {}; for (var q6 = 0; q6 < 200; q6++) { if (q6 && q6 % 20 === 0) H.nextDay(); var p6 = E.pick('m4'); seen[p6.id] = 1; E.record(p6.group, p6.id, true, { sig: 'same' }); }
+    out['new skills wait while eight are in play and not yet mastered'] = size(seen) === 8;
+    H.fresh(); for (var q7 = 0; q7 < 8; q7++) E.record('m4', 'm0', true, { sig: 'x' + q7 }); for (var q8 = 0; q8 < 8; q8++) E.record('m4', 'm' + (1 + q8 % 4), false, { sig: 'y' }); seen = {}; var lifts = 0, pl = E.pick('m4'), pl2 = E.pick('m4');
+    out['after a run of misses a strong skill is asked, but not twice running'] = pl.lift === true && pl.id === 'm0' && pl.tag === 'Review' && !pl2.lift;
+    for (var q9 = 0; q9 < 12; q9++) { var p9 = E.pick('m4'); if (p9.lift) lifts++; seen[p9.id] = 1; E.record(p9.group, p9.id, !!p9.lift, { sig: 'y' }); }
+    out['and new skills wait until answers are going right again'] = lifts === 4 && size(seen) === 5;
+    H.fresh(); lifts = 0; for (var q10 = 0; q10 < 60; q10++) { var p10 = E.pick('m4'); if (p10.lift) lifts++; E.record(p10.group, p10.id, q10 % 5 > 0, { sig: 'g' + q10 }); } out['with four answers in five right there is no lift'] = lifts === 0;
     H.fresh(); var w = E.warmupFor('m4', 'm2'); out['a skill can point back to an earlier one that is not solid'] = !!w && w.group === 'm3' && w.id === 'p2' && E.warmupFor('m4', 'm9') === null;
     out['two of three warm-ups right means the trouble is in the new part'] = E.warmupDone('m4', 'm2', w, 2) === 'on' && !E.support().length;
     out['otherwise the earlier skill is built first and the harder one rests'] = E.warmupDone('m4', 'm2', w, 1) === 'back' && E.support().length === 1 && E.rec('m4', 'm2').rest === H.today();
@@ -2058,17 +2083,18 @@ var LearnCore = (function () {
   // opts: {skills, weak, total, acc, weakAcc, seed}. On a real host pass {host, engine, group, sigOf}.
   function simulate(opts) {
     opts = opts || {}; var H = opts.host || fakeHost({ skills: opts.skills || 28, seed: opts.seed }), E = opts.engine || create(H), group = opts.group || 'm4', total = opts.total || 300;
-    var all = H.skills(group), weak = all.slice(0, opts.weak == null ? 3 : opts.weak), count = {}, broke = {}, verdicts = {}, last = null, lastRetry = -9, retries = 0, n = 0, rnd = H.random || Math.random;
+    var all = H.skills(group), weak = all.slice(0, opts.weak == null ? 3 : opts.weak), count = {}, broke = {}, verdicts = {}, last = null, lastRetry = -9, retries = 0, lifts = 0, lastRefresh = -99, n = 0, rnd = H.random || Math.random, cap = (H.config || {}).inPlay || DEFAULTS.inPlay;
     var bad = function (t) { broke[t] = 1; };
     for (var k = 0; k < total; k++) {
       if (k % 20 === 0 && k && opts.nextDay) opts.nextDay(); else if (k % 20 === 0 && k && H.nextDay) H.nextDay();
-      var p = E.pick(group), st = E.rec(p.group, p.id), wasM = st.m, cs0 = st.cs || 0, n0 = st.n, home = p.group === group;
+      var open0 = all.filter(function (x) { var s2 = E.rec(group, x); return s2.n && !s2.m; }).length, p = E.pick(group), st = E.rec(p.group, p.id), wasM = st.m, cs0 = st.cs || 0, n0 = st.n, home = p.group === group;
+      if (home && !n0 && open0 >= cap && k - lastRefresh > 40) bad('a new skill started with too many in play'); if (p.lift) lifts++;
       if (home) count[p.id] = (count[p.id] || 0) + 1;
-      if (home && wasM && st.due > H.today() && p.tag !== 'One more try' && !E.core().fwd[group] && all.some(function (x) { var s2 = E.rec(group, x); return x !== p.id && x !== last && s2.n && !s2.m && s2.rest !== H.today(); })) bad('a mastered skill came back before its review day');
+      if (home && wasM && st.due > H.today() && p.tag !== 'One more try' && !p.lift && !E.core().fwd[group] && all.some(function (x) { var s2 = E.rec(group, x); return x !== p.id && x !== last && s2.n && !s2.m && s2.rest !== H.today(); })) bad('a mastered skill came back before its review day');
       if (p.id === last) bad('same skill twice in a row'); last = p.id;
       if (p.tag === 'One more try') { retries++; if (k - lastRetry < 3) bad('two retries within three questions'); lastRetry = k; }
       var sig = opts.sigOf ? opts.sigOf(p) : (p.want && rnd() < .9 ? p.want : 'k' + Math.floor(rnd() * 8)), ok = rnd() < (home && weak.indexOf(p.id) >= 0 ? (opts.weakAcc == null ? .45 : opts.weakAcc) : (opts.acc == null ? .92 : opts.acc)), v = E.record(p.group, p.id, ok, { sig: sig });
-      verdicts[v] = (verdicts[v] || 0) + 1; n++;
+      verdicts[v] = (verdicts[v] || 0) + 1; n++; if (v === 'refresh') lastRefresh = k;
       var keys = {}; E.retries().forEach(function (x) { if (keys[x.g + x.s]) bad('two retries waiting for one skill'); keys[x.g + x.s] = 1; });
       if (!wasM && st.m && !(cs0 + 1 >= 4 && n0 + 1 >= 5)) bad('mastered too early');
       if (!wasM && st.m && openKinds(st).length) bad('mastered with a missed kind still open');
@@ -2077,7 +2103,7 @@ var LearnCore = (function () {
       if (!ok && v !== 'intro' && st.box !== 0) bad('a miss did not go to box 0'); if (st.box > 4) bad('box above 4');
     }
     var w = weak.reduce(function (a, id) { return a + (count[id] || 0); }, 0), others = all.filter(function (id) { return weak.indexOf(id) < 0; });
-    return { broke: Object.keys(broke), retries: retries, verdicts: verdicts, mastered: all.filter(function (id) { return E.rec(group, id).m; }).length + ' of ' + all.length, weakShare: Math.round(w / total * 100) + '%',
+    return { broke: Object.keys(broke), retries: retries, lifts: lifts, verdicts: verdicts, mastered: all.filter(function (id) { return E.rec(group, id).m; }).length + ' of ' + all.length, weakShare: Math.round(w / total * 100) + '%',
       fewestOther: Math.min.apply(null, others.map(function (id) { return count[id] || 0; })), missing: others.filter(function (id) { return !count[id]; }) };
   }
 

@@ -2856,7 +2856,7 @@ function settle(ok, b, how){
   if (ok){
     m.streak++; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (prob.steps ? 3 : prob.typed === 'write' ? 4 : prob.typed ? 2 : special ? 1 : 0);
     S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
-    $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
+    $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); rightSound();
     if (rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
     if (!was && isMastered(st)) dayState().up.push(g.skills[prob.i][1]);
     renderProgress(); ui(); save(); if (dayDue()){ const cur1 = prob; setTimeout(() => { if (prob === cur1) dayDone(); }, 900); }
@@ -4118,26 +4118,49 @@ const TRACKS = {
 const MU = {ok:false, name:'', tr:null, i:0, loop:0, t0:0, out:null, noise:null, cache:{}, duck:false};
 // One note or drum hit. ctx and out default to the game's own; a test can pass others.
 function voice(e, when, spb, ctx, out){
-  ctx = ctx || AC; out = out || MU.out; const dur = e.d*spb, v = e.v, G = (peak, a, hold, rel) => { const g = ctx.createGain(); g.gain.setValueAtTime(.0001, when); g.gain.exponentialRampToValueAtTime(peak, when + a); g.gain.setValueAtTime(peak, when + a + hold); g.gain.exponentialRampToValueAtTime(.0001, when + a + hold + rel); g.connect(out); return g; };
+  ctx = ctx || AC; out = out || MU.out; const dur = e.d*spb, v = e.v, live = ctx === AC && !!MU.wet, hv = 1 + (Math.random() - .5)*.14;
+  // where a sound goes: straight out, or through the pump; a little of it into the reverb and echo; a little to one side
+  const to = (node, send, pan, pump) => { let d = pump && live ? MU.pump : out; if (pan && live && ctx.createStereoPanner){ const pn = ctx.createStereoPanner(); pn.pan.value = pan; pn.connect(d); d = pn; } node.connect(d); if (send && live){ const sg = ctx.createGain(); sg.gain.value = send; node.connect(sg); sg.connect(MU.wet); } };
+  const G = (peak, a, hold, rel, send, pan, pump) => { const g = ctx.createGain(); peak *= hv; g.gain.setValueAtTime(.0001, when); g.gain.exponentialRampToValueAtTime(peak, when + a); g.gain.setValueAtTime(peak, when + a + hold); g.gain.exponentialRampToValueAtTime(.0001, when + a + hold + rel); to(g, send, pan, pump); return g; };
   const osc = (type, f, to, stop, det) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det; o.connect(to); o.start(when); o.stop(stop); return o; };
-  const noise = (type, freq, peak, len) => { const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = MU.noise; f.type = type; f.frequency.value = freq; g.gain.setValueAtTime(peak, when); g.gain.exponentialRampToValueAtTime(.0001, when + len); src.connect(f); f.connect(g); g.connect(out); src.start(when); src.stop(when + len + .02); };
-  if (v === 'hat'){ noise('highpass', 7000, .045*e.g, .05); return; }
-  if (v === 'ohat'){ noise('highpass', 6000, .04*e.g, .18); return; }
-  if (v === 'rim'){ noise('bandpass', 2400, .09*e.g, .05); return; }
-  if (v === 'snare'){ noise('bandpass', 1900, .2*e.g, .13); return; }
-  if (v === 'clap'){ noise('bandpass', 1500, .17*e.g, .1); noise('highpass', 2500, .06*e.g, .16); return; }
-  if (v === 'kick'){ const g = ctx.createGain(), o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(150, when); o.frequency.exponentialRampToValueAtTime(45, when + .11); g.gain.setValueAtTime(.42*e.g, when); g.gain.exponentialRampToValueAtTime(.0001, when + .2); o.connect(g); g.connect(out); o.start(when); o.stop(when + .22); return; }
+  const noise = (type, freq, peak, len, send, pan) => { const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); src.buffer = MU.noise; f.type = type; f.frequency.value = freq; g.gain.setValueAtTime(peak*hv, when); g.gain.exponentialRampToValueAtTime(.0001, when + len); src.connect(f); f.connect(g); to(g, send, pan); src.start(when); src.stop(when + len + .02); };
+  const side = Math.round(e.t*4) % 2 ? .35 : -.35;
+  if (v === 'hat'){ noise('highpass', 7000, .045*e.g, .05, 0, side); return; }
+  if (v === 'ohat'){ noise('highpass', 6000, .04*e.g, .18, .1, .3); return; }
+  if (v === 'rim'){ noise('bandpass', 2400, .09*e.g, .05, .2, -.2); return; }
+  if (v === 'snare'){ noise('bandpass', 1900, .2*e.g, .13, .2); return; }
+  if (v === 'clap'){ noise('bandpass', 1500, .17*e.g, .1, .25); noise('highpass', 2500, .06*e.g, .16, .25); return; }
+  if (v === 'kick'){ const g = ctx.createGain(), o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(150, when); o.frequency.exponentialRampToValueAtTime(45, when + .11); g.gain.setValueAtTime(.42*e.g, when); g.gain.exponentialRampToValueAtTime(.0001, when + .2); o.connect(g); g.connect(out); o.start(when); o.stop(when + .22);
+    if (live){ MU.pump.gain.cancelScheduledValues(when); MU.pump.gain.setValueAtTime(.5, when); MU.pump.gain.linearRampToValueAtTime(1, when + .2); }
+    return; }
   const f = 440*Math.pow(2, (e.n-69)/12), lp = (cut, q) => { const b = ctx.createBiquadFilter(); b.type = 'lowpass'; b.frequency.value = cut; b.Q.value = q || .7; return b; };
   if (v === 'sbass'){ const g = G(.15*e.g, .008, Math.max(.02, dur - .05), .06), b = lp(520); b.connect(g); osc('sawtooth', f, b, when + dur + .1); osc('sine', f, g, when + dur + .1); return; }
-  if (v === 'pluck'){ const g = G(.06*e.g, .005, .02, .16), b = lp(2600, 2); b.frequency.setValueAtTime(3200, when); b.frequency.exponentialRampToValueAtTime(900, when + .15); b.connect(g); osc('sawtooth', f, b, when + .24); osc('square', f, b, when + .24, 7); return; }
-  if (v === 'lead'){ const g = G(.05*e.g, .012, Math.max(.03, dur*.85 - .02), .09), b = lp(2400, 1.2); b.connect(g); const end = when + dur + .12; osc('square', f, b, end); osc('sawtooth', f, b, end, 9); return; }
-  if (v === 'pad'){ const g = G(.022*e.g, .12, Math.max(.05, dur - .15), .35), b = lp(1100); b.connect(g); const end = when + dur + .4; osc('sawtooth', f, b, end, -8); osc('sawtooth', f, b, end, 8); return; }
-  if (v === 'bell'){ const g = G(.04*e.g, .004, .01, .9); osc('sine', f, g, when + 1); const g2 = ctx.createGain(); g2.gain.value = .3; g2.connect(g); osc('sine', f*3, g2, when + 1); return; }
-  if (v === 'mar'){ const g = G(.1*e.g, .004, .02, .32); osc('sine', f, g, when + .4); const g2 = ctx.createGain(); g2.gain.value = .22; g2.connect(g); osc('sine', f*4, g2, when + .12); return; }
+  if (v === 'pluck'){ const g = G(.06*e.g, .005, .02, .16, .22, side*.8, true), b = lp(2600, 2); b.frequency.setValueAtTime(3200, when); b.frequency.exponentialRampToValueAtTime(900, when + .15); b.connect(g); osc('sawtooth', f, b, when + .24); osc('square', f, b, when + .24, 7); return; }
+  if (v === 'lead'){ const g = G(.05*e.g, .012, Math.max(.03, dur*.85 - .02), .09, .34), b = lp(2400, 1.2); b.connect(g); const end = when + dur + .12, o1 = osc('square', f, b, end), o2 = osc('sawtooth', f, b, end, 9);
+    // a held note gets a little vibrato, the way a singer would
+    if (dur > .45){ const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 5.5; lg.gain.setValueAtTime(0, when + .12); lg.gain.linearRampToValueAtTime(f*.011, when + .4); l.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency); l.start(when); l.stop(end); }
+    return; }
+  if (v === 'pad'){ const g = G(.022*e.g, .12, Math.max(.05, dur - .15), .35, .25, 0, true), b = lp(1100); b.connect(g); const end = when + dur + .4; osc('sawtooth', f, b, end, -8); osc('sawtooth', f, b, end, 8); return; }
+  if (v === 'bell'){ const g = G(.04*e.g, .004, .01, .9, .4, -side); osc('sine', f, g, when + 1); const g2 = ctx.createGain(); g2.gain.value = .3; g2.connect(g); osc('sine', f*3, g2, when + 1); return; }
+  if (v === 'mar'){ const g = G(.1*e.g, .004, .02, .32, .3); osc('sine', f, g, when + .4); const g2 = ctx.createGain(); g2.gain.value = .22; g2.connect(g); osc('sine', f*4, g2, when + .12); return; }
   const bass = v === 'bass', end = when + dur*(bass ? 1 : 1.5) + .35, peak = (bass ? .13 : .07)*e.g, g = ctx.createGain();
-  g.gain.setValueAtTime(.0001, when); g.gain.exponentialRampToValueAtTime(peak, when+.012); g.gain.exponentialRampToValueAtTime(peak*.45, when+Math.min(dur,.35)); g.gain.exponentialRampToValueAtTime(.0001, end); g.connect(out);
+  g.gain.setValueAtTime(.0001, when); g.gain.exponentialRampToValueAtTime(peak, when+.012); g.gain.exponentialRampToValueAtTime(peak*.45, when+Math.min(dur,.35)); g.gain.exponentialRampToValueAtTime(.0001, end); to(g, bass ? 0 : .25);
   for (const [type, mult, vol] of (bass ? [['triangle',1,1],['sine',1,.6]] : [['sine',1,1],['triangle',2,.22],['sine',4,.06]])){ const og = ctx.createGain(); og.gain.value = vol; og.connect(g); osc(type, f*mult, og, end+.02); }   // a soft electric-piano tone, or a round bass
 }
+// Every track gets an extra layer made from its own tune: the melody doubled an octave up on bells, and busier hats on the straight-time tracks.
+const KEYS = {pop:[72,4], sparkle:[69,3], cozy:[72,4], chill:[65,4], dance:[65,4]};
+function trackOf(k){ if (MU.cache[k]) return MU.cache[k]; const tr = TRACKS[k](), tune = k === 'chill' ? 'ep' : k === 'cozy' ? 'mar' : 'lead', add = [];
+  for (const e of tr.ev){ if (e.v === tune && e.g >= .7) add.push({t:e.t, n:e.n + 12, d:e.d, v:'bell', g:.3, x:1}); if (e.v === 'kick' && k !== 'cozy' && k !== 'chill'){ add.push({t:e.t + .25, n:0, d:.1, v:'hat', g:.45, x:1}); add.push({t:e.t + .75, n:0, d:.1, v:'hat', g:.45, x:1}); } }
+  tr.ev = sortEv(tr.ev.concat(add)); return MU.cache[k] = tr; }
+const onStreak = () => !$('math').hidden && S.math.streak >= 3;
+// Which notes sit out this time round. Rounds go: plain, with the extra layer, a breakdown (the beat drops out for the first half, then comes back), with the extra layer.
+function sitsOut(e, loop, tr){ const sec = loop % 4, firstHalf = e.t < tr.len/2;
+  if (e.x) return !(sec % 2 === 1 || onStreak());
+  if (sec === 2 && firstHalf && (e.v === 'kick' || e.v === 'sbass' || e.v === 'bass' || e.v === 'clap' || e.v === 'snare' || e.v === 'rim')) return true;
+  return false; }
+// a right answer rings out in the key of whatever is playing
+function rightSound(){ if (!S.sound) return; if (station() === 'off' || !MU.out || !MU.tr || !KEYS[MU.name]){ beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1); return; }
+  const [root, third] = KEYS[MU.name]; [0, third, 7, 12].forEach((iv, k) => voice({t:k, n:root + iv, d:.3, v:'bell', g:1.1}, AC.currentTime + .02 + k*.07, .5)); }
 const station = () => S.music === false ? 'off' : S.station || 'auto';
 // Auto: a cozy tune at home and in the park, pop in the valley, a sparkly beat in the city, a dance tune on the islands
 const wantTrack = () => { const s = station(); return s !== 'auto' ? s : scene !== 'quest' ? 'cozy' : land !== 'home' ? 'dance' : qr.zone === 'city' ? 'sparkle' : 'pop'; };
@@ -4146,22 +4169,28 @@ function musicTick(){
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
     if (!MU.out){ MU.out = AC.createGain(); MU.out.gain.value = .5; const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; MU.out.connect(comp); comp.connect(AC.destination);
+      MU.pump = AC.createGain(); MU.pump.connect(MU.out); MU.wet = AC.createGain(); MU.wet.gain.value = .8;
+      // a small room: reverb from a burst of fading noise, and a soft echo
+      const sr = AC.sampleRate, len = Math.floor(sr*1.5), ir = AC.createBuffer(2, len, sr); for (let c = 0; c < 2; c++){ const ch = ir.getChannelData(c); for (let k = 0; k < len; k++) ch[k] = (Math.random()*2 - 1)*Math.pow(1 - k/len, 2.6); }
+      const rv = AC.createConvolver(), rg = AC.createGain(), dl = AC.createDelay(1), fb = AC.createGain(), dg = AC.createGain(); rv.buffer = ir; rg.gain.value = .55; dl.delayTime.value = .29; fb.gain.value = .26; dg.gain.value = .3;
+      MU.wet.connect(rv); rv.connect(rg); rg.connect(MU.out); MU.wet.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dg); dg.connect(MU.out);
       MU.noise = AC.createBuffer(1, 8820, 22050); const d = MU.noise.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = Math.random()*2-1; }
     // the music steps back while a question is on screen, and right back while something is read aloud
     const want = wantTrack();
-    if (MU.name !== want){ MU.name = want; MU.tr = MU.cache[want] || (MU.cache[want] = TRACKS[want]()); MU.i = 0; MU.loop = 0; MU.t0 = AC.currentTime + .4; }
+    if (MU.name !== want){ MU.name = want; MU.tr = trackOf(want); MU.i = 0; MU.loop = 0; MU.t0 = AC.currentTime + .4; }
     MU.out.gain.setTargetAtTime(.5*(MU.tr.vol || 1)*(MU.duck ? .15 : !$('math').hidden ? .5 : 1), AC.currentTime, .15);
     const spb = 60/MU.tr.bpm, horizon = AC.currentTime + .7;
     for (let guard = 0; guard < 300; guard++){ const e = MU.tr.ev[MU.i], when = MU.t0 + (MU.loop*MU.tr.len + e.t)*spb;
       if (when > horizon) break;
       if (when < AC.currentTime){ MU.t0 += AC.currentTime - when + .08; continue; }      // fell behind (tab was asleep): slide forward instead of bunching notes
-      voice(e, when, spb); if (++MU.i >= MU.tr.ev.length){ MU.i = 0; MU.loop++; } }
-  } catch(e){}
+      if (!sitsOut(e, MU.loop, MU.tr)) voice(e, when, spb); MU.played = (MU.played || 0) + 1; if (++MU.i >= MU.tr.ev.length){ MU.i = 0; MU.loop++; } }
+  } catch(e){ MU.err = String(e && e.message || e); }
 }
+window.pupMusicLive = () => ({station:station(), track:MU.name, notesScheduled:MU.played || 0, round:MU.loop, effects:!!MU.wet, error:MU.err || null});
 setInterval(musicTick, 180);
 // for checking a build: renders each track for a few bars and reports how loud it gets and whether its tune fits its bars
 window.pupMusic = async () => { const out = {};
-  for (const k of Object.keys(TRACKS)){ const tr = TRACKS[k](), spb = 60/tr.bpm, secs = Math.min(16, tr.len*spb), ctx = new OfflineAudioContext(1, Math.ceil(secs*22050), 22050), g = ctx.createGain(); g.gain.value = .5; g.connect(ctx.destination);
+  for (const k of Object.keys(TRACKS)){ const tr = trackOf(k), spb = 60/tr.bpm, secs = Math.min(16, tr.len*spb), ctx = new OfflineAudioContext(1, Math.ceil(secs*22050), 22050), g = ctx.createGain(); g.gain.value = .5; g.connect(ctx.destination);
     if (!MU.noise){ MU.noise = ctx.createBuffer(1, 8820, 22050); const d = MU.noise.getChannelData(0); for (let q = 0; q < d.length; q++) d[q] = Math.random()*2-1; }
     for (const e of tr.ev) if (e.t*spb < secs - .5) voice(e, e.t*spb + .05, spb, ctx, g);
     const buf = (await ctx.startRendering()).getChannelData(0); let pk = 0, sq = 0; for (let q = 0; q < buf.length; q++){ const a = Math.abs(buf[q]); if (a > pk) pk = a; sq += a*a; }

@@ -15,13 +15,14 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 9
-        versionName '1.7'
+        versionCode 10
+        versionName '1.8'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    androidResources { noCompress += ['onnx', 'wasm'] }   // the voice model and its runtime are read straight from the package
     sourceSets { main { assets.srcDirs = [gameAssets, 'src/main/assets'] } }   // the game page, plus the bundled fonts
     signingConfigs {
         release {
@@ -59,4 +60,9 @@ tasks.register('copyGrader', Copy) {
     from('../../pupgrader.js')
     into(gameAssets)
 }
-preBuild.dependsOn 'copyGame', 'copyGrader'
+// the reading voice: a neural voice and the runtime it needs, loaded by the page from https://populationpup.local/tts/
+tasks.register('copyVoice', Copy) {
+    from('../../docs/tts')
+    into(gameAssets.map { it.dir('tts') })
+}
+preBuild.dependsOn 'copyGame', 'copyGrader', 'copyVoice'

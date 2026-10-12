@@ -33,3 +33,11 @@ The build copies `../index.html` into the app, so the app always matches the web
 ## Writing grader
 
 Sentences a child types are marked on the device by a small sentence-meaning model, [potion-base-4M](https://huggingface.co/minishlab/potion-base-4M) by Minish Lab (Model2Vec, MIT license), stored in `pupgrader.js` as 8-bit numbers. A grown-up can optionally add an Anthropic API key behind the grown-up code; typed sentences are then marked by Claude instead.
+
+## Reading voice
+
+Questions, lessons and listening passages are read aloud by a neural voice that runs on the device (Piper `en_US-hfc_female-medium`, CC BY-NC-SA 4.0, non-commercial use with credit; see `docs/tts/README.md`). The engine is shared with [Last Bell](https://github.com/wkbrowne/last-bell). If a device is too slow for it, the device's own voice is used. The voice and speed are set on the pause screen.
+
+## Standards and self-checks
+
+`docs/grade4-standards.md` maps every Grade 4 standard to a skill and describes how practice adapts. In the browser console, `pupCheck()` generates hundreds of questions per skill and lists any with a missing, duplicate or wrong answer, and `pupSim()` simulates a weak student to show how questions are shared out.

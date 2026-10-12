@@ -4,15 +4,21 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /** Full-screen shell around the game page bundled in assets. Saves live in the WebView's local storage. */
 public class MainActivity extends Activity {
@@ -41,7 +47,22 @@ public class MainActivity extends Activity {
         web.setOnLongClickListener(new View.OnLongClickListener() {   // no text-selection menu on long press
             @Override public boolean onLongClick(View v) { return true; }
         });
-        web.setWebViewClient(new WebViewClient());
+        s.setAllowFileAccess(true);
+        // The reading voice's files are served from the app's own assets under a made-up address,
+        // because a page opened from a file cannot fetch other files directly.
+        web.setWebViewClient(new WebViewClient() {
+            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest rq) {
+                android.net.Uri u = rq.getUrl();
+                if (u == null || !"populationpup.local".equals(u.getHost())) return null;
+                String path = u.getPath() == null ? "" : u.getPath().replaceFirst("^/+", "");
+                Map<String, String> h = new HashMap<String, String>();
+                h.put("Access-Control-Allow-Origin", "*");
+                if (path.contains("..") || !path.startsWith("tts/")) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, new ByteArrayInputStream(new byte[0]));
+                String mime = path.endsWith(".js") ? "text/javascript" : path.endsWith(".wasm") ? "application/wasm" : path.endsWith(".json") ? "application/json" : "application/octet-stream";
+                try { return new WebResourceResponse(mime, null, 200, "OK", h, getAssets().open(path)); }
+                catch (Exception e) { return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", h, new ByteArrayInputStream(new byte[0])); }
+            }
+        });
         web.addJavascriptInterface(new Speech(), "PupSpeech");   // listening questions are read aloud by the tablet's own voice
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
             @Override public void onInit(int status) {
@@ -78,6 +99,27 @@ public class MainActivity extends Activity {
             if (tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "pup") != TextToSpeech.SUCCESS) speechDone(false);
         }
         @JavascriptInterface public void stop() { if (ttsReady) tts.stop(); }
+        /** English voices that work offline, as JSON: name, language tag and the engine's own quality score. */
+        @JavascriptInterface public String voices() {
+            StringBuilder sb = new StringBuilder("[");
+            try {
+                if (ttsReady && tts.getVoices() != null) for (Voice v : tts.getVoices()) {
+                    if (v == null || v.getLocale() == null || !"en".equals(v.getLocale().getLanguage())) continue;
+                    if (v.isNetworkConnectionRequired()) continue;
+                    if (v.getFeatures() != null && v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+                    if (sb.length() > 1) sb.append(',');
+                    sb.append("{\"name\":\"").append(v.getName().replace("\"", "")).append("\",\"lang\":\"").append(v.getLocale().toLanguageTag()).append("\",\"q\":").append(v.getQuality()).append('}');
+                }
+            } catch (Exception e) { }
+            return sb.append(']').toString();
+        }
+        @JavascriptInterface public void setup(String name, float rate, float pitch) {
+            if (!ttsReady) return;
+            try {
+                tts.setSpeechRate(rate); tts.setPitch(pitch);
+                if (name != null && name.length() > 0 && tts.getVoices() != null) for (Voice v : tts.getVoices()) if (v != null && name.equals(v.getName())) { tts.setVoice(v); break; }
+            } catch (Exception e) { }
+        }
     }
 
     private void hideSystemBars() {

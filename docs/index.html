@@ -89,6 +89,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 .album button small{font-weight:800;opacity:.7}
 #hatchc{width:240px;height:200px;align-self:center;max-width:100%}
 #mhow{background:var(--sun);border:2px solid var(--ink);border-radius:999px;text-decoration:none;padding:2px 12px;min-height:32px;white-space:nowrap}
+.picbox{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px;display:flex;justify-content:center;flex:none}
+.picbox svg{max-height:34vh}
+.readbtn{background:#fff;border:2px solid var(--ink);border-radius:999px;text-decoration:none;padding:2px 12px;min-height:32px;white-space:nowrap}
 #mhow.pulse{animation:wiggle .5s 5}
 .lesson-ex{white-space:pre-line;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px 12px;font-size:15px}
 #ml-how{font-size:15px}
@@ -109,6 +112,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--sky);outline-of
 .answers button.wide{grid-column:1/-1;font-size:17px;font-family:var(--body);font-weight:800}
 .answers.text button{font-size:17px;font-family:var(--body);font-weight:800;padding:9px 8px}
 .q.long{font-size:22px;line-height:1.25;text-wrap:balance}
+.pinrow select{max-width:none}
 select{font:inherit;font-weight:800;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:3px 8px;max-width:50%}
 .grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .grades button.on{background:var(--sun)}
@@ -262,10 +266,22 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
     </div>
   </div>
 
+  <div class="modal" id="daym" hidden>
+    <div class="card">
+      <h2 id="day-h"></h2>
+      <p id="day-p" style="white-space:pre-line;font-size:15px"></p>
+      <label class="pinrow" id="day-pinrow" hidden><span>Grown-up code</span><input id="day-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>
+      <div class="fb" id="day-fb"></div>
+      <button class="go" id="day-a" type="button"></button>
+      <button class="link" id="day-b" type="button"></button>
+    </div>
+  </div>
   <div class="modal" id="pausem" hidden>
     <div class="card">
       <h2 id="pause-h">Game paused</h2>
       <p id="pause-p">Your game is saved. It is safe to close it now.</p>
+      <div class="pinrow"><span>Reading voice</span><button class="link readbtn" id="opt-voice" type="button"></button></div>
+      <div class="pinrow"><span>Reading speed</span><button class="link readbtn" id="opt-rate" type="button"></button><button class="link readbtn" id="opt-test" type="button">Hear it</button></div>
       <button class="go" id="resume" type="button">Keep playing</button>
       <button class="link" id="totitle" type="button">Back to the title screen</button>
     </div>
@@ -297,6 +313,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <div class="grades" id="grades"></div>
         <div class="grades subs" id="gr-subs"></div>
         <label class="pinrow"><span id="gr-l"></span><input id="gr-pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 digits"></label>
+        <div class="pinrow" id="gr-dayrow"><span>Daily goal</span><select id="gr-goal"><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select><span>Play-time limit</span><select id="gr-limit"><option value="0">none</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></div>
         <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:16px;letter-spacing:0"></label>
         <p id="gr-keyp" style="font-size:12px;margin:0;text-align:center"></p>
         <div class="fb" id="gr-fb"></div>
@@ -304,9 +321,10 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       </div>
       <div class="slate" id="slate" hidden></div>
       <div class="stack" id="mplay">
-        <div class="row" style="justify-content:center"><span class="sub skill" id="mskill"></span><button class="link" id="mhow" type="button">How to</button></div>
+        <div class="row" style="justify-content:center"><span class="sub skill" id="mskill"></span><button class="link" id="mhow" type="button">How to</button><button class="link readbtn" id="mread" type="button" hidden>Read to me</button></div>
         <p class="lesson-ex" id="mpass" hidden></p>
         <div class="listen" id="mlisten" hidden><button class="go small" id="lplay" type="button">Listen</button><span class="sub" id="lmsg"></span></div>
+        <div class="picbox" id="mpic" hidden></div>
         <div class="q" id="q"></div>
         <div class="answers" id="answers"></div>
         <div class="fb" id="fb"></div>
@@ -316,7 +334,9 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <h2 id="fx-h">Granny Dot: let's work it out</h2>
         <p class="lesson-ex" id="fx-steps"></p>
         <p id="fx-tip" style="white-space:pre-line;font-size:14px"></p>
+        <button class="link readbtn" id="fx-read" type="button" hidden style="align-self:center">Read to me</button>
         <p class="lesson-ex" id="fx-pass" hidden></p>
+        <div class="picbox" id="fx-pic" hidden></div>
         <b id="fx-q" style="font-family:var(--display);font-weight:400;font-size:22px;text-align:center;text-wrap:balance"></b>
         <div class="answers" id="fx-answers"></div>
         <div class="fb" id="fx-fb"></div>
@@ -325,7 +345,9 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <h2 id="ml-h"></h2>
         <p id="ml-how"></p>
         <p class="lesson-ex" id="ml-ex"></p>
+        <div class="picbox" id="ml-pic" hidden></div>
         <div class="row"><b id="ml-try"></b><button class="link" id="ml-show" type="button">Show the answer</button></div>
+        <button class="link readbtn" id="ml-read" type="button" hidden style="align-self:center">Read to me</button>
         <button class="go small" id="ml-back" type="button">Got it</button>
       </div>
       <div class="stack" id="msum" hidden><h2 id="msum-h" style="text-align:center"></h2><div class="list" id="msum-l"></div><button class="go small" id="mnew" type="button">New slate of questions</button></div>
@@ -405,7 +427,7 @@ const TRICKS = [
 const STAGES = ['Puppy','Young dog','Grown dog'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, ela3:1, g4:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, ela3:1, g4:1, sk3:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
 // the grade and the grown-up code live apart from the save, so erasing the game does not unlock the grade
 const LOCK = 'pocketpup.lock'; let GL = {};
@@ -426,7 +448,7 @@ try { if (!G.list.length){ const raw = localStorage.getItem(KEY); if (raw){     
 function load(extra){
   try { const raw = G.cur && localStorage.getItem(gkey(G.cur)); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
   if (extra && extra.S) S = Object.assign(fresh(), extra.S);
-  const oldEla = S.math && !S.math.ela2, old3 = S.math && !S.math.ela3, old4 = S.math && !S.math.g4;
+  const oldEla = S.math && !S.math.ela2, old3 = S.math && !S.math.ela3, old4 = S.math && !S.math.g4, oldSk = S.math && !S.math.sk3;
   S.math = Object.assign(fresh().math, S.math); S.mode = 'both'; S.trophies = S.trophies || []; S.breed = S.breed || 'lab'; S.sex = S.sex || 'girl';
   if (oldEla){      // listening and essay skills joined the English lists for grades 3 and up: move saved mastery to the new places
     const mp = [0,1,3,4,5,6,8,9,10,11], sk = S.math.sk, E = /^E[3-6]/;
@@ -435,6 +457,10 @@ function load(extra){
   { const sk = S.math.sk, clear = E => { S.math.redo = (S.math.redo || []).filter(r => !E.test(r.g)); if (S.math.fix && E.test(S.math.fix.gid)) S.math.fix = null; S.math.slate = null; };
     if (old3){ for (const g of ['E3','E4','E5','E6']) for (let i = 11; i >= 3; i--) if (sk[g+':'+i]){ sk[g+':'+(i+1)] = sk[g+':'+i]; delete sk[g+':'+i]; } clear(/^E[3-6]/); S.math.ela3 = 1; }      // a fill-the-gap reading skill joined English at place 3
     if (old4){ const mp = [0,2,3,5,6,7,9,11,12,13,15,16,17,20], was = mp.map((v,i) => sk['4:'+i]); for (let i = 0; i < 25; i++) delete sk['4:'+i]; was.forEach((v,i) => { if (v) sk['4:'+mp[i]] = v; }); clear(/^4$/); S.math.g4 = 1; } }      // eleven skills joined Grade 4 math
+  if (oldSk){ const sk = S.math.sk, out = {};      // records were kept by position and as a score from 0 to 1; now by skill name and in boxes
+    for (const k of Object.keys(sk)){ const mm = /^(E?\w+):(\d+)$/.exec(k), o = sk[k] || {}; if (!mm){ out[k] = o; continue; } const g = allGrade(mm[1]); if (!g || !g.skills[+mm[2]]) continue;
+      const v = o.m || 0, n = o.n || 0, M = v >= .8 && n >= 4; out[mm[1] + '|' + g.skills[+mm[2]][1]] = {n, r:Math.round(n*Math.min(1, v + .1)), cs:M ? 4 : v >= .6 ? 2 : 0, miss:0, box:M ? 3 : v >= .6 ? 2 : v >= .3 ? 1 : n ? 0 : 1, M}; }
+    S.math.sk = out; S.math.redo = []; S.math.slate = null; S.math.deck = {}; if (S.math.fix) S.math.fix = null; S.math.sk3 = 1; }
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
   S.math.subject = lockSub();
   // time away: needs drift down gently, never to zero
@@ -1294,11 +1320,11 @@ const GRADES = [
       const L = ri(2,5), ml = ri(2,9)*50; return wp('A jug holds ' + L + ' liters of water. ' + A + ' pours out ' + ml + ' milliliters. How many milliliters are left?', L*1000-ml, [L*100-ml > 0 ? L*100-ml : L*1000, L*1000+ml, L*1000], 'Change liters to milliliters first: ' + L + X + '1,000 = ' + fmt(L*1000) + '. Then ' + fmt(L*1000) + M + ml + ' = ' + fmt(L*1000-ml) + '.'); }],
     ['4.MD.A.3', 'Area and perimeter: find the missing side', () => { const a = ri(2,9), b = ri(2,12); return ask('A rectangle has area ' + a*b + ' and width ' + a + '. What is its length?', b, [a*b-a]); }],
     ['4.MD.B.4', 'Line plots', () => { const vals = [[1,4],[1,2],[3,4],[1,1]], cnt = vals.map(() => ri(1,5)), lab = v => v[1] === 1 ? '1' : F(v[0],v[1]), tot = cnt.reduce((a,b) => a+b, 0), th = pickOf(['beetles','leaves','seeds','worms']);
-      const plot = '**Lengths of ' + tot + ' ' + th + ', in inches**\n' + vals.map((v,i) => lab(v) + '   ' + 'X '.repeat(cnt[i])).join('\n') + '\nEach X stands for one of the ' + th + '.', t = ri(0,3);
-      if (t === 0){ const i = ri(0,3); const p = wp('How many of the ' + th + ' are ' + lab(vals[i]) + ' inch long?', cnt[i], [tot, cnt[(i+1) % 4]], 'Count the X marks in the row for ' + lab(vals[i]) + '.'); p.pass = plot; return p; }
-      if (t === 1){ const p = wp('How many of the ' + th + ' are 1/2 inch long or longer?', cnt[1]+cnt[2]+cnt[3], [cnt[1], tot, cnt[2]+cnt[3]], 'Add the rows for 1/2, 3/4 and 1: ' + cnt[1] + PL + cnt[2] + PL + cnt[3] + '.'); p.pass = plot; return p; }
-      if (t === 2) return pf('What is the difference in length between the longest and the shortest of the ' + th + '?', '3/4 inch', ['1/4 inch', '1/2 inch', '1 1/4 inches'], 'The longest is 1 inch, which is 4/4. The shortest is 1/4. 4/4 − 1/4 = 3/4.', plot);
-      const p = wp('How many more of the ' + th + ' are in the longest row than in the shortest row of X marks?', Math.max(...cnt)-Math.min(...cnt), [Math.max(...cnt), tot], 'The most X marks in a row is ' + Math.max(...cnt) + ' and the fewest is ' + Math.min(...cnt) + '. Subtract.'); p.pass = plot; return p; }],
+      const plot = '**Lengths of ' + tot + ' ' + th + ', in inches.** Each \u00d7 on the line plot stands for one of the ' + th + '.', pic = {t:'lineplot', labels:vals.map(lab), cnt}, t = ri(0,3);
+      if (t === 0){ const i = ri(0,3); const p = wp('How many of the ' + th + ' are ' + lab(vals[i]) + ' inch long?', cnt[i], [tot, cnt[(i+1) % 4]], 'Count the \u00d7 marks above ' + lab(vals[i]) + '.'); p.pass = plot; p.pic = pic; return p; }
+      if (t === 1){ const p = wp('How many of the ' + th + ' are 1/2 inch long or longer?', cnt[1]+cnt[2]+cnt[3], [cnt[1], tot, cnt[2]+cnt[3]], 'Add the marks above 1/2, 3/4 and 1: ' + cnt[1] + PL + cnt[2] + PL + cnt[3] + '.'); p.pass = plot; p.pic = pic; return p; }
+      if (t === 2) return pq(pf('What is the difference in length between the longest and the shortest of the ' + th + '?', '3/4 inch', ['1/4 inch', '1/2 inch', '1 1/4 inches'], 'The longest is 1 inch, which is 4/4. The shortest is 1/4. 4/4 − 1/4 = 3/4.', plot), pic);
+      const p = wp('The tallest stack of marks has how many more than the shortest stack?', Math.max(...cnt)-Math.min(...cnt), [Math.max(...cnt), tot], 'The tallest stack has ' + Math.max(...cnt) + ' and the shortest has ' + Math.min(...cnt) + '. Subtract.'); p.pass = plot; p.pic = pic; return p; }],
     ['4.MD.C.7', 'Angles', () => { const t = ri(0,3);
       if (t === 0){ const [fr2, deg] = pickOf([['1/4',90],['1/2',180],['3/4',270]]); return wp('An angle turns through ' + fr2 + ' of a full circle. How many degrees is the angle?', deg, [360, deg/2, 100], 'A full circle is 360 degrees. ' + fr2 + ' of 360 is ' + deg + '.'); }
       if (t === 1){ const whole = pickOf([90,120,135,150,180]), a = ri(2, whole/5-2)*5; return wp('A ' + whole + '° angle is split into two smaller angles. One of them measures ' + a + '°. How many degrees is the other?', whole-a, [whole+a, 180-a === whole-a ? 90-a : 180-a], 'The two parts add up to the whole angle: ' + whole + M + a + ' = ' + (whole-a) + '.'); }
@@ -1741,19 +1767,45 @@ const curSub = () => { const m = S.math; return m.subject === 'ela' ? 'ela' : m.
 const curGrade = () => S.math.grade ? allGrade((curSub() === 'ela' ? 'E' : '') + S.math.grade) : null;
 const gradeIdx = g => GRADES.findIndex(x => x.id === g.id.replace(/^E/, ''));
 const probGrade = () => (prob && allGrade(prob.gid)) || curGrade();
-const skState = id => S.math.sk[id] || (S.math.sk[id] = {m:0, n:0, last:0});
-const isMastered = st => st.m >= .8 && st.n >= 4;
-// skills open up in order: three to begin, one more each time an open skill is going well
-function openCount(g){ let k = 3; for (let i = 0; i < g.skills.length && i < k; i++) if (skState(g.id+':'+i).m >= .6) k++; return Math.min(k, g.skills.length); }
+// A skill's record is kept under its grade and name, so adding skills later never shifts saved progress.
+// n answered, r right, cs right in a row, miss recent misses, box 0 (shaky) to 4 (solid), M mastered.
+const skKey = (gid, i) => { const g = allGrade(gid); return gid + '|' + (g && g.skills[i] ? g.skills[i][1] : i); };
+const skState = id => { const c = id.lastIndexOf(':'), k = skKey(id.slice(0,c), +id.slice(c+1)); return S.math.sk[k] || (S.math.sk[k] = {n:0, r:0, cs:0, miss:0}); };
+const boxOf = st => st.box == null ? (st.M ? 3 : 1) : st.box;
+const isMastered = st => !!st.M;
+// ADAPTIVE PRACTICE
+//  - Every skill in the grade is in play. A right answer moves a skill up a box; a miss sends it to box 0.
+//  - A missed skill comes back three questions later ("One more try"). At most one question in three is a retry, and a skill has one retry waiting at a time.
+//  - Each round deals every skill that is due: box 0 and 1 every round (box 0 twice), box 2 every second round, box 3 every third, box 4 every fourth.
+//  - Mastery is four right in a row with at least five answered, or passing Granny Dot's proof questions. Two later misses take it away again.
+let pickTag = '';
 function pickSkill(g){
-  const m = S.math, k = openCount(g);
-  m.redo = (m.redo || []).slice(-24);
-  const due = m.redo.findIndex(r => r.g === g.id && r.at <= m.n); if (due >= 0) return m.redo.splice(due,1)[0].i;     // a missed skill comes back two questions later
-  const w = []; let tot = 0;
-  for (let i = 0; i < k; i++){ if (k > 1 && i === m.lastI) continue; const st = skState(g.id+':'+i);
-    const v = .15 + 2*(1-st.m)*(1-st.m) + (st.n ? 0 : .6) + st.m*Math.min(.5, (m.n-st.last)*.02); w.push([i,v]); tot += v; }   // weak and new skills most, mastered ones as spaced review
-  let r = Math.random()*tot; for (const [i,v] of w){ r -= v; if (r <= 0) return i; } return w[0][0];
+  const m = S.math, name = i => g.skills[i][1], idx = nm => g.skills.findIndex(x => x[1] === nm), all = g.skills.map((x,i) => i);
+  m.retry = (m.retry || []).filter(r => r && r.g); m.deck = m.deck || {}; m.cyc = m.cyc || {}; pickTag = '';
+  const ri = (m.gap || 0) >= 2 ? m.retry.findIndex(r => r.g === g.id && r.at <= m.n && idx(r.s) >= 0) : -1;
+  if (ri >= 0){ m.gap = 0; pickTag = 'One more try'; return idx(m.retry.splice(ri,1)[0].s); }
+  m.gap = (m.gap || 0) + 1;
+  let d = (m.deck[g.id] || []).filter(nm => idx(nm) >= 0);
+  if (!d.length){
+    const c = m.cyc[g.id] = (m.cyc[g.id] || 0) + 1;
+    for (const i of all){ const st = skState(g.id+':'+i), b = boxOf(st); if (st.n > 0 && c % [1,1,2,3,4][b]) continue; d.push(name(i)); if (st.n > 0 && b === 0) d.push(name(i)); }
+    if (!d.length) d = all.map(name);
+    d = shuffle(d); const si = d.findIndex(nm => boxOf(skState(g.id+':'+idx(nm))) >= 3); if (si > 0) d.unshift(d.splice(si,1)[0]);      // open each round with something she is good at
+  }
+  const i = idx(d.shift()); m.deck[g.id] = d; const st = skState(g.id+':'+i); if (st.M || boxOf(st) >= 3) pickTag = 'Review';
+  return i;
 }
+// one answer goes into the record
+function record(g, i, ok){
+  const m = S.math, st = skState(g.id+':'+i), nm = g.skills[i][1]; st.n++; m.n++; dayTick(g, i, ok);
+  if (ok){ st.r = (st.r || 0) + 1; st.miss = Math.max(0, (st.miss || 0) - 1); st.cs = (st.cs || 0) + 1; st.box = Math.min(4, boxOf(st) + 1); if (!st.M && st.cs >= 4 && st.n >= 5){ st.M = true; st.slip = 0; } return; }
+  st.miss = (st.miss || 0) + 1; st.cs = 0; st.box = 0; m.retry = m.retry || [];
+  if (!m.retry.some(r => r.g === g.id && r.s === nm) && m.retry.length < 6) m.retry.push({g:g.id, s:nm, at:m.n + 3});
+  if (st.M){ st.slip = (st.slip || 0) + 1; if (st.slip >= 2){ st.M = false; st.slip = 0; } }
+}
+// where she stands in a grade: what is shaky and what is solid
+function standing(g){ const row = (s,i) => ({name:s[1], st:skState(g.id+':'+i)}), all = g.skills.map(row).filter(x => x.st.n > 0);
+  return {weak:all.filter(x => !x.st.M && (boxOf(x.st) === 0 || x.st.miss >= 2)), strong:all.filter(x => x.st.M || boxOf(x.st) >= 3)}; }
 function choices(p){
   if (p.multi) return shuffle(p.ans.concat(p.opts));
   if (p.opts){ if (p.keep) return p.opts;
@@ -1793,7 +1845,7 @@ function renderGrown(){
     : m === 'setup' ? 'Pick the grade your child is in at school and the subjects to practice, then choose a 4-digit code that only you know. After that the grade is locked. It moves up by itself when every math skill in the grade is mastered. Any other change needs your code.'
     : 'Unlocked. Pick the grade and the subjects. Type a new code only if you want to change the code.';
   $('gr-l').textContent = m === 'unlock' ? 'Grown-up code' : m === 'setup' ? 'Choose a 4-digit code' : 'New code (optional)';
-  $('gr-keyrow').hidden = $('gr-keyp').hidden = m === 'unlock'; $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
+  $('gr-keyrow').hidden = $('gr-keyp').hidden = $('gr-dayrow').hidden = m === 'unlock'; $('gr-goal').value = String(dayGoal()); $('gr-limit').value = String(dayLimit()); $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
   $('gr-keyp').textContent = 'Now and then your child types a sentence of their own. The tablet marks it by itself. With an Anthropic API key here, the sentence and its question are sent to Claude over the internet for better marking and feedback. Nothing else is sent. Leave it empty to keep everything on the tablet.';
   $('gr-pin').type = m === 'unlock' ? 'password' : 'tel'; $('gr-ok').textContent = m === 'unlock' ? 'Unlock' : 'Lock the grade'; $('gr-cancel').hidden = !S.math.grade;
 }
@@ -1806,25 +1858,26 @@ $('gr-ok').onclick = () => {
   }
   if (!grown.pick){ fb.textContent = 'Pick a grade first.'; return; }
   if (grown.mode === 'setup' ? !/^\d{4}$/.test(v) : v && !/^\d{4}$/.test(v)){ fb.textContent = 'The code must be 4 digits.'; return; }
-  if (v) GL.pin = v; { const k = $('gr-key').value.trim(); if (/^none$/i.test(k)) delete GL.key; else if (k) GL.key = k; } const pick = grown.pick; $('gr-pin').blur();
+  if (v) GL.pin = v; (GL.goals = GL.goals || {})[G.cur] = +$('gr-goal').value; (GL.limits = GL.limits || {})[G.cur] = +$('gr-limit').value; { const k = $('gr-key').value.trim(); if (/^none$/i.test(k)) delete GL.key; else if (k) GL.key = k; } const pick = grown.pick; $('gr-pin').blur();
   if (grown.sub !== S.math.subject){ (GL.subjects = GL.subjects || {})[G.cur] = grown.sub; S.math.subject = grown.sub; S.math.mixNext = 'math'; S.math.slate = null; }
   if (pick === S.math.grade){ saveLock(); renderMath(); } else setGrade(pick);
 };
 $('gr-cancel').onclick = () => renderMath();
+const earnText = () => { const D = dayState(); return 'Today ' + Math.min(D.n, 999) + '/' + dayGoal() + (S.streak && S.streak.n > 1 ? ' \u00b7 ' + S.streak.n + '-day streak' : '') + ' \u00b7 Earned ' + session + ' bones'; };
 function renderProgress(){
   const g = probGrade(), done = g.skills.filter((s,i) => isMastered(skState(g.id+':'+i))).length, nx = g.ela ? null : GRADES[GRADES.indexOf(g)+1];
   $('mprog').textContent = 'Egg ' + S.egg.w + '/' + EGG_N + ' \u00b7 ' + done + ' of ' + g.skills.length + ' skills mastered'; $('mbar').firstElementChild.style.width = done/g.skills.length*100 + '%';
-  $('mearn').textContent = 'Earned ' + session + ' bones';
+  $('mearn').textContent = earnText();
   const all = done === g.skills.length;
   if (all && !S.math.done[g.id]){ S.math.done[g.id] = true; const prize = 40 + 20*gradeIdx(g); S.bones += prize; session += prize; award('grade' + g.id, g.name + ' mastered', 2, true); chime(); toast(g.name + ' mastered! +' + prize + ' bones and a gold trophy', 4500); }
   $('mup').hidden = !(all && nx); if (all && nx){ $('mup').textContent = g.name + ' mastered! Move up to ' + nx.name; $('mup').onclick = () => setGrade(nx.id); }
 }
 function renderSkills(){
-  const g = probGrade(), k = openCount(g), box = $('mlist'); box.textContent = '';
-  g.skills.forEach((s,i) => { const st = skState(g.id+':'+i), row = el('div', 'item' + (i >= k ? ' locked' : '')), info = el('div');
-    info.appendChild(el('b','', s[1])); info.appendChild(document.createTextNode('CCSS ' + (g.ela ? 'ELA ' : '') + s[0] + ' · ' + (i >= k ? 'Coming up' : isMastered(st) ? 'Mastered' : st.n ? st.n + ' answered' : 'New')));
+  const g = probGrade(), box = $('mlist'); box.textContent = '';
+  g.skills.forEach((s,i) => { const st = skState(g.id+':'+i), row = el('div', 'item'), info = el('div');
+    info.appendChild(el('b','', s[1])); info.appendChild(document.createTextNode('CCSS ' + (g.ela ? 'ELA ' : '') + s[0] + ' · ' + (isMastered(st) ? 'Mastered' : st.n ? st.n + ' answered' : 'New')));
     const lb = el('button', '', 'Lesson'); lb.type = 'button'; lb.id = 'lesson-' + i; lb.onclick = () => openLesson(s, 'list');
-    row.appendChild(info); row.appendChild(el('span','pct', i >= k ? '' : Math.round(st.m*100) + '%')); row.appendChild(lb); box.appendChild(row); });
+    row.appendChild(info); row.appendChild(el('span','pct', st.n ? '\u25cf'.repeat(boxOf(st)) + '\u25cb'.repeat(4 - boxOf(st)) : 'new')); row.appendChild(lb); box.appendChild(row); });
 }
 // Granny Dot's lessons: a short how-to and a worked example for every skill, opened from the How to button or the skills list
 const LESSON = {
@@ -1950,12 +2003,198 @@ Object.assign(LESSON, {
   "Mixed numbers": ["A mixed number is a whole number and a fraction together. Add or subtract the wholes and the fractions separately. If the fractions add up to a whole or more, trade that whole over.", "2 3/5 + 1 4/5: wholes make 3, fractions make 7/5, which is 1 2/5. Altogether 4 2/5."],
   "Convert units of measure": ["To change a bigger unit into smaller ones, multiply by how many small units make one big unit.", "1 foot = 12 inches, so 4 feet = 4 × 12 = 48 inches. 1 hour = 60 minutes. 1 kilogram = 1,000 grams."],
   "Measurement word problems": ["Make the units match before you add or subtract. For time, remember that 60 minutes make an hour. For money, line up the decimal points.", "A 3-foot ribbon with 10 inches cut off: 3 feet = 36 inches, and 36 − 10 = 26 inches."],
-  "Line plots": ["A line plot shows data with one X for each item. Count the X marks in a row to see how many items have that measurement.", "If the row for 1/2 has three X marks, three of the items are 1/2 inch long."],
+  "Line plots": ["A line plot shows data with one mark for each item, stacked above its measurement. Count the marks in a stack to see how many items have that measurement.", "If three marks sit above 1/2, three of the items are 1/2 inch long."],
   "Angles": ["Angles are measured in degrees. A full circle is 360°, a straight line is 180°, and a square corner is 90°. Angles that sit next to each other add up.", "A 120° angle split into two parts, one of them 45°: the other is 120 − 45 = 75°."],
   "Lines, shapes and symmetry": ["Parallel lines never meet. Perpendicular lines cross at right angles. Shapes are sorted by their sides and angles. A line of symmetry folds a shape into two matching halves.", "A rectangle has 4 right angles, 2 pairs of parallel sides and 2 lines of symmetry."],
   "Math reasoning: who is right, and why?": ["These questions ask you to judge someone else's thinking. Work the problem yourself first. Then pick the choice that gives the right answer and a reason that is actually true.", "Someone says 3/8 is more than 3/4 because 8 is more than 4. That is wrong: eighths are smaller pieces than fourths."],
   "Research: sources and evidence": ["A good source is about your exact topic and comes from someone who knows the subject, such as an encyclopedia, a museum or a science group. Facts can be checked; opinions cannot. Evidence must support the point you are making.", "For a report on what sea turtles eat, an aquarium's website is more trustworthy than a page selling turtle toys."],
 });
+// ---- pictures: drawn models for math questions and lessons, as the tests and textbooks show them
+const Pic = {
+  INK:'#2B2350', A:'#FFC53D', B:'#5BC0EB', C:'#FF5D73', D:'#4FB06A', P:'#FFF9EC',
+  svg(w, h, body){ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" style="width:100%;max-width:' + w + 'px;height:auto;font-family:Nunito,sans-serif;font-weight:800">' + body + '</svg>'; },
+  t(x, y, s, size, anchor, fill){ return '<text x="' + x + '" y="' + y + '" font-size="' + (size || 14) + '" text-anchor="' + (anchor || 'middle') + '" fill="' + (fill || this.INK) + '">' + String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</text>'; },
+  ln(x1, y1, x2, y2, w, col, dash){ return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + (col || this.INK) + '" stroke-width="' + (w || 3) + '" stroke-linecap="round"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>'; },
+  rc(x, y, w, h, fill, r){ return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (r || 0) + '" fill="' + (fill || '#fff') + '" stroke="' + this.INK + '" stroke-width="2.5"/>'; },
+  ci(x, y, r, fill){ return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + (fill || '#fff') + '" stroke="' + this.INK + '" stroke-width="2.5"/>'; },
+  clock(p){ const cx = 90, cy = 90, R = 76; let b = this.ci(cx, cy, R, '#fff');
+    for (let k = 1; k <= 12; k++){ const a = k*Math.PI/6; b += this.t(cx + Math.sin(a)*(R-17), cy - Math.cos(a)*(R-17) + 5, k, 15); }
+    for (let k = 0; k < 60; k++){ const a = k*Math.PI/30, r1 = R - (k % 5 ? 4 : 7); b += this.ln(cx + Math.sin(a)*r1, cy - Math.cos(a)*r1, cx + Math.sin(a)*(R-1), cy - Math.cos(a)*(R-1), k % 5 ? 1 : 2); }
+    const ma = p.m*Math.PI/30, ha = (p.h % 12 + p.m/60)*Math.PI/6;
+    b += this.ln(cx, cy, cx + Math.sin(ha)*40, cy - Math.cos(ha)*40, 6) + this.ln(cx, cy, cx + Math.sin(ma)*60, cy - Math.cos(ma)*60, 3.5, this.C) + this.ci(cx, cy, 5, this.INK);
+    return this.svg(180, 180, b); },
+  coins(p){ const SZ = {25:[23,'25¢','#DDE3EE'], 10:[15,'10¢','#DDE3EE'], 5:[19,'5¢','#DDE3EE'], 1:[17,'1¢','#D9A066']}; let x = 8, b = '';
+    for (const c of p.c){ const [r, lab, col] = SZ[c]; b += this.ci(x + r, 34, r, col) + this.t(x + r, 39, lab, r > 16 ? 13 : 10); x += 2*r + 8; }
+    return this.svg(Math.max(120, x), 68, b); },
+  // a number line from lo to hi; ticks every step; labels as whole numbers, or as fractions with denominator den; a dot at mark; curved jumps
+  numline(p){ const W = 360, x0 = 26, x1 = W - 26, n = Math.round((p.hi - p.lo)/p.step), X = v => x0 + (v - p.lo)/(p.hi - p.lo)*(x1 - x0); let b = this.ln(x0 - 12, 60, x1 + 12, 60, 3);
+    for (let k = 0; k <= n; k++){ const v = p.lo + k*p.step, big = !p.every || k % p.every === 0; b += this.ln(X(v), big ? 48 : 53, X(v), big ? 72 : 67, big ? 2.5 : 1.5);
+      if (big && !(p.hide && Math.abs(v - p.mark) < 1e-9)) b += this.t(X(v), 92, p.den ? (k === 0 && p.lo === 0 ? '0' : (Math.round(v*p.den)) % p.den === 0 ? String(Math.round(v)) : Math.round(v*p.den) + '/' + p.den) : fmt(r3(v)), 13); }
+    for (const j of p.jumps || []){ const a = X(j[0]), c = X(j[1]); b += '<path d="M' + a + ' 46 Q' + (a+c)/2 + ' ' + (46 - Math.min(34, Math.abs(c-a)*.6)) + ' ' + c + ' 46" fill="none" stroke="' + this.C + '" stroke-width="2.5"/>'; }
+    if (p.mark != null) b += this.ci(X(p.mark), 60, 7, this.C) + (p.hide ? this.t(X(p.mark), 30, '?', 20, 'middle', this.C) : '');
+    return this.svg(W, 100, b); },
+  array(p){ const s = Math.min(30, 300/p.c), W = p.c*s + 16; let b = ''; for (let r = 0; r < p.r; r++) for (let c = 0; c < p.c; c++) b += this.ci(8 + c*s + s/2, 8 + r*s + s/2, s*.36, this.A); return this.svg(W, p.r*s + 16, b); },
+  blocks(p){ let x = 6, b = ''; for (let k = 0; k < (p.hu || 0); k++){ b += this.rc(x, 6, 70, 70, this.B, 3); for (let g = 1; g < 10; g++) b += this.ln(x + g*7, 6, x + g*7, 76, .7) + this.ln(x, 6 + g*7, x + 70, 6 + g*7, .7); x += 78; }
+    for (let k = 0; k < (p.te || 0); k++){ b += this.rc(x, 6, 9, 70, this.D, 2); for (let g = 1; g < 10; g++) b += this.ln(x, 6 + g*7, x + 9, 6 + g*7, .7); x += 14; }
+    x += 6; for (let k = 0; k < (p.o || 0); k++) b += this.rc(x + (k % 5)*13, 6 + Math.floor(k/5)*13, 9, 9, this.A, 2);
+    return this.svg(x + ((p.o || 0) ? 70 : 6), 84, b); },
+  bars(p){ const n = p.vals.length, mx = Math.max(...p.vals), top = Math.ceil(mx/(p.by || 1))*(p.by || 1), W = 60 + n*64, H = 170, Y = v => 130 - v/top*104; let b = p.title ? this.t(W/2, 16, p.title, 13) : '';
+    for (let v = 0; v <= top; v += (p.by || 1)) b += this.ln(46, Y(v), W - 8, Y(v), .8, '#B9B3CC') + this.t(38, Y(v) + 4, v, 11, 'end');
+    p.vals.forEach((v, i) => { b += this.rc(62 + i*64, Y(v), 36, 130 - Y(v), [this.B, this.A, this.C, this.D][i % 4]) + this.t(80 + i*64, 148, p.labels[i], 12); });
+    return this.svg(W, H, b + this.ln(46, 130, W - 8, 130, 2.5)); },
+  // an X for each item above a labelled line, as line plots are drawn
+  lineplot(p){ const n = p.labels.length, W = 60 + n*70, mx = Math.max(...p.cnt), H = 62 + mx*22; let b = this.ln(20, H - 34, W - 20, H - 34, 3);
+    p.labels.forEach((l, i) => { const x = 60 + i*70; b += this.ln(x, H - 40, x, H - 28, 2) + this.t(x, H - 10, l, 14); for (let k = 0; k < p.cnt[i]; k++) b += this.t(x, H - 44 - k*22, '×', 22, 'middle', this.C); });
+    return this.svg(W, H, (p.title ? this.t(W/2, 14, p.title, 12) : '') + b); },
+  shape(p){ const pts = {square:[[40,20],[140,20],[140,120],[40,120]], rect:[[20,35],[160,35],[160,105],[20,105]], 'tri-eq':[[90,14],[160,126],[20,126]], 'tri-right':[[30,20],[30,124],[150,124]], 'tri-obtuse':[[10,124],[100,124],[170,40]], trapezoid:[[55,30],[125,30],[165,116],[15,116]], rhombus:[[90,10],[150,70],[90,130],[30,70]], parallelogram:[[50,30],[170,30],[130,112],[10,112]], pentagon:[[90,12],[160,62],[134,128],[46,128],[20,62]], hexagon:[[55,14],[125,14],[162,70],[125,126],[55,126],[18,70]]}[p.k];
+    let b = '<polygon points="' + pts.map(q => q.join(',')).join(' ') + '" fill="' + this.B + '" stroke="' + this.INK + '" stroke-width="3" stroke-linejoin="round"/>';
+    for (const l of p.sym || []) b += this.ln(l[0], l[1], l[2], l[3], 2.5, this.C, '7 6');
+    if (p.sq) b += '<path d="M30 110 h14 v14" fill="none" stroke="' + this.INK + '" stroke-width="2"/>';
+    return this.svg(180, 140, b); },
+  // two lines: parallel, perpendicular or crossing
+  lines(p){ const b = p.k === 'parallel' ? this.ln(20, 40, 160, 40, 4) + this.ln(20, 90, 160, 90, 4) : p.k === 'perp' ? this.ln(90, 14, 90, 126, 4) + this.ln(20, 70, 160, 70, 4) + '<path d="M90 56 h14 v14" fill="none" stroke="' + this.INK + '" stroke-width="2"/>' : this.ln(20, 110, 160, 30, 4) + this.ln(20, 50, 160, 100, 4);
+    return this.svg(180, 140, b); },
+  // n of d equal parts shaded: a circle, or a bar when p.bar
+  frac(p){ const one = (n, d, x) => { let b = '';
+      if (p.bar){ const w = 150/d; for (let k = 0; k < d; k++) b += this.rc(x + k*w, 12, w, 40, k < n ? this.A : '#fff'); return b; }
+      const cx = x + 50, cy = 56, R = 46; if (d === 1) return this.ci(cx, cy, R, n ? this.A : '#fff');
+      for (let k = 0; k < d; k++){ const a0 = k/d*2*Math.PI - Math.PI/2, a1 = (k+1)/d*2*Math.PI - Math.PI/2; b += '<path d="M' + cx + ' ' + cy + ' L' + (cx + R*Math.cos(a0)) + ' ' + (cy + R*Math.sin(a0)) + ' A' + R + ' ' + R + ' 0 0 1 ' + (cx + R*Math.cos(a1)) + ' ' + (cy + R*Math.sin(a1)) + ' Z" fill="' + (k < n ? this.A : '#fff') + '" stroke="' + this.INK + '" stroke-width="2.5"/>'; } return b; };
+    const list = p.list || [[p.n, p.d]], step = p.bar ? 0 : 112; let b = '';
+    if (p.bar){ list.forEach((f, i) => { b += '<g transform="translate(0,' + i*52 + ')">' + one(f[0], f[1], 8) + (p.lab ? this.t(176, 38, f[0] + '/' + f[1], 15, 'start') : '') + '</g>'; }); return this.svg(p.lab ? 220 : 166, list.length*52 + 12, b); }
+    list.forEach((f, i) => { b += one(f[0], f[1], 6 + i*step); }); return this.svg(list.length*step, 112, b); },
+  tenframe(p){ let b = ''; for (let k = 0; k < 10; k++){ const x = 8 + (k % 5)*36, y = 8 + Math.floor(k/5)*36; b += this.rc(x, y, 36, 36, '#fff') + (k < p.n ? this.ci(x + 18, y + 18, 12, this.C) : ''); } return this.svg(196, 88, b); },
+  // an angle drawn from a flat ray; with a protractor behind it when p.pro
+  angle(p){ const cx = 150, cy = 150, R = 120, a = p.deg*Math.PI/180, X = (r, t) => cx + r*Math.cos(t), Y = (r, t) => cy - r*Math.sin(t); let b = '';
+    if (p.pro){ b += '<path d="M' + (cx - R - 14) + ' ' + cy + ' A' + (R + 14) + ' ' + (R + 14) + ' 0 0 1 ' + (cx + R + 14) + ' ' + cy + ' Z" fill="#fff" stroke="' + this.INK + '" stroke-width="2"/>';
+      for (let d = 0; d <= 180; d += 5){ const t = d*Math.PI/180, r1 = R + 14 - (d % 10 ? 6 : 11); b += this.ln(X(r1, t), Y(r1, t), X(R + 14, t), Y(R + 14, t), d % 10 ? .8 : 1.4); if (d % 30 === 0 || d % 20 === 0 && false) b += this.t(X(R - 8, t), Y(R - 8, t) + 4, d, 11); else if (d % 10 === 0) b += this.t(X(R - 8, t), Y(R - 8, t) + 4, d, 8, 'middle', '#7A7396'); } }
+    b += this.ln(cx, cy, cx + R + 22, cy, 4) + this.ln(cx, cy, X(R + 22, a), Y(R + 22, a), 4, this.C);
+    if (!p.pro) b += p.deg === 90 ? '<path d="M' + (cx + 18) + ' ' + cy + ' v-18 h-18" fill="none" stroke="' + this.INK + '" stroke-width="2"/>' : '<path d="M' + (cx + 30) + ' ' + cy + ' A30 30 0 ' + (p.deg > 180 ? 1 : 0) + ' 0 ' + X(30, a) + ' ' + Y(30, a) + '" fill="none" stroke="' + this.INK + '" stroke-width="2"/>';
+    return this.svg(300, p.deg > 180 ? 300 : 166, b + this.ci(cx, cy, 4, this.INK)); },
+  // a rectangle with its side lengths written on it
+  box(p){ const w = Math.min(220, 40 + p.w*16), h = Math.min(110, 30 + p.h*12); return this.svg(w + 80, h + 44, this.rc(40, 8, w, h, this.D) + this.t(40 + w/2, h + 30, p.wl, 14) + this.t(w + 46, 12 + h/2, p.hl, 14, 'start')); },
+  html(p){ try { return p && this[p.t] ? this[p.t](p) : ''; } catch(e){ return ''; } }
+};
+function setPic(id, p){ const e = $(id); if (!e) return; const h = Pic.html(p); e.hidden = !h; e.innerHTML = h; }
+// a skill's generator sometimes hands out a picture question instead: withPic('4', 'Angles', .5, h => ...)
+function withPic(gid, name, chance, fn){ const g = GRADES.find(x => x.id === gid), sk = g && g.skills.find(x => x[1] === name); if (!sk) return; const old = sk[2]; sk[2] = h => { if (Math.random() < chance){ const p = fn(h); if (p) return p; } return old(h); }; }
+const pq = (p, pic) => { p.pic = pic; return p; };
+// ---- picture questions, and the Grade 4 standards that were still missing
+const symQ = () => { const it = pickOf([['square',4],['rect',2],['tri-eq',3],['hexagon',6],['rhombus',2],['trapezoid',1],['parallelogram',0]]); return pq(pf('How many lines of symmetry does this shape have?', String(it[1]), ['0','1','2','3','4','6'].filter(x => x !== String(it[1])).sort(() => Math.random() - .5).slice(0,3), 'A line of symmetry folds the shape into two halves that match exactly. Count every fold that works.'), {t:'shape', k:it[0]}); };
+const foldQ = () => { const it = pickOf([['square',[90,10,90,130],true],['rect',[20,35,160,105],false],['tri-eq',[90,8,90,132],true],['parallelogram',[90,22,90,120],false],['rhombus',[30,70,150,70],true],['trapezoid',[8,73,172,73],false]]); return pq(pf('Is the dashed line a line of symmetry for this shape?', it[2] ? 'Yes, the two sides match when folded.' : 'No, the two sides do not match when folded.', [it[2] ? 'No, the two sides do not match when folded.' : 'Yes, the two sides match when folded.', 'No, because only circles have lines of symmetry.'], 'Picture folding the shape along the dashed line. It is a line of symmetry only if one half lands exactly on the other.'), {t:'shape', k:it[0], sym:[it[1]]}); };
+const linesQ = () => { const it = pickOf([['parallel','parallel lines'],['perp','perpendicular lines'],['cross','lines that cross but are not perpendicular']]); return pq(pf('What kind of lines are shown?', it[1], ['parallel lines','perpendicular lines','lines that cross but are not perpendicular'].filter(x => x !== it[1]), 'Parallel lines never meet. Perpendicular lines cross at square corners.'), {t:'lines', k:it[0]}); };
+const nameQ = () => { const it = pickOf([['trapezoid','trapezoid'],['rhombus','rhombus'],['parallelogram','parallelogram'],['tri-right','right triangle'],['tri-obtuse','obtuse triangle'],['hexagon','hexagon'],['pentagon','pentagon']]); return pq(pf('Which name fits this shape?', it[1], shuffle(['trapezoid','rhombus','parallelogram','right triangle','obtuse triangle','hexagon','pentagon','rectangle'].filter(x => x !== it[1])).slice(0,3), 'Count the sides and look at the angles and the parallel sides.'), Object.assign({t:'shape', k:it[0]}, it[0] === 'tri-right' ? {sq:1} : {})); };
+withPic('4', 'Lines, shapes and symmetry', .5, () => pickOf([symQ, foldQ, linesQ, nameQ])());
+withPic('4', 'Lines, shapes and symmetry', .12, () => ({q:'Choose all the shapes that always have two pairs of parallel sides.', multi:true, all:true, ans:['square','rectangle','rhombus'], opts:['trapezoid','right triangle'], sol:'The answers are: square, rectangle and rhombus.', why:'A trapezoid has only one pair of parallel sides, and a triangle has none.'}));
+withPic('4', 'Angles', .5, () => { if (Math.random() < .5){ const deg = pickOf([30,45,60,90,120,150]), kind = deg < 90 ? 'acute' : deg === 90 ? 'right' : 'obtuse'; return pq(pf('What kind of angle is shown?', kind, ['acute','right','obtuse','straight'].filter(x => x !== kind), 'Compare it with a square corner. Smaller is acute, the same is right, wider is obtuse.'), {t:'angle', deg}); }
+  const deg = pickOf([20,30,40,50,60,70,80,100,110,120,130,140,150,160]); return pq(wp('Use the protractor. What is the measure of the angle, in degrees?', deg, [180-deg, deg+10, deg-10], 'One side sits on 0. Follow the scale that starts at 0 on that side to where the red side crosses: ' + deg + '°. Check: the angle is ' + (deg < 90 ? 'smaller' : 'wider') + ' than a square corner, so ' + deg + ' makes sense and ' + (180-deg) + ' does not.'), {t:'angle', deg, pro:1}); });
+withPic('4', 'Equivalent fractions', .35, () => { const [n,d] = fr(), k = d <= 4 ? ri(2,3) : 2; return pq(wp('The two bars show the same amount. ' + F(n,d) + ' = ?/' + d*k, n*k, [n+k, n, d*k-n*k === n*k ? n*k+1 : d*k-n*k], 'Each piece of the top bar was cut into ' + k + ' pieces, so there are ' + k + ' times as many shaded pieces: ' + n + X + k + ' = ' + n*k + '.'), {t:'frac', bar:1, list:[[n,d],[n*k,d*k]]}); });
+withPic('4', 'Equivalent fractions', .1, () => { const [n,d] = pickOf([[1,2],[1,3],[2,3],[3,4]]), good = [F(n*2,d*2), F(n*3,d*3)], bad = shuffle([F(n*2,d*2+1), F(n+1,d+1), F(n*2,d*3), F(n*3,d*2)]).slice(0,3); return {q:'Choose all the fractions that are equal to ' + F(n,d) + '.', multi:true, all:true, ans:good, opts:bad, sol:'The answers are: ' + good.join(' and ') + '.', why:'An equal fraction comes from multiplying the top and the bottom by the same number.'}; });
+withPic('4', 'Compare fractions with different denominators', .35, h => { if (h) return null; const [a,b] = fr(), [c,d] = fr(); if (b === d) return null; return pq(cmp(F(a,b), F(c,d), a*d, c*b), {t:'frac', bar:1, lab:1, list:[[a,b],[c,d]]}); });
+withPic('4', 'Write fractions as decimals', .4, () => { const n = ri(1,9); return pq(wp('What decimal is at the point on the number line?', n/10, [n/100, n, (n+1)/10], 'The line from 0 to 1 is cut into 10 equal parts, so each part is one tenth, 0.1. The point is ' + n + ' parts along: 0.' + n + '.'), {t:'numline', lo:0, hi:1, step:.1, every:5, mark:n/10, hide:0}); });
+withPic('4', 'Multiply a fraction by a whole number', .3, () => { const d = pickOf([3,4,5,6]), n = ri(1,d-1), w = ri(2,4); return pq(pf('Each bar shows ' + F(n,d) + '. How much is shaded in all?', F(w*n,d), [F(w*n,w*d), F(w+n,d), F(n,w*d)], 'There are ' + w + ' bars with ' + n + ' shaded ' + (n === 1 ? 'piece' : 'pieces') + ' each: ' + w + X + n + ' = ' + w*n + ' pieces, and each piece is 1/' + d + '.'), {t:'frac', bar:1, list:Array.from({length:w}, () => [n,d])}); });
+withPic('4', 'Mixed numbers', .3, () => { const d = pickOf([2,3,4,6]), w = ri(1,2), n = ri(1,d-1); return pq(pf('What mixed number do the circles show?', mixed(w,n,d), [mixed(w+1,n,d), mixed(w,d-n === n ? n+1 : d-n,d === 2 ? 3 : d), mixed(n,w,d), F(w+n,d)].filter(x => x !== mixed(w,n,d)).slice(0,3), w + (w === 1 ? ' circle is' : ' circles are') + ' fully shaded, and the last has ' + n + ' of its ' + d + ' parts shaded.'), {t:'frac', list:Array.from({length:w}, () => [d,d]).concat([[n,d]])}); });
+withPic('4', 'Measurement word problems', .3, () => { const h = ri(1,10), m = pickOf([0,5,10,15,20,30,40,45]), dur = pickOf([25,35,45,50]), tot = m+dur, eh = h + Math.floor(tot/60), em = tot % 60, tm = (x,y) => x + ':' + (y < 10 ? '0' : '') + y;
+  return pq(pf('The clock shows when practice starts. It lasts ' + dur + ' minutes. What time does it end?', tm(eh,em), [tm(h,(m+dur) % 60), tm(eh+1,em), tm(eh,(em+10) % 60), tm(h,m)].filter(x => x !== tm(eh,em)).slice(0,3), 'The clock shows ' + tm(h,m) + '. Count on ' + dur + ' minutes to reach ' + tm(eh,em) + '.'), {t:'clock', h, m}); });
+withPic('4', 'Area and perimeter: find the missing side', .4, () => { const l = ri(5,12), w = ri(2,l-1), per = Math.random() < .5; return pq(wp('What is the ' + (per ? 'perimeter' : 'area') + ' of the rectangle' + (per ? ', in feet?' : ', in square feet?'), per ? 2*(l+w) : l*w, per ? [l*w, l+w] : [2*(l+w), l+w], per ? 'Perimeter is the distance around: ' + l + PL + w + PL + l + PL + w + ' = ' + 2*(l+w) + '.' : 'Area is length times width: ' + l + X + w + ' = ' + l*w + '.'), {t:'box', w:l, h:w, wl:l + ' ft', hl:w + ' ft'}); });
+withPic('4', 'Word problems: times as many', .25, () => { const a = ri(3,9), b = ri(2,9); return pf('Which statement matches the equation ' + a*b + ' = ' + a + X + b + '?', a*b + ' is ' + a + ' times as many as ' + b + '.', [a*b + ' is ' + a + ' more than ' + b + '.', a + ' is ' + a*b + ' times as many as ' + b + '.', a*b + ' is ' + a + ' and ' + b + ' put together.'], 'A multiplication equation can be read as a comparison: ' + a*b + ' is ' + a + ' times as many as ' + b + ', and also ' + b + ' times as many as ' + a + '.'); });
+const ONES = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'], TENS = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+const words99 = n => n < 20 ? ONES[n] : TENS[Math.floor(n/10)] + (n % 10 ? '-' + ONES[n % 10] : ''), words999 = n => (n >= 100 ? ONES[Math.floor(n/100)] + ' hundred' + (n % 100 ? ' ' : '') : '') + (n % 100 ? words99(n % 100) : '');
+withPic('4', 'Place value: read and compare large numbers', .25, () => { const th = ri(11,98), rest = pickOf([ri(1,9), ri(1,9)*100 + ri(1,9), ri(101,999)]), n = th*1000 + rest; return wp('Which number is ' + words99(th) + ' thousand, ' + words999(rest) + '?', n, [th*1000 + rest*10 > 99999 ? th*100 + rest : th*1000 + rest*10, th*100 + rest, n + 1000].filter(x => x !== n), 'Write the thousands first: ' + th + ' thousand. Then fill the last three places with ' + String(rest).padStart(3,'0') + ', using zeros to hold empty places.'); });
+withPic('4', 'Factors and prime numbers', .2, () => { const k = ri(3,9), good = shuffle([2,3,4,5,6,7,8,9].map(x => x*k)).slice(0,2), bad = shuffle([k*3+1, k*5-1, k*7+2, k*4+1, k*6-1]).filter(x => x % k).slice(0,3); return {q:'Choose all the multiples of ' + k + '.', multi:true, all:true, ans:good, opts:bad, sol:'The answers are: ' + good.join(' and ') + '.', why:'A multiple of ' + k + ' is what you get when you count by ' + k + 's: ' + [1,2,3,4,5].map(x => x*k).join(', ') + ' and so on.'}; });
+withPic('3', 'Multiply within 100', .3, () => { const r = ri(2,6), c = ri(2,9); return pq(wp('How many dots are there? There are ' + r + ' rows of ' + c + '.', r*c, [r+c, r*c+c, r*c-r], r + ' rows of ' + c + ' is ' + r + X + c + ' = ' + r*c + '.'), {t:'array', r, c}); });
+withPic('3', 'Area of a rectangle', .4, () => { const l = ri(3,10), w = ri(2,7); return pq(wp('What is the area of the rectangle, in square feet?', l*w, [2*(l+w), l+w], 'Area is length times width: ' + l + X + w + ' = ' + l*w + '.'), {t:'box', w:l, h:w, wl:l + ' ft', hl:w + ' ft'}); });
+withPic('3', 'Compare fractions', .3, () => { const d = pickOf([2,3,4,6,8]), n = ri(1,d-1); return pq(pf('What fraction is at the point on the number line?', F(n,d), [F(n+1,d+1), F(d-n === n ? n+1 : d-n, d), F(n,d+2)].filter(x => x !== F(n,d)), 'The line from 0 to 1 is cut into ' + d + ' equal parts. The point is ' + n + ' of them along, so it is ' + F(n,d) + '.'), {t:'numline', lo:0, hi:1, step:1/d, den:d, mark:n/d, hide:1}); });
+withPic('2', 'Count money', .6, () => { const c = [].concat(Array(ri(0,2)).fill(25), Array(ri(0,3)).fill(10), Array(ri(0,2)).fill(5), Array(ri(0,4)).fill(1)); if (c.length < 2) return null; const v = c.reduce((a,b) => a+b, 0); return pq(wp('How many cents are shown?', v, [v+5, v-1 > 0 ? v-1 : v+2, v+10], 'Start with the biggest coins and count on: ' + c.join(', ') + ' makes ' + v + ' cents.'), {t:'coins', c}); });
+withPic('2', 'Equal groups and arrays', .5, () => { const r = ri(2,5), c = ri(2,5); return pq(wp('How many dots are in the array?', r*c, [r+c, r*c+1, r*c-r > 0 && r*c-r !== r+c ? r*c-r : r*c+2], 'Add one row at a time: ' + Array(r).fill(c).join(' + ') + ' = ' + r*c + '.'), {t:'array', r, c}); });
+withPic('2', 'Skip-count by 5s, 10s and 100s', .3, () => { const st = pickOf([5,10]), a = ri(1,6)*st, k = 3; return pq(wp('The jumps on the number line are all the same size. What number does the last jump land on?', a + st*k, [a + st*k + st, a + st*(k-1), a + k], 'Each jump is ' + st + '. ' + [0,1,2,3].map(i => a + st*i).join(', ') + '.'), {t:'numline', lo:a, hi:a + st*k, step:st, mark:a + st*k, hide:1, jumps:[0,1,2].map(i => [a + st*i, a + st*(i+1)])}); });
+withPic('K', 'Make 10', .5, () => { const n = ri(1,9); return pq(wp('How many more dots are needed to fill the ten-frame?', 10-n, [n, 10], 'There are ' + n + ' dots and 10 boxes. ' + n + ' + ' + (10-n) + ' = 10.'), {t:'tenframe', n}); });
+// lesson pictures: a worked model beside the words
+const LPIC = {
+  'Equivalent fractions':{t:'frac', bar:1, lab:1, list:[[1,2],[2,4],[4,8]]}, 'Compare fractions with different denominators':{t:'frac', bar:1, lab:1, list:[[2,3],[3,4]]}, 'Mixed numbers':{t:'frac', list:[[4,4],[3,4]]},
+  'Multiply a fraction by a whole number':{t:'frac', bar:1, lab:1, list:[[2,5],[2,5],[2,5]]}, 'Write fractions as decimals':{t:'numline', lo:0, hi:1, step:.1, every:5, mark:.7}, 'Angles':{t:'angle', deg:60, pro:1},
+  'Line plots':{t:'lineplot', labels:['1/4','1/2','3/4','1'], cnt:[2,3,1,4]}, 'Lines, shapes and symmetry':{t:'shape', k:'square', sym:[[90,10,90,130],[30,70,150,70],[40,20,140,120],[140,20,40,120]]}, 'Measurement word problems':{t:'clock', h:3, m:15},
+  'Area and perimeter: find the missing side':{t:'box', w:6, h:4, wl:'6 ft', hl:'4 ft'}, 'Round multi-digit numbers':{t:'numline', lo:4000, hi:5000, step:100, every:5, mark:4650}, 'Number patterns':{t:'numline', lo:3, hi:18, step:5, mark:18, jumps:[[3,8],[8,13],[13,18]]},
+  'Count money':{t:'coins', c:[25,10,10,5,1]}, 'Equal groups and arrays':{t:'array', r:3, c:4}, 'Make 10':{t:'tenframe', n:7}, 'Multiply within 100':{t:'array', r:4, c:6}};
+// more Grade 4 math standards
+{ const g4 = GRADES.find(x => x.id === '4').skills;
+  g4.push(['4.NF.C.5', 'Add tenths and hundredths', () => { const a = ri(1,8), b = ri(1, Math.min(59, 99 - a*10)), s = a*10 + b; return wp(F(a,10) + PL + F(b,100) + ' = ?/100', s, [a + b, s + 10, a + b + 10], 'Change tenths to hundredths first: ' + F(a,10) + ' = ' + F(a*10,100) + '. Then ' + a*10 + PL + b + ' = ' + s + ' hundredths.'); }]);
+  g4.push(['4.NF.B.3', 'Fraction word problems', () => { const A = pickOf(KIDS), B = pickOf(KIDS.filter(x => x !== A)), t = ri(0,2), d = pickOf([6,8,10,12]);
+    if (t === 0){ const a = ri(1,d/2-1), b = ri(1,d/2); return pf(A + ' ate ' + F(a,d) + ' of a pizza and ' + B + ' ate ' + F(b,d) + ' of it. What fraction of the pizza did they eat altogether?', F(a+b,d), [F(a+b,2*d), F(Math.abs(a-b) || a+b+1,d), F(a*b+1 === a+b ? a+b+2 : a*b+1,d)], 'The pieces are the same size, so add the tops and keep the bottom: ' + a + PL + b + ' = ' + (a+b) + ', so ' + F(a+b,d) + '.'); }
+    if (t === 1){ const a = ri(d/2+1,d-1), b = ri(1,a-1); return pf('A jug was ' + F(a,d) + ' full. ' + A + ' poured out ' + F(b,d) + ' of the jug. What fraction of the jug is still full?', F(a-b,d), [F(a+b,d), F(a-b,2*d), F(a-b+1,d)], 'Subtract the tops and keep the bottom: ' + a + M + b + ' = ' + (a-b) + ', so ' + F(a-b,d) + '.'); }
+    const n = ri(3,6), fn = pickOf([[1,2],[1,3],[2,3],[1,4],[3,4]]), tot = n*fn[0], w = Math.floor(tot/fn[1]), r = tot % fn[1], ans = mixed(w, r, fn[1]); return pf('Each of ' + n + ' friends drinks ' + F(fn[0],fn[1]) + ' cup of juice. How many cups do they drink altogether?', ans, [mixed(w+1, r, fn[1]), F(tot, fn[1]*n), mixed(n, fn[0], fn[1])].filter(x => x !== ans), n + X + F(fn[0],fn[1]) + ' = ' + F(tot,fn[1]) + (tot >= fn[1] ? ', which is ' + ans : '') + '.'); }]);
+  g4.push(['4.NF.B.3', 'Break fractions apart', () => { const d = pickOf([5,6,8,10]), n = ri(3,d-1), a = ri(1,n-1), b = n-a; return pf('Which sum is equal to ' + F(n,d) + '?', F(a,d) + PL + F(b,d), [F(a,d) + PL + F(b+1,d), F(n,d) + PL + F(n,d), F(a,d-1) + PL + F(b,1)], 'A fraction can be broken into parts with the same bottom number, as long as the tops add up: ' + a + PL + b + ' = ' + n + '.'); }]);
+}
+Object.assign(LESSON, {
+  'Add tenths and hundredths': ['Tenths and hundredths can only be added once they are the same kind of piece. One tenth is the same as ten hundredths, so multiply the top and bottom of the tenths by 10 first.', '3/10 + 27/100: 3/10 = 30/100, and 30 + 27 = 57, so the sum is 57/100.'],
+  'Fraction word problems': ['When the pieces are the same size (the same bottom number), add or subtract the top numbers and keep the bottom. To find several of the same fraction, multiply the top by how many there are.', 'Ana ate 2/8 and Ben ate 3/8: 2 + 3 = 5, so 5/8 altogether. Four friends each drink 2/3 cup: 4 × 2 = 8, so 8/3, which is 2 2/3 cups.'],
+  'Break fractions apart': ['Any fraction can be split into smaller fractions with the same bottom number. The top numbers of the parts must add up to the top of the whole.', '5/8 = 2/8 + 3/8, and also 1/8 + 4/8, and also 1/8 + 1/8 + 3/8.']});
+// ---- Grade 4 English standards that had no questions yet
+const bankW = items => () => { const it = pickOf(items), p = pk(it[0], it[1], it[2]); p.why = it[3]; return p; };
+const L4G = [
+  ['Choose the word that completes the sentence.\n\nThe girl ______ won the race is my cousin.', 'who', ['which', 'whose', 'where'], 'Use who for a person doing the action.'],
+  ['Choose the word that completes the sentence.\n\nThis is the park ______ we play soccer.', 'where', ['who', 'when', 'whose'], 'Where tells about a place.'],
+  ['Choose the word that completes the sentence.\n\nThe boy ______ backpack is missing went to the office.', 'whose', ['who', 'which', 'when'], 'Whose shows that something belongs to someone: the backpack belongs to the boy.'],
+  ['Choose the word that completes the sentence.\n\nI remember the day ______ we met.', 'when', ['where', 'whose', 'which'], 'When tells about a time.'],
+  ['Choose the word that completes the sentence.\n\nThe bridge, ______ was built long ago, is still strong.', 'which', ['who', 'whose', 'when'], 'Use which for a thing.'],
+  ['Choose the words that complete the sentence.\n\nRight now, I ______ my homework.', 'am doing', ['was doing', 'will be doing', 'did'], '"Right now" needs the present progressive: am, is or are with an -ing verb.'],
+  ['Choose the words that complete the sentence.\n\nYesterday at noon, we ______ lunch.', 'were eating', ['are eating', 'will be eating', 'eat'], 'An action that was going on in the past needs was or were with an -ing verb.'],
+  ['Choose the words that complete the sentence.\n\nTomorrow at this time, she ______ to Texas.', 'will be flying', ['was flying', 'is flying', 'flew'], 'An action that will be going on in the future needs will be with an -ing verb.'],
+  ['Choose the word that completes the sentence.\n\nIt is a rule: you ______ wear a helmet when you ride.', 'must', ['might', 'could', 'may'], 'Must shows that something is required.'],
+  ['Choose the word that completes the sentence.\n\nIt ______ rain later, so bring a coat just in case.', 'might', ['must', 'can', 'will'], 'Might shows that something is possible but not certain.'],
+  ['Choose the word that completes the sentence.\n\nWhen she was five, she ______ already swim across the pool.', 'could', ['can', 'may', 'must'], 'Could shows an ability in the past.'],
+  ['Which sentence puts the describing words in the correct order?', 'She carried a small red bag.', ['She carried a red small bag.', 'She carried a bag small red.', 'She carried small a red bag.'], 'Size comes before color: a small red bag.'],
+  ['Which sentence puts the describing words in the correct order?', 'We saw three big brown dogs.', ['We saw brown three big dogs.', 'We saw big three brown dogs.', 'We saw brown big three dogs.'], 'Number comes first, then size, then color.'],
+  ['Which sentence puts the describing words in the correct order?', 'He sat in a beautiful old wooden chair.', ['He sat in a wooden old beautiful chair.', 'He sat in an old wooden beautiful chair.', 'He sat in a wooden beautiful old chair.'], 'Opinion comes first, then age, then what it is made of.'],
+  ['Which words are the prepositional phrase in this sentence?\n\nThe cat slept under the table.', 'under the table', ['The cat', 'slept under', 'cat slept'], 'A prepositional phrase starts with a word such as under, on, in or after and tells where or when.'],
+  ['Which words are the prepositional phrase in this sentence?\n\nAfter the game, we ate pizza.', 'After the game', ['we ate', 'ate pizza', 'the game, we'], 'After is a preposition. "After the game" tells when.'],
+  ['Which of these is a run-on sentence?', 'I was tired I went to bed.', ['I was tired, so I went to bed.', 'Because I was tired, I went to bed.', 'I was tired. I went to bed.'], 'A run-on jams two complete thoughts together with nothing to join them.'],
+  ['Which is the best way to fix this run-on sentence?\n\nThe bell rang we lined up.', 'The bell rang, and we lined up.', ['The bell rang we, lined up.', 'The bell rang and, we lined up.', 'The bell, rang we lined up.'], 'Join two complete thoughts with a comma and a joining word such as and, but or so.'],
+  ['Which of these is a sentence fragment?', 'Because the bus was late.', ['The bus was late.', 'We waited because the bus was late.', 'The bus came late today.'], 'A fragment is missing part of the thought. "Because the bus was late" leaves you asking what happened.'],
+  ['Choose the word that completes the sentence.\n\nI ate ______ much cake at the party.', 'too', ['to', 'two', 'tow'], 'Too means more than enough. Two is the number. To shows direction.'],
+  ['Which sentence uses a comma correctly?', 'I wanted to play outside, but it started to rain.', ['I wanted to play outside but, it started to rain.', 'I wanted, to play outside but it started to rain.', 'I wanted to play, outside but it started to rain.'], 'When and, but or so joins two complete thoughts, the comma goes before the joining word.']];
+const L4V = [
+  ['The words telephone and telescope share the root "tele." What does "tele" mean?', 'far', ['sound', 'small', 'star'], 'A telephone carries sound from far away, and a telescope sees far away.'],
+  ['The words photograph and autograph share the root "graph." What does "graph" mean?', 'write or draw', ['light', 'self', 'picture frame'], 'An autograph is your own writing, and a photograph is a picture drawn with light.'],
+  ['The words export and transport share the root "port." What does "port" mean?', 'carry', ['boat', 'door', 'sell'], 'To transport is to carry across, and to export is to carry out.'],
+  ['The words erupt and interrupt share the root "rupt." What does "rupt" mean?', 'break or burst', ['talk', 'loud', 'hot'], 'A volcano bursts out when it erupts, and you break in when you interrupt.'],
+  ['The words biology and biography share the root "bio." What does "bio" mean?', 'life', ['book', 'study', 'two'], 'Biology is the study of living things, and a biography is the story of a life.'],
+  ['The words thermometer and thermos share the root "therm." What does "therm" mean?', 'heat', ['measure', 'cold drink', 'glass'], 'A thermometer measures heat, and a thermos keeps heat in.'],
+  ['The words microscope and microphone share the root "micro." What does "micro" mean?', 'small', ['see', 'sound', 'far'], 'A microscope lets you see small things, and a microphone picks up small sounds.'],
+  ['The words automatic and autograph share the root "auto." What does "auto" mean?', 'self', ['car', 'fast', 'write'], 'Something automatic works by itself, and an autograph is written by yourself.'],
+  ['"It is raining cats and dogs." What does this saying mean?', 'It is raining very hard.', ['Animals are falling from the sky.', 'It is a good day to walk a pet.', 'The rain has stopped.'], 'This is an idiom: its words together mean something different from each word alone.'],
+  ['"The spelling test was a piece of cake." What does "a piece of cake" mean?', 'very easy', ['very sweet', 'served at lunch', 'too long'], 'The idiom "a piece of cake" means something easy to do.'],
+  ['"I have a big test tomorrow, so I need to hit the books." What does "hit the books" mean?', 'study hard', ['throw books away', 'close the books', 'go to the library late'], '"Hit the books" is an idiom for studying.'],
+  ['"Mia stayed home because she was feeling under the weather." What does "under the weather" mean?', 'a little sick', ['caught in the rain', 'very cold', 'bored'], '"Under the weather" is an idiom for feeling unwell.'],
+  ['What does the saying "The early bird catches the worm" mean?', 'People who start early have the best chance.', ['Birds wake up before worms do.', 'Worms are hard to catch.', 'It is bad to get up early.'], 'An adage is a short saying that gives advice. This one is about starting early.'],
+  ['What does the saying "Do not count your chickens before they hatch" mean?', 'Do not depend on something before it has happened.', ['Count carefully when you do math.', 'Chickens are hard to count.', 'Eggs should be kept warm.'], 'The eggs may not all hatch, so do not plan as if they already have.'],
+  ['What does the saying "Actions speak louder than words" mean?', 'What you do matters more than what you say.', ['Loud people get more done.', 'It is rude to speak loudly.', 'Words are never important.'], 'This proverb says that doing something proves more than promising it.'],
+  ['Tess wants to find a word that means almost the same as "happy." Which book should she use?', 'a thesaurus', ['an atlas', 'a dictionary of names', 'an almanac'], 'A thesaurus lists synonyms, words with nearly the same meaning.'],
+  ['Omar wants to check how to say the word "colonel" aloud. Which part of a dictionary entry will help him most?', 'the pronunciation', ['the part of speech', 'the example sentence', 'the guide words'], 'The pronunciation, shown in symbols after the word, tells how to say it.'],
+  ['The guide words at the top of a dictionary page are "lamp" and "leaf." Which word is on that page?', 'lantern', ['lemon', 'ladder', 'light'], 'Words are in ABC order. Lantern comes after lamp and before leaf.'],
+  ['Read the dictionary entry.\n\nbark (noun) 1. the sound a dog makes 2. the outer covering of a tree\n\nWhich meaning is used in this sentence? The bark of the old oak was rough.', 'meaning 2', ['meaning 1', 'both meanings', 'neither meaning'], 'An oak is a tree, so bark here is its outer covering.'],
+  ['Where in a book would you look to find the meaning of a special word used in that book?', 'the glossary', ['the title page', 'the index', 'the table of contents'], 'A glossary is a small dictionary at the back of a book.']];
+const L4P = [
+  ['Read the sentence from a story.\n\nI tugged on my boots and raced outside before anyone could stop me.\n\nFrom which point of view is the story told?', 'first person', ['third person', 'second person', 'no point of view'], 'The narrator uses I and my, so the narrator is a character in the story.'],
+  ['Read the sentence from a story.\n\nLena tugged on her boots and raced outside before anyone could stop her.\n\nFrom which point of view is the story told?', 'third person', ['first person', 'second person', 'no point of view'], 'The narrator uses Lena, she and her, so the narrator is outside the story.'],
+  ['Which words in a story are the best clue that it is told in the first person?', 'I, me and my', ['he, she and they', 'you and your', 'said and asked'], 'A first-person narrator is in the story and speaks as I.'],
+  ['One story about a soccer game is told by the goalie. Another story about the same game is told by a narrator who is not in it. How will the two most likely differ?', "The goalie's story will tell her own thoughts and feelings.", ['The two stories will have different final scores.', "The narrator's story will use the word I.", 'Only one of the stories can be true.'], 'A first-person narrator shares what she herself thinks and feels.'],
+  ['Which of these is found in a play but not in a poem?', 'stage directions', ['rhyme', 'stanzas', 'rhythm'], 'Stage directions tell actors how to move and speak.'],
+  ['A group of lines in a poem is called a', 'stanza', ['scene', 'paragraph', 'chapter'], 'Poems are built from lines, and lines are grouped into stanzas.'],
+  ['In a play, what is the list of characters called?', 'the cast of characters', ['the stanza', 'the setting', 'the glossary'], 'A script begins with its cast of characters.'],
+  ['A play is divided into parts. What are the parts called?', 'acts and scenes', ['stanzas and lines', 'chapters and paragraphs', 'verses and rhymes'], 'Plays have acts and scenes. Poems have stanzas. Stories have chapters and paragraphs.'],
+  ['The pattern of beats you hear when a poem is read aloud is called its', 'rhythm', ['setting', 'dialogue', 'theme'], 'Rhythm is the beat of a poem.'],
+  ['A girl who lived through a big storm wrote about it in her diary that night. What kind of account is her diary?', 'a firsthand account', ['a secondhand account', 'a made-up story', 'a poem'], 'A firsthand account is written by someone who was there.'],
+  ['A reporter wrote about a big storm a week later, after talking to people who had been there. What kind of account is the article?', 'a secondhand account', ['a firsthand account', 'a diary', 'a play'], 'A secondhand account is written by someone who was not there and learned about it from others.'],
+  ['How is a firsthand account of an event most likely to differ from a secondhand account?', "It tells the writer's own feelings about what happened.", ['It is always longer.', 'It is always less true.', 'It never includes dates.'], 'Someone who was there can tell what it felt like.']];
+const eChart = () => { const who = shuffle(['Ana','Ben','Chloe','Dev','Elena','Finn']).slice(0,4), v = shuffle([2,3,4,5,6,7,8,9]).slice(0,4), th = pickOf(['Books read in March','Laps run on Friday','Cans collected for the food drive']), pic = {t:'bars', labels:who, vals:v, title:th}, hi = v.indexOf(Math.max(...v)), lo = v.indexOf(Math.min(...v)), t = ri(0,2);
+  const p = t === 0 ? pk('According to the chart, who has the highest number?', who[hi], who.filter((x,i) => i !== hi)) : t === 1 ? pk('According to the chart, how many more does ' + who[hi] + ' have than ' + who[lo] + '?', String(v[hi]-v[lo]), [String(v[hi]), String(v[hi]+v[lo]), String(v[lo])].filter(x => x !== String(v[hi]-v[lo]))) : pk('Which statement is supported by the chart?', who[hi] + ' has more than ' + who[lo] + '.', [who[lo] + ' has the most.', 'All four have the same number.', who[lo] + ' has more than ' + who[hi] + '.']);
+  p.pic = pic; p.why = 'Read the height of each bar against the numbers on the left. ' + who[hi] + ' has ' + v[hi] + ' and ' + who[lo] + ' has ' + v[lo] + '.'; return p; };
+E_4.push(['L.4.1', 'Language: Grade 4 grammar', bankW(L4G)], ['L.4.4-5', 'Vocabulary: roots, sayings and word tools', bankW(L4V)], ['RL.4.5-6', 'Reading: point of view and kinds of writing', bankW(L4P)], ['RI.4.7', 'Reading information: charts and diagrams', eChart]);
+Object.assign(LESSON, {
+  'Language: Grade 4 grammar': ['Who is for people, which is for things, whose shows belonging, where is for places and when is for times. An action still going on uses am, is, are, was, were or will be with an -ing verb. Must means it is required, might means it is possible, could means it was possible before. Describing words go in order: number, opinion, size, age, color, material.', 'The girl who won. The park where we play. Right now I am reading. You must wear a helmet. Three big brown dogs.'],
+  'Vocabulary: roots, sayings and word tools': ['Many words share a root that carries meaning: tele means far, graph means write, port means carry, bio means life. An idiom or saying means something different from its separate words. A dictionary gives meanings and how to say a word; a thesaurus gives words that mean the same; a glossary explains the special words in one book.', 'Telephone and telescope both deal with things far away. "A piece of cake" means easy.'],
+  'Reading: point of view and kinds of writing': ['A first-person story is told by a character using I and me. A third-person story is told by a narrator outside it, using he, she and they. Poems have lines, stanzas and rhythm. Plays have a cast, scenes, dialogue and stage directions. A firsthand account is by someone who was there; a secondhand account is by someone who learned about it later.', '"I raced outside" is first person. "Lena raced outside" is third person.'],
+  'Reading information: charts and diagrams': ['A chart is part of the text. Read its title, then the labels, then compare the bars against the numbers on the side. To find how many more, subtract the smaller number from the larger.', 'If one bar reaches 8 and another reaches 5, the first is 3 more.']});
 let lessonOf = null, lessonBack = null, lessonAfter = null;
 function lessonTry(){
   let p; for (let k = 0; k < 30; k++){ p = lessonOf[2](false); if (!p.steps && !p.typed) break; }
@@ -1965,7 +2204,7 @@ function lessonTry(){
 }
 function openLesson(sk, back){
   const L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', '']; lessonOf = sk; lessonBack = back;
-  $('ml-h').textContent = "Granny Dot's lesson: " + sk[1]; $('ml-how').textContent = L[0]; $('ml-ex').textContent = L[1] ? 'Example\n' + L[1] : ''; $('ml-ex').hidden = !L[1]; lessonTry();
+  readBtn(); setPic('ml-pic', LPIC[sk[1]]); $('ml-h').textContent = "Granny Dot's lesson: " + sk[1]; $('ml-how').textContent = L[0]; $('ml-ex').textContent = L[1] ? 'Example\n' + L[1] : ''; $('ml-ex').hidden = !L[1]; lessonTry();
   $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = false; $('mhow').classList.remove('pulse'); setReading(false);
 }
 $('mhow').onclick = () => { if (prob && probGrade()) openLesson(probGrade().skills[prob.i], 'q'); };
@@ -1995,34 +2234,195 @@ function celebrate(btn, big){
   }
   beep(1320, .18, 'triangle', .05, 0, .2);
 }
-// read-aloud for listening questions: the tablet app speaks through Android, a browser through its own voices
-let spkId = 0, spkT = 0, speaking = false, ttsBad = false, spkKeep = [];
-const synth = () => window.speechSynthesis;
-const canSpeak = () => { try { return !ttsBad && (window.PupSpeech ? !!window.PupSpeech.ok() : !!(synth() && window.SpeechSynthesisUtterance && synth().getVoices().length)); } catch(e){ return false; } };
-try { if (synth()) synth().getVoices(); } catch(e){}
-function duck(on){ if (MU.out) MU.out.gain.value = on ? .1 : .55; }      // the music steps back while a presentation plays
-function stopSpeak(){ spkId++; clearTimeout(spkT); if (!speaking) return; speaking = false; duck(false); try { if (window.PupSpeech) window.PupSpeech.stop(); else synth().cancel(); } catch(e){} }
-function speakText(text, done){
-  stopSpeak(); const id = ++spkId, fin = ok => { if (id !== spkId) return; spkId++; clearTimeout(spkT); speaking = false; duck(false); done(ok); };
-  speaking = true; duck(true);
-  try {
-    if (window.PupSpeech){ window.pupSpeechDone = ok => fin(ok !== false); window.PupSpeech.speak(text); }
-    else { spkKeep = (text.match(/[^.!?]+[.!?]+["”]?/g) || [text]).map((t, i, a) => { const u = new SpeechSynthesisUtterance(t.trim()); u.lang = 'en-US'; u.rate = .9; if (i === a.length-1) u.onend = () => fin(true); u.onerror = () => fin(false); return u; });
-      spkKeep.forEach(u => synth().speak(u)); }
-  } catch(e){ fin(false); return; }
-  spkT = setTimeout(() => fin(true), text.split(' ').length*700 + 6000);
-}
+// ---- read-aloud. The bundled voice reads by default; the device's own voice is the fallback.
+const ANDROID = /android_asset/.test(location.href);
+const audioCtx = () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){} return AC; };
+// The game's own reading voice (shared with Last Bell): a natural-sounding neural voice (Piper) that runs on the device, off the main thread.
+// It needs no internet once the game is installed. If the device is too slow for it, Speak falls back to the device voice.
+const Voice = {
+  state: 'off', rtf: 0, w: null, n: 0, wait: {}, cache: new Map(), src: null, err: '',
+  base() { return ANDROID ? 'https://populationpup.local/tts/' : new URL('tts/', location.href).href; },
+  ready() { return this.state === 'ready'; },
+  // fast enough to keep up with a child reading along
+  good() { return this.state === 'ready' && this.rtf > 0 && this.rtf < 2.5; },
+  start() {
+    if (this.state !== 'off') return; this.state = 'loading';
+    try {
+      const code = '(' + this.worker.toString() + ')()';
+      this.w = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+      this.w.onerror = e => { this.fail(e.message || 'worker'); };
+      this.w.onmessage = e => {
+        const m = e.data;
+        if (m.t === 'ready') this.test();
+        else if (m.t === 'pcm' || m.t === 'err') { const f = this.wait[m.id]; delete this.wait[m.id]; if (m.t === 'err' && !m.id) this.fail(m.msg); if (f) f(m.t === 'pcm' ? m : null); }
+      };
+      this.w.postMessage({ t: 'init', base: this.base() });
+    } catch (e) { this.fail(String(e)); }
+  },
+  fail(msg) { this.state = 'bad'; this.err = msg; for (const k in this.wait) { this.wait[k](null); } this.wait = {}; try { this.w && this.w.terminate(); } catch (e) {} },
+  raw(text, rate) { return new Promise(res => { const id = ++this.n; this.wait[id] = res; this.w.postMessage({ t: 'syn', id, text, rate }); }); },
+  // time a short sentence once, so a slow tablet uses its own voice instead of making the child wait
+  async test() {
+    await this.raw('Ready.', 1);
+    const m = await this.raw('This is how I sound when I read to you.', 1);
+    if (!m) { this.fail('test'); return; }
+    this.rtf = m.ms / 1000 / (m.pcm.length / m.sr); this.state = 'ready';
+  },
+  // one sentence -> an AudioBuffer (remembered, so a repeat is instant)
+  async get(text, rate) {
+    if (!this.ready() || !audioCtx()) return null;
+    const key = rate + '|' + text; let p = this.cache.get(key);
+    if (!p) {
+      p = this.raw(text, rate).then(m => { if (!m) { this.cache.delete(key); return null; } const b = audioCtx().createBuffer(1, m.pcm.length, m.sr); b.getChannelData(0).set(m.pcm); return b; });
+      this.cache.set(key, p); if (this.cache.size > 60) this.cache.delete(this.cache.keys().next().value);
+    }
+    return p;
+  },
+  play(buf, onEnd) {
+    this.stop();
+    const A = audioCtx(), s = A.createBufferSource(), g = A.createGain(); g.gain.value = 1;
+    s.buffer = buf; s.connect(g); g.connect(A.destination); s.onended = () => { if (this.src === s) { this.src = null; onEnd(); } };
+    this.src = s; s.start();
+  },
+  stop() { const s = this.src; this.src = null; if (s) { try { s.onended = null; s.stop(); } catch (e) {} } },
+  // Runs inside the worker. Kept self-contained: it is turned into text and loaded from a Blob.
+  worker: function () {
+    let B, sess, cfg, phon, q = Promise.resolve();
+    const init = async base => {
+      B = base; importScripts(B + 'ort.wasm.min.js');
+      ort.env.wasm.wasmPaths = B; ort.env.wasm.numThreads = 1;
+      const [mod, cj, buf] = await Promise.all([import(B + 'phonemizer.js'), fetch(B + 'voice.json').then(r => r.json()), fetch(B + 'voice.onnx').then(r => r.arrayBuffer())]);
+      phon = mod.phonemize; cfg = cj;
+      sess = await ort.InferenceSession.create(buf, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
+    };
+    const syn = async (text, rate) => {
+      const t0 = Date.now(), map = cfg.phoneme_id_map, bits = text.split(/([,.!?;:]+)/); let ph = '';
+      for (let i = 0; i < bits.length; i++) {
+        const s = bits[i]; if (!s.trim()) continue;
+        if (i % 2) ph += s[0]; else ph += (ph ? ' ' : '') + (await phon(s.trim(), cfg.espeak.voice || 'en-us')).join(' ');
+      }
+      const ids = [map['^'][0], 0];
+      for (const c of ph) if (map[c]) ids.push(map[c][0], 0);
+      ids.push(map['$'][0]);
+      const inf = cfg.inference || {};
+      const out = await sess.run({
+        input: new ort.Tensor('int64', BigInt64Array.from(ids.map(BigInt)), [1, ids.length]),
+        input_lengths: new ort.Tensor('int64', BigInt64Array.from([BigInt(ids.length)]), [1]),
+        scales: new ort.Tensor('float32', Float32Array.from([inf.noise_scale || .667, (inf.length_scale || 1) / (rate || 1), inf.noise_w || .8]), [3])
+      });
+      const pcm = new Float32Array(out[Object.keys(out)[0]].data);
+      // even loudness from sentence to sentence
+      let pk = 0; for (let i = 0; i < pcm.length; i++) { const a = pcm[i] < 0 ? -pcm[i] : pcm[i]; if (a > pk) pk = a; }
+      if (pk > .01) { const k = .85 / pk; for (let i = 0; i < pcm.length; i++) pcm[i] *= k; }
+      // soft edges so sentences do not click
+      const f = Math.min(400, pcm.length >> 1); for (let i = 0; i < f; i++) { pcm[i] *= i / f; pcm[pcm.length - 1 - i] *= i / f; }
+      return { pcm, sr: cfg.audio.sample_rate, ms: Date.now() - t0 };
+    };
+    onmessage = e => {
+      const m = e.data;
+      q = q.then(async () => {
+        try {
+          if (m.t === 'init') { await init(m.base); postMessage({ t: 'ready' }); }
+          else if (m.t === 'syn') { const r = await syn(m.text, m.rate); postMessage({ t: 'pcm', id: m.id, pcm: r.pcm, sr: r.sr, ms: r.ms }, [r.pcm.buffer]); }
+        } catch (err) { postMessage({ t: 'err', id: m.id || 0, msg: String(err && err.message || err) }); }
+      });
+    };
+  }
+};
+const Speak = {
+  id: 0, on: false, bad: false, done: null, tm: 0, VKEY: 'pocketpup.voice', RKEY: 'pocketpup.rate',
+  dev() { try { return !this.bad && (window.PupSpeech ? !!window.PupSpeech.ok() : !!(window.speechSynthesis && window.SpeechSynthesisUtterance)); } catch (e) { return false; } },
+  can() { return this.dev() || Voice.ready(); },
+  // which voice reads: the game's own natural voice when the device can keep up, unless a grown-up picked another
+  mode() { const want = this.get(this.VKEY, ''); if (want === '*game') return Voice.ready() ? 'game' : 'dev'; if (want) return this.dev() ? 'dev' : 'game'; return Voice.good() || !this.dev() ? 'game' : 'dev'; },
+  duck(d) { try { if (MU.out) MU.out.gain.value = d ? .1 : .55; } catch (e) {} },
+  get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  rate() { return parseFloat(this.get(this.RKEY, '0.95')); },
+  // English voices on this device, best first. Natural-sounding ones are ranked above the robotic defaults.
+  voices() {
+    let list = [];
+    try {
+      if (window.PupSpeech) list = window.PupSpeech.voices ? JSON.parse(window.PupSpeech.voices() || '[]') : [];
+      else list = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)).map(v => ({ name: v.name, lang: v.lang, q: v.localService ? 300 : 320 }));
+    } catch (e) {}
+    const score = v => { const n = v.name.toLowerCase(); let s = v.q || 300;
+      if (/natural|neural|wavenet/.test(n)) s += 200; if (/enhanced|premium|siri/.test(n)) s += 150;
+      if (/samantha|ava|allison|zoe|aria|jenny|michelle|salli|joanna|kendra|ivy|google us english/.test(n)) s += 90;
+      if (/female|#female|-f-|sfg|tpf|iob|iog/.test(n)) s += 20;
+      if (/en[-_]us/i.test(v.lang || n)) s += 60; else if (/en[-_](gb|au)/i.test(v.lang || n)) s += 10;
+      if (/compact|espeak|pico|albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|jester|organ|trinoids|whisper|wobble|zarvox|fred|ralph|junior|kathy|princess|superstar|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley/.test(n)) s -= 400;
+      return s; };
+    return list.map(v => Object.assign(v, { score: score(v) })).sort((a, b) => b.score - a.score);
+  },
+  // on a tablet the engine's own default is used unless a grown-up picked a voice; in a browser, the best-ranked one
+  voiceName() { const want = this.get(this.VKEY, ''), vs = this.voices(); return (vs.find(v => v.name === want) || (window.PupSpeech ? {} : vs[0]) || {}).name || ''; },
+  label() { if (!this.can()) return 'none on this device'; if (this.mode() === 'game') return 'Story voice'; return this.voiceName() ? this.pretty(this.voiceName()) : 'Tablet voice'; },
+  pretty(n) { return String(n || 'Device voice').replace(/^(Microsoft|Google)\s+/i, '').replace(/\s*-\s*English.*$/i, '').replace(/\(.*?\)/g, '').replace(/en[-_]us[-_]x[-_]/i, 'Voice ').replace(/[-_#]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 26); },
+  // make text sound right when spoken: math signs become words, shouted words are not spelled out, gaps become "blank"
+  clean(t) {
+    return String(t)
+      .replace(/[★☆▸▶◀♥♡·•]/g, ' ').replace(/_{2,}/g, ' blank ')
+      .replace(/(\d)\s*\/\s*(\d)/g, '$1 over $2').replace(/\?\s*([+×÷−=])/g, 'what number $1').replace(/=\s*\?/g, 'equals what')
+      .replace(/×/g, ' times ').replace(/÷/g, ' divided by ').replace(/−/g, ' minus ').replace(/(\d)\s*-\s*(\d)/g, '$1 minus $2').replace(/\+/g, ' plus ').replace(/=/g, ' equals ')
+      .replace(/(\d)¢/g, '$1 cents').replace(/(\d)°/g, '$1 degrees').replace(/</g, ' is less than ').replace(/>/g, ' is greater than ').replace(/\bR(\d)/g, 'remainder $1')
+      .replace(/\b([A-Z]{2,})\b/g, w => /^(OK|TV|ABC|II|III|IV)$/.test(w) ? w : w.toLowerCase())
+      .replace(/\.\.\./g, ', ').replace(/\s+/g, ' ').trim();
+  },
+  stop() { this.id++; clearTimeout(this.tm); if (!this.on) return; this.on = false; this.duck(false); Voice.stop(); try { if (window.PupSpeech) window.PupSpeech.stop(); else if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} },
+  // spoken a sentence at a time, so there is a natural breath between sentences and long passages are never cut off
+  say(text) {
+    this.stop(); if (!this.can()) return Promise.resolve(false);
+    const parts = (this.clean(text).match(/[^.!?]+[.!?]+["')]*|[^.!?]+$/g) || []).map(x => x.trim()).filter(x => /[a-z0-9]/i.test(x));
+    if (!parts.length) return Promise.resolve(false);
+    return new Promise(res => {
+      const id = ++this.id, end = ok => { if (id !== this.id) return; this.id++; clearTimeout(this.tm); this.on = false; this.duck(false); res(ok); };
+      this.on = true; this.duck(true);
+      const name = this.voiceName(), rate = this.rate(); let i = 0;
+      if (this.mode() === 'game') {
+        const step = async () => {
+          if (id !== this.id) return; if (i >= parts.length) { end(true); return; }
+          const buf = await Voice.get(parts[i++], rate); if (id !== this.id) return;
+          if (!buf) { end(false); return; }
+          if (i < parts.length) Voice.get(parts[i], rate);
+          Voice.play(buf, () => { this.tm = setTimeout(step, 140); });
+        };
+        step(); return;
+      }
+      const next = ok => {
+        if (id !== this.id) return; clearTimeout(this.tm);
+        if (ok === false || i >= parts.length) { end(ok !== false); return; }
+        const t = parts[i++]; this.done = next; this.tm = setTimeout(() => next(true), 3500 + t.length * 120);
+        try {
+          if (window.PupSpeech) { if (window.PupSpeech.setup) window.PupSpeech.setup(name, rate, 1); window.PupSpeech.speak(t); }
+          else { const u = new SpeechSynthesisUtterance(t), v = speechSynthesis.getVoices().find(x => x.name === name); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US'; u.rate = rate; u.onend = () => next(true); u.onerror = () => next(false); this.keep = u; speechSynthesis.speak(u); }
+        } catch (e) { this.bad = true; end(false); }
+      };
+      next(true);
+    });
+  }
+};
+window.pupSpeechDone = ok => { const f = Speak.done; Speak.done = null; if (f) f(ok !== false); };
+window.pupVoiceState = () => Voice.state + (Voice.err ? ' (' + Voice.err + ')' : '') + ' rtf ' + (Voice.rtf || 0).toFixed(2) + ' mode ' + Speak.mode();
+try { if (window.speechSynthesis) speechSynthesis.getVoices(); } catch(e){}
+const canSpeak = () => Speak.can();
+function stopSpeak(){ Speak.stop(); readBtn(); }
+function speakText(text, done){ Speak.say(text).then(ok => done(ok)); }
+// READ TO ME: any question, lesson or explanation can be read aloud
+let reading = null;
+function readBtn(){ for (const id of ['mread','fx-read','ml-read']){ const b = $(id); if (b){ b.hidden = !canSpeak(); b.textContent = reading === id && Speak.on ? 'Stop' : 'Read to me'; } } }
+function readAloud(id, text){ if (reading === id && Speak.on){ reading = null; Speak.stop(); readBtn(); return; } reading = id; Speak.say(text).then(() => { if (reading === id) reading = null; readBtn(); }); readBtn(); }
 function renderListen(done){
   const on = !!prob.listen && !done && canSpeak(); $('mlisten').hidden = !on; if (!on) return;
-  $('lplay').textContent = speaking ? 'Stop' : prob.heard ? 'Listen again' : 'Listen';
-  $('lmsg').textContent = speaking ? 'Playing: ' + prob.lt : prob.heard ? 'You may listen again as often as you like.' : 'Listen to "' + prob.lt + '". The answer choices appear when it ends.';
+  $('lplay').textContent = Speak.on ? 'Stop' : prob.heard ? 'Listen again' : 'Listen';
+  $('lmsg').textContent = Speak.on ? 'Playing: ' + prob.lt : prob.heard ? 'You may listen again as often as you like.' : 'Listen to "' + prob.lt + '". The answer choices appear when it ends.';
   $('answers').hidden = !prob.heard;
 }
 $('lplay').onclick = () => {
-  if (!prob || !prob.listen) return; if (speaking){ stopSpeak(); renderListen(false); return; }
+  if (!prob || !prob.listen) return; if (Speak.on){ stopSpeak(); renderListen(false); return; }
   const p = prob; speakText(p.lt + '. ' + p.listen, ok => {
-    if (!ok){ ttsBad = true; if (prob === p && !$('mplay').hidden) showProb(); return; }
-    p.heard = true; if (S.math.slate) for (const x of S.math.slate.items) if (x.lt === p.lt) x.heard = true;
+    if (!ok){ Speak.bad = !Voice.ready(); if (prob === p && !$('mplay').hidden) showProb(); return; }
+    p.heard = true; if (S.math.slate) for (const x of S.math.slate.items) if (x && x.lt === p.lt) x.heard = true;
     if (prob === p && !$('mplay').hidden) renderListen(!!p.st); });
   renderListen(false);
 };
@@ -2125,12 +2525,44 @@ async function cloudGrade(p, t){
 }
 async function gradeWrite(p, t){ if (GL.key && navigator.onLine !== false){ const v = await cloudGrade(p, t); if (v) return v; } return localGrade(p, t); }
 // a slate of questions: answer in any order, skip one and come back to it later
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+const dayGoal = () => (GL.goals || {})[G.cur] || 20, dayLimit = () => (GL.limits || {})[G.cur] || 0;
+function dayState(){ const t = today(); if (!S.day || S.day.d !== t){ if (S.day && S.day.n) S.prev = S.day; S.day = {d:t, n:0, r:0, up:[], miss:{}, secs:0}; } return S.day; }
+function dayTick(g, i, ok){ const D = dayState(), nm = g.skills[i][1], st = skState(g.id+':'+i), was = st.M; D.n++; if (ok) D.r++; else D.miss[nm] = (D.miss[nm] || 0) + 1; D.wasM = was; D.lastSkill = nm; }
+const dayDue = () => { const D = dayState(); return !D.met && D.n >= dayGoal(); };
+function nextUp(){ const out = []; for (const gid of [S.math.grade, 'E' + S.math.grade]){ const g = allGrade(gid); if (g) for (const x of standing(g).weak) out.push(x.name); } return out.slice(0, 3); }
+function daySummary(D){ const pct = D.n ? Math.round(D.r/D.n*100) : 0, weak = nextUp(), got = (D.up || []).slice(0, 3);
+  return D.n + ' questions, ' + pct + '% right.' + (got.length ? '\nMastered: ' + got.join(', ') + '.' : '') + (weak.length ? '\nNext up: ' + weak.join(', ') + '.' : '\nNothing is shaky right now. Lovely work.'); }
+function dayModal(h, text, a, b, pin){ $('day-h').textContent = h; $('day-p').textContent = text; $('day-a').textContent = a.t; $('day-a').onclick = a.f; $('day-b').hidden = !b; if (b){ $('day-b').textContent = b.t; $('day-b').onclick = b.f; }
+  $('day-pinrow').hidden = !pin; $('day-pin').value = ''; $('day-fb').textContent = ''; $('daym').hidden = false; ui(); }
+const dayClose = () => { $('daym').hidden = true; ui(); };
+function dayDone(){
+  const D = dayState(); if (D.met) return; D.met = true; const y = new Date(Date.now() - 864e5), yd = y.getFullYear() + '-' + String(y.getMonth()+1).padStart(2,'0') + '-' + String(y.getDate()).padStart(2,'0');
+  S.streak = S.streak && S.streak.last === yd ? {n:S.streak.n + 1, last:D.d} : S.streak && S.streak.last === D.d ? S.streak : {n:1, last:D.d};
+  S.bones += 15; session += 15; chime(); if (S.streak.n >= 5) award('week', 'Five days in a row', 1, true); save();
+  dayModal("Today's goal is done!", daySummary(D) + '\n\n+15 bones. ' + (S.streak.n > 1 ? S.streak.n + ' days in a row!' : 'That is day one of a new streak.'),
+    {t:'Save and stop for today', f:() => { dayClose(); $('math').hidden = true; oneShot = null; save(); showSplash(); }}, {t:'Keep playing', f:() => { dayClose(); if (!$('math').hidden && $('mfix').hidden && $('mlesson').hidden) nextProb(); }});
+}
+function welcomeBack(){ const D0 = S.day, t = today(); if (!D0 || D0.d === t || !D0.n){ dayState(); return; } dayState(); const st = S.streak && (new Date(t) - new Date(S.streak.last)) <= 864e5*1.5 ? S.streak.n : 0;
+  dayModal('Welcome back, ' + S.name + '!', 'Last time: ' + daySummary(D0) + '\n\n' + (st ? 'Your streak is ' + st + (st === 1 ? ' day' : ' days') + '. ' : '') + "Today's goal is " + dayGoal() + ' questions.', {t:"Let's go", f:dayClose}); }
+// a grown-up can cap play time per day; when it runs out the game wraps up and needs the code to go on
+function dayClock(dt){ if (!S.adopted || !G.cur || !$('splash').hidden || document.hidden) return; const D = dayState(), lim = dayLimit(), now = Date.now(); D.secs = (D.secs || 0) + Math.min(2, (now - (dayClock.t || now))/1000); dayClock.t = now;      // real seconds, however fast the screen is drawing
+  if (lim && !D.more && D.secs >= lim*60 && $('daym').hidden){ save();
+    dayModal('Time is up for today', "You have played for " + lim + " minutes, which is today's limit.\n" + daySummary(D) + '\n\nA grown-up can type the code to keep going.',
+      {t:'Save and stop', f:() => { dayClose(); $('math').hidden = true; oneShot = null; save(); showSplash(); }}, {t:'Keep going', f:() => { if (GL.pin && $('day-pin').value.trim() !== GL.pin){ $('day-fb').textContent = 'That is not the code.'; return; } D.more = true; dayClose(); }}, !!GL.pin); } }
 const TYPED_GAP = 10, SLATE_N = 8, single = () => !!oneShot || rescue > 0;      // gathering, stew and rescues ask one question at a time instead
 function makeProb(gid){
-  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), h = skState(g.id+':'+i).m > .5, m0 = S.math; let p = g.skills[i][2](h);
+  const g = gid ? allGrade(gid) : curGrade(), i = pickSkill(g), h = boxOf(skState(g.id+':'+i)) >= 2, m0 = S.math; let p = g.skills[i][2](h);
+  m0.seen = m0.seen || []; const sig = x => (x.q + '|' + (x.lt || '') + (x.pass || '').slice(0, 60)).slice(0, 160);
+  for (let k = 0; k < 8 && m0.seen.includes(sig(p)); k++) p = g.skills[i][2](h);      // not the same question again so soon
   for (let k = 0; k < 20 && p.typed && (single() || (m0.tq || 0) < TYPED_GAP); k++) p = g.skills[i][2](k < 19 && h);      // typed questions are kept rare, and out of gathering and rescues
-  m0.tq = p.typed ? 0 : (m0.tq || 0) + 1; p.i = i; p.gid = g.id; p.list = p.steps || p.typed ? [] : choices(p);
-  if (!gid || !single()) if (h && typeof p.ans === 'number' && p.ans >= 0 && !p.opts && !single() && Math.random() < .4) p.num = 1;      // the real test often has her type a number instead of choosing one if (p.steps) for (const x of p.steps) x.list = shuffle([].concat(x.ans, x.opts)); if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts)); p.st = 0; S.math.lastI = i;
+  m0.seen.push(sig(p)); if (m0.seen.length > 24) m0.seen.shift();
+  m0.tq = p.typed ? 0 : (m0.tq || 0) + 1; p.i = i; p.gid = g.id; p.tag = pickTag; p.list = p.steps || p.typed ? [] : choices(p);
+  // the real test often has her type a number instead of choosing one
+  if (h && typeof p.ans === 'number' && p.ans >= 0 && !p.opts && !single() && Math.random() < .4) p.num = 1;
+  if (p.steps) for (const x of p.steps) x.list = shuffle([].concat(x.ans, x.opts));
+  if (p.partB) p.partB.list = shuffle([p.partB.ans].concat(p.partB.opts));
+  p.st = 0;
   if (!gid && S.math.subject === 'mix') S.math.mixNext = curSub() === 'math' ? 'ela' : 'math';      // with Both chosen, single questions take turns
   return p;
 }
@@ -2138,23 +2570,25 @@ function slate(){
   const m = S.math, key = m.grade + '|' + (m.subject || 'math');
   if (!m.slate || m.slate.key !== key || !m.slate.items || !m.slate.items.length){
     const gidOf = k => ((m.subject === 'mix' ? k % 2 === 1 : m.subject === 'ela') ? 'E' : '') + m.grade;     // and a slate takes turns too: math, English, math, English
-    m.slate = {key, g:gidOf(0), cur:0, paid:false, items:[]}; for (let k = 0; k < SLATE_N; k++) m.slate.items.push(makeProb(gidOf(k))); }
+    m.slate = {key, cur:0, paid:false, items:[], gids:[]}; for (let k = 0; k < SLATE_N; k++){ m.slate.items.push(null); m.slate.gids.push(gidOf(k)); } }
   return m.slate;
 }
+const slateGet = k => { const sl = slate(); return sl.items[k] || (sl.items[k] = makeProb((sl.gids || [])[k] || sl.g || undefined)); };
+const openAt = p => !p || !p.st;
 function nextProb(){
   if (single()){ prob = makeProb(); showProb(); return; }
-  const sl = slate(); let k = sl.items.findIndex((p,j) => j >= sl.cur && !p.st); if (k < 0) k = sl.items.findIndex(p => !p.st);
+  const sl = slate(); let k = sl.items.findIndex((p,j) => j >= sl.cur && openAt(p)); if (k < 0) k = sl.items.findIndex(openAt);
   if (k < 0){ slateDone(); return; }
-  sl.cur = k; prob = sl.items[k]; showProb();
+  sl.cur = k; prob = slateGet(k); showProb();
 }
 function renderStrip(){
   const strip = $('slate'), sl = single() || !curGrade() ? null : slate(); strip.textContent = ''; strip.hidden = !sl; if (!sl) return;
-  sl.items.forEach((p,j) => { const b = el('button', p.st === 1 ? 'ok' : p.st === 2 ? 'no' : '', String(j+1)); b.type = 'button'; b.id = 'sl-' + j;
+  sl.items.forEach((p0,j) => { const p = p0 || {}, b = el('button', p.st === 1 ? 'ok' : p.st === 2 ? 'no' : '', String(j+1)); b.type = 'button'; b.id = 'sl-' + j;
     if (j === sl.cur && $('msum').hidden) b.setAttribute('aria-current', 'true'); b.setAttribute('aria-label', 'Question ' + (j+1) + (p.st === 1 ? ', right' : p.st === 2 ? ', missed' : ', not answered yet'));
-    b.onclick = () => { sl.cur = j; prob = p; showProb(); }; strip.appendChild(b); });
-  if (!prob.st && $('msum').hidden && sl.items.filter(p => !p.st).length > 1){ const b = el('button', 'skip', 'Skip'); b.type = 'button'; b.id = 'mskip'; b.onclick = skipProb; strip.appendChild(b); }
+    b.onclick = () => { sl.cur = j; prob = slateGet(j); showProb(); }; strip.appendChild(b); });
+  if (!prob.st && $('msum').hidden && sl.items.filter(openAt).length > 1){ const b = el('button', 'skip', 'Skip'); b.type = 'button'; b.id = 'mskip'; b.onclick = skipProb; strip.appendChild(b); }
 }
-function skipProb(){ const sl = slate(), n = sl.items.length; for (let d = 1; d <= n; d++){ const j = (sl.cur + d) % n; if (!sl.items[j].st){ sl.cur = j; prob = sl.items[j]; showProb(); return; } } }
+function skipProb(){ const sl = slate(), n = sl.items.length; for (let d = 1; d <= n; d++){ const j = (sl.cur + d) % n; if (openAt(sl.items[j])){ sl.cur = j; prob = slateGet(j); showProb(); return; } } }
 // passages use **bold** for a title and [[double brackets]] for underlined words
 function setPass(elm, text){ elm.hidden = !text; elm.innerHTML = (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[\[(.+?)\]\]/g,'<u>$1</u>'); elm.scrollTop = 0; }
 // answer buttons: short answers sit two to a row, sentence-length ones take a full row each
@@ -2179,10 +2613,10 @@ function fillSpecial(box, p, done){
     cb = el('button', 'wide check', 'Use these ' + need + ' in my essay'); cb.type = 'button'; cb.id = 'ans-check'; cb.disabled = true; cb.onclick = () => next(two.slice(), cb); box.appendChild(cb); return;
   }
   if (p.multi){
-    const sel = done ? (p.pick || []) : [], need = p.ans.length, btns = [];
-    const check = () => { const c = el('button', 'wide check', 'Check my ' + need + ' answers'); c.type = 'button'; c.id = 'ans-check'; c.disabled = true; c.onclick = () => { p.pick = sel.slice(); settle(sel.every(v => p.ans.includes(v)), c); }; box.appendChild(c); return c; };
+    const sel = done ? (p.pick || []) : [], need = p.all ? 99 : p.ans.length, btns = [];      // p.all: pick every right answer, and she is not told how many there are
+    const check = () => { const c = el('button', 'wide check', p.all ? 'Check my answers' : 'Check my ' + need + ' answers'); c.type = 'button'; c.id = 'ans-check'; c.disabled = true; c.onclick = () => { p.pick = sel.slice(); settle(sel.length === p.ans.length && sel.every(v => p.ans.includes(v)), c); }; box.appendChild(c); return c; };
     p.list.forEach((v,j) => { const b = mk(v, done ? (p.ans.includes(v) ? 'ok' : sel.includes(v) ? 'no' : '') : '', 'ans-' + j); btns.push(b);
-      if (done) b.disabled = true; else b.onclick = () => { const k = sel.indexOf(v); if (k >= 0) sel.splice(k,1); else { if (sel.length >= need) btns[p.list.indexOf(sel.shift())].classList.remove('on'); sel.push(v); } b.classList.toggle('on', sel.includes(v)); cb.disabled = sel.length !== need; }; });
+      if (done) b.disabled = true; else b.onclick = () => { const k = sel.indexOf(v); if (k >= 0) sel.splice(k,1); else { if (sel.length >= need) btns[p.list.indexOf(sel.shift())].classList.remove('on'); sel.push(v); } b.classList.toggle('on', sel.includes(v)); cb.disabled = p.all ? !sel.length : sel.length !== need; }; });
     const cb = done ? null : check(); return;
   }
   const pick = done ? (p.pick || []) : [], partA = () => {
@@ -2198,10 +2632,10 @@ function showProb(){
   // a presentation's words stay hidden while it can be heard; they appear once the question is settled, or on a device with no voice
   const text = st ? essayPass(prob, done) : lis ? (done ? '**' + prob.lt + '**\n' + lis : canSpeak() ? '' : '**' + prob.lt + '**\n(This device cannot read aloud, so read the presentation instead.)\n' + lis) : prob.pass;
   setPass($('mpass'), text); setReading(!!text && text.length > 300); if (st && !prob.maze && (done || prob.sel.length)) $('mpass').scrollTop = 1e6;
-  const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mskill').textContent = s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
+  setPic('mpic', prob.pic); const q = cur ? cur.q : prob.q; $('q').textContent = q; $('q').className = q.length > 16 || text || lis ? 'q long' : 'q'; $('mskill').textContent = (prob.tag ? prob.tag + ' · ' : '') + s[1] + ' · CCSS ' + (g.ela ? 'ELA ' : '') + s[0];
   $('fb').textContent = done ? (prob.st === 1 ? 'You got this one right.' : 'Missed. ' + (st ? (prob.maze ? 'The right words are shown.' : 'The strong response is shown.') : prob.sol)) : oneShot ? oneShot.label : rescue > 0 ? rescue + ' more to find ' + S.name : S.math.streak >= 3 ? S.math.streak + ' in a row!' : '';
   if (prob.num) fillNum($('answers'), prob, done); else if (prob.typed) fillTyped($('answers'), prob, done); else if (prob.multi || prob.partB || st) fillSpecial($('answers'), prob, done); else fillAnswers($('answers'), prob, done, answer, 'ans-');
-  renderListen(done); $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
+  renderListen(done); readBtn(); $('mread').hidden = !canSpeak() || (!!prob.listen && !done); $('math-h').textContent = (g.ela ? 'English' : 'Math') + ' for bones'; renderProgress(); renderStrip();
 }
 function slateDone(){
   const sl = slate(), right = sl.items.filter(p => p.st === 1).length, n = sl.items.length, bonus = right === n ? 10 : right >= n-2 ? 4 : 0, box = $('msum-l');
@@ -2209,32 +2643,32 @@ function slateDone(){
   $('mplay').hidden = true; $('msum').hidden = false; box.textContent = ''; setReading(false);
   $('msum-h').textContent = right + ' of ' + n + ' right' + (bonus ? '. Slate bonus +' + bonus + ' bones!' : '.');
   sl.items.forEach((p,j) => { if (p.st !== 2) return; const row = el('div','item'), info = el('div'); info.appendChild(el('b','', 'Question ' + (j+1) + ': ' + p.q)); info.appendChild(document.createTextNode(p.sol + ' This skill will come back for more practice.')); row.appendChild(info); box.appendChild(row); });
-  box.hidden = right === n; renderStrip(); $('mearn').textContent = 'Earned ' + session + ' bones'; ui();
+  box.hidden = right === n; renderStrip(); $('mearn').textContent = earnText(); ui();
 }
 $('mnew').onclick = () => { S.math.slate = null; nextProb(); };
 function answer(v, b){ if (mathLock || !prob) return; prob.pick = v; settle(v === prob.ans, b); }
 function settle(ok, b){
   if (mathLock || !prob) return; mathLock = true;
   const m = S.math, g = probGrade(), st = skState(g.id+':'+prob.i), was = isMastered(st), special = prob.multi || prob.partB || prob.steps || prob.typed || prob.num;
-  prob.st = ok ? 1 : 2;
-  st.n++; st.last = m.n; m.n++;
+  prob.st = ok ? 1 : 2; record(g, prob.i, ok);
   if (special){ if (prob.num) fillNum($('answers'), prob, true); else if (prob.typed) fillTyped($('answers'), prob, true); else fillSpecial($('answers'), prob, true); b = [...$('answers').querySelectorAll('button')].find(x => x.classList.contains('ok')) || $('answers'); if (prob.steps){ setPass($('mpass'), essayPass(prob, true)); $('q').textContent = prob.q; } }
   if (ok){
-    m.streak++; st.m += (1-st.m)*.25; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (prob.steps ? 3 : prob.typed === 'write' ? 4 : prob.typed ? 2 : special ? 1 : 0);
+    m.streak++; const bonus = m.streak % 5 === 0, r = 1 + Math.ceil(gradeIdx(g)/2) + (was ? 0 : 1) + (bonus ? 3 : 0) + (prob.steps ? 3 : prob.typed === 'write' ? 4 : prob.typed ? 2 : special ? 1 : 0);
     S.bones += r; session += r; b.classList.add('ok'); celebrate(b, bonus || (!was && isMastered(st))); warmEgg(m.streak >= 3 ? 2 : 1); if (!was && isMastered(st)) rankCheck();
     $('fb').textContent = (!was && isMastered(st) ? 'Skill mastered! +' : 'Correct! +') + r + (r === 1 ? ' bone' : ' bones') + (bonus ? ' with a streak bonus' : ''); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
     if (rescue > 0){ rescue--; if (rescue) $('fb').textContent += ' · ' + rescue + ' more to find ' + S.name; else setTimeout(comeHome, 700); }
-    renderProgress(); ui(); save();
+    if (!was && isMastered(st)) dayState().up.push(g.skills[prob.i][1]);
+    renderProgress(); ui(); save(); if (dayDue()){ const cur1 = prob; setTimeout(() => { if (prob === cur1) dayDone(); }, 900); }
     if (oneShot){ const o = oneShot, fin = () => { $('math').hidden = true; o.fn(true); ui(); }; oneShot = null; setTimeout(() => { if ($('mlesson').hidden) fin(); else lessonAfter = fin; }, 800); return; }
     renderStrip(); const cur0 = prob;
-    setTimeout(() => { if (!$('math').hidden && !showSkills && curGrade() && prob === cur0 && $('mlesson').hidden) nextProb(); }, 1000);
+    setTimeout(() => { if (!$('math').hidden && !showSkills && curGrade() && prob === cur0 && $('mlesson').hidden && $('daym').hidden) nextProb(); }, 1000);
     return;
   }
   // A miss stops play: Granny Dot explains this exact problem, then a fresh one on the same skill must be answered correctly.
-  m.streak = 0; st.m *= .55; m.redo.push({g:g.id, i:prob.i, at:m.n+2});
+  m.streak = 0;
   if (!special){ b.classList.add('no'); [...$('answers').children].forEach((o,j) => { if (prob.list[j] === prob.ans) o.classList.add('ok'); }); }
   $('fb').textContent = 'Not quite. Let us work it out together.'; beep(220,.2,'sine',.06,.7);
-  m.fix = {gid:g.id, i:prob.i}; fixMissed = prob;
+  m.fix = {gid:g.id, i:prob.i, need:st.miss >= 3 ? 3 : 1, got:0}; fixMissed = prob;      // a skill that keeps going wrong gets the lesson and three proof questions
   if (oneShot){ const o = oneShot; oneShot = null; fixResume = () => { $('math').hidden = true; o.fn(true); ui(); }; }          // prove the skill and the gathering still pays
   else if (rescue > 0) fixResume = () => { rescue--; if (rescue > 0) nextProb(); else comeHome(); };
   else fixResume = null;
@@ -2288,28 +2722,36 @@ function openFix(){
   const f = S.math.fix, g = f && allGrade(f.gid); if (!g || !g.skills[f.i]){ S.math.fix = null; fixLocks(false); nextProb(); return; }
   const sk = g.skills[f.i], L = LESSON[sk[1]] || ['Read the question slowly and work it out one step at a time.', ''], m0 = fixMissed, steps = m0 ? (explain(m0) || (m0.why ? ['Why: ' + m0.why] : null)) : null;
   $('mplay').hidden = true; $('mlist').hidden = true; $('msum').hidden = true; $('slate').hidden = true; $('mlesson').hidden = true; $('mup').hidden = true; $('mgrown').hidden = true; $('mfix').hidden = false; fixLocks(true); setReading(false); stopSpeak();
-  $('fx-h').textContent = "Granny Dot: let's work it out"; $('fx-fb').textContent = '';
+  $('fx-h').textContent = (f.need || 1) > 1 ? "Granny Dot's lesson: prove it, " + ((f.got || 0) + 1) + ' of ' + f.need : "Granny Dot: let's work it out"; $('fx-fb').textContent = '';
   $('fx-steps').hidden = !m0; if (m0) setPass($('fx-steps'), (m0.listen ? '**What you heard: ' + m0.lt + '**\n' + m0.listen + '\n\n' : m0.pass && m0.pass.length < 260 ? m0.pass + '\n\n' : '') + 'The question: ' + m0.q + '\n' + (m0.typed && m0.pick ? 'You wrote: ' + m0.pick + '\n' : '') + (m0.why || !explain(m0) ? m0.sol + '\n' : '') + (steps ? steps.join('\n') : ''));
   $('fx-tip').textContent = 'How it works: ' + L[0] + (!steps && L[1] ? '\n\nExample: ' + L[1] : '');
   let p; for (let k = 0; k < 30; k++){ p = sk[2](false); if (p.listen) p.pass = '**' + p.lt + '** (read it this time)\n' + p.listen; if (!p.multi && !p.partB && !p.steps && !p.typed && (!m0 || p.q + (p.pass || '') !== m0.q + (m0.pass || ''))) break; }   // the retry is always a plain one-answer question
-  p.list = choices(p); fixProb = p; fixLock = false;
+  p.list = choices(p); fixProb = p; fixLock = false; readBtn(); setPic('fx-pic', p.pic);
   setPass($('fx-pass'), p.pass); $('fx-q').textContent = 'Now you try: ' + p.q;
   fillAnswers($('fx-answers'), p, false, checkAnswer, 'fx-');
 }
 function checkAnswer(v, b){
-  if (fixLock) return; fixLock = true; const f = S.math.fix, st = skState(f.gid+':'+f.i);
+  if (fixLock) return; fixLock = true; const f = S.math.fix, st = skState(f.gid+':'+f.i), need = f.need || 1;
   if (v === fixProb.ans){
-    b.classList.add('ok'); st.m += (1-st.m)*.15; celebrate(b, false); $('fx-fb').textContent = 'That is it. You have got it!'; beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
+    f.got = (f.got || 0) + 1; const more = f.got < need;
+    b.classList.add('ok'); celebrate(b, !more && need > 1); beep(660,.1,'triangle',.07); beep(990,.15,'triangle',.07,0,.1);
+    $('fx-fb').textContent = more ? 'Yes! ' + (need - f.got) + ' more to prove it.' : need > 1 ? 'Proved it! This skill is yours.' : 'That is it. You have got it!';
+    if (more){ fixMissed = null; save(); setTimeout(openFix, 1100); return; }
+    if (need > 1){ st.M = true; st.slip = 0; st.miss = 0; st.box = Math.max(2, boxOf(st)); rankCheck(); }      // passing the proof counts as mastery
     S.math.fix = null; const r = fixResume; fixResume = null; fixMissed = null; save();
     setTimeout(() => { $('mfix').hidden = true; fixLocks(false); if (r) r(); else if (!$('math').hidden) nextProb(); }, 1200);
   } else {
     b.classList.add('no'); [...$('fx-answers').children].forEach((o,j) => { if (fixProb.list[j] === fixProb.ans) o.classList.add('ok'); });
-    fixProb.pick = v; fixMissed = fixProb; st.m *= .85; $('fx-fb').textContent = 'Not yet. Look at the steps, then try another one.'; beep(220,.2,'sine',.06,.7); save();
+    fixProb.pick = v; fixMissed = fixProb; $('fx-fb').textContent = 'Not yet. Look at the steps, then try another one.'; beep(220,.2,'sine',.06,.7); save();
     setTimeout(openFix, 2000);
   }
 }
 $('subject').onchange = e => { S.math.subject = e.target.value; S.math.mixNext = 'math'; showSkills = false; save(); renderMath(); };
 $('grade').onclick = openGrown;
+$('mread').onclick = () => { if (!prob) return; const st = prob.steps && !prob.st ? prob.steps[Math.min(prob.sel.length, prob.steps.length-1)] : null, list = st ? st.list : prob.partB && prob.pick ? prob.partB.list : prob.list || [];
+  readAloud('mread', $('q').textContent + '. ' + (prob.num || prob.typed || prob.listen && !prob.heard ? '' : list.map(fmt).join('. ') + '.')); };
+$('fx-read').onclick = () => readAloud('fx-read', $('fx-steps').textContent + '. ' + $('fx-tip').textContent + '. ' + $('fx-q').textContent);
+$('ml-read').onclick = () => readAloud('ml-read', $('ml-how').textContent + '. ' + $('ml-ex').textContent);
 $('mshow').onclick = () => { showSkills = !showSkills; renderMath(); };
 
 /* ---------- shop ---------- */
@@ -2363,7 +2805,7 @@ $('sdone').onclick = () => { $('shop').hidden = true; ui(); };
 $('away-go').onclick = startRescue;
 $('away-other').onclick = () => { tab = 'dogs'; openShop(); };
 $('w-done').onclick = () => { $('world').hidden = true; ui(); };
-const paused = () => !$('world').hidden || !$('hatchm').hidden || !$('pausem').hidden || !$('splash').hidden || !$('build').hidden || !$('awaym').hidden || !$('math').hidden || !$('shop').hidden || (S.adopted && !$('adopt').hidden);
+const paused = () => !$('daym').hidden || !$('world').hidden || !$('hatchm').hidden || !$('pausem').hidden || !$('splash').hidden || !$('build').hidden || !$('awaym').hidden || !$('math').hidden || !$('shop').hidden || (S.adopted && !$('adopt').hidden);
 
 /* ---------- quest: rebuilding Woofwood Valley ---------- */
 let MW = 78, MH = 38; const TS = () => 56*U;
@@ -3190,7 +3632,10 @@ function switchGame(id){ if (G.cur === id) return; save(); G.cur = id; saveGames
 function playGame(id){
   switchGame(id); $('splash').hidden = true; pop();
   if (!S.adopted) openAdopt('first'); else if (S.at === 'quest' && scene !== 'quest') arrive('quest'); ui();   // Continue picks up where you stopped: at home or in the valley
+  if (S.adopted) welcomeBack();
+  setTimeout(() => { audioCtx(); Voice.start(); }, 1500);
 }
+if (location.hash === '#voicetest') setTimeout(() => Voice.start(), 500);      // lets the app shells be checked without tapping through the game
 function deleteGame(id){
   try { localStorage.removeItem(gkey(id)); } catch(e){}
   G.list = G.list.filter(g => g.id !== id); if (GL.grades) delete GL.grades[id]; saveLock();
@@ -3205,9 +3650,15 @@ $('newgame').addEventListener('submit', e => {
   const id = newId(); save(); G.list.push({id, name:nm}); $('gname').value = ''; $('gname').blur(); playGame(id);
 });
 // Pause stops the clock and saves on the spot. The game also saves by itself every few seconds and whenever it is closed or put in the background.
-function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true; save(); $('pause-h').textContent = 'Game paused'; $('pause-p').textContent = S.name + "'s game is saved. It is safe to close it now, and you will pick up right here next time."; $('pausem').hidden = false; ui(); }
+function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true; save(); renderOpts(); $('pause-h').textContent = 'Game paused'; $('pause-p').textContent = S.name + "'s game is saved. It is safe to close it now, and you will pick up right here next time."; $('pausem').hidden = false; ui(); }
 $('pause').onclick = pauseGame;
-$('resume').onclick = () => { $('pausem').hidden = true; ui(); };
+// Options: which voice reads aloud, and how fast
+const RATES = [['Slow', '0.8'], ['Normal', '0.95'], ['Fast', '1.1']];
+function renderOpts(){ $('opt-voice').textContent = Speak.label() + (Voice.state === 'loading' ? ' (story voice loading)' : ''); const r = Speak.get(Speak.RKEY, '0.95'); $('opt-rate').textContent = (RATES.find(x => x[1] === r) || RATES[1])[0]; }
+$('opt-voice').onclick = () => { const names = [''].concat(Voice.ready() ? ['*game'] : [], Speak.dev() ? Speak.voices().slice(0, 4).map(v => v.name) : []), cur = Speak.get(Speak.VKEY, ''), nx = names[(names.indexOf(cur) + 1) % names.length]; Speak.set(Speak.VKEY, nx); renderOpts(); };
+$('opt-rate').onclick = () => { const r = Speak.get(Speak.RKEY, '0.95'), k = RATES.findIndex(x => x[1] === r); Speak.set(Speak.RKEY, RATES[(k + 1) % RATES.length][1]); renderOpts(); };
+$('opt-test').onclick = () => { Speak.say('Hello, ' + S.name + '. This is how I sound when I read to you.'); };
+$('resume').onclick = () => { Speak.stop(); $('pausem').hidden = true; ui(); };
 $('totitle').onclick = () => { $('pausem').hidden = true; save(); showSplash(); };
 window.pocketSave = save;
 
@@ -3376,6 +3827,34 @@ setInterval(musicTick, 180);
 document.addEventListener('pointerdown', () => { MU.ok = true; }, {once:true});
 $('mus').onclick = () => { S.music = !S.music; MU.name = ''; ui(); save(); };
 
+// Self-check for grown-ups and for testing: pupCheck() makes many questions per skill and lists anything wrong with them.
+window.pupCheck = (n, only) => { const bad = [], seen = {}; n = n || 300;
+  for (const G0 of GRADES) for (const gid of [G0.id, 'E' + G0.id]){ const g = allGrade(gid); if (!g || (only && !only.includes(gid))) continue;
+    g.skills.forEach((sk, i) => { const where = gid + ' ' + sk[1], note = (t, p) => { const k = where + ': ' + t; if (!seen[k]){ seen[k] = 1; bad.push(k + ' | ' + String(p && p.q).slice(0, 90)); } };
+      if (!LESSON[sk[1]]) note('no lesson');
+      for (let k = 0; k < n; k++){ let p; try { p = sk[2](k % 2 === 0); } catch(e){ note('crashed: ' + e.message); break; }
+        if (!p || !p.q || !p.sol) { note('no question or solution', p); continue; }
+        if (/undefined|NaN|\[object/.test(p.q + ' ' + p.sol + ' ' + (p.why || '') + ' ' + (p.pass || ''))) note('broken text', p);
+        const sets = p.steps ? p.steps.map(x => ({ans:x.ans, opts:x.opts, multi:x.multi})) : p.typed ? [] : [p].concat(p.partB ? [{ans:p.partB.ans, opts:p.partB.opts}] : []);
+        if (p.typed && (p.ans == null || p.ans === '')) note('typed question with no answer', p);
+        for (const x of sets){ const right = [].concat(x.ans);
+          if (!right.length || right.some(v => v == null || v === '' || (typeof v === 'number' && !isFinite(v)))) { note('missing answer', p); continue; }
+          const list = x === p && !p.multi ? choices(p) : right.concat(x.opts || []), txt = list.map(String);
+          if (new Set(txt).size !== txt.length) note('duplicate choice ' + JSON.stringify(txt), p);
+          if (!right.every(v => list.includes(v))) note('answer not among the choices', p);
+          const want = x.opts ? Math.min(3, 1 + new Set(x.opts.filter(v => !right.includes(v)).map(String)).size) : 4;      // some questions rightly have two or three choices (greater or less, < > =)
+          if (list.length < want) note('fewer choices than expected: ' + JSON.stringify(txt), p);
+          const fv = v => { const m = /^(\d+)\/(\d+)$/.exec(String(v)); return m ? m[1]/m[2] : String(v); };      // 2/4 and 1/2 count as the same answer
+          if ((x !== p || p.multi) && x.opts && x.opts.some(v => right.some(r => fv(r) === fv(v)))) note('a wrong choice equals the answer', p);
+          if (typeof p.ans === 'number' && x === p && (p.ans < 0 && !/[−-]/.test(p.q + p.sol))) note('negative answer', p); }
+        const chk = /^([\d,]+) ([+−×÷]) ([\d,]+) = \?$/.exec(p.q);      // plain arithmetic is worked out again to check the answer key
+        if (chk){ const a = +chk[1].replace(/,/g,''), b = +chk[3].replace(/,/g,''), v = chk[2] === '+' ? a+b : chk[2] === '−' ? a-b : chk[2] === '×' ? a*b : a/b; if (Math.abs(v - p.ans) > 1e-9) note('wrong answer key: expected ' + v + ', has ' + p.ans, p); } } }); }
+  return bad; };
+// pupSim(): 300 answers from a pretend student who is weak in three skills, to see how the picker shares out the questions
+window.pupSim = (gid, weakN, total) => { const keep = JSON.stringify(S.math), g = allGrade(gid || '4'); S.math = Object.assign({}, fresh().math, {grade:g.id.replace(/^E/, '')}); const dk = S.day; S.day = null;
+  const weak = g.skills.slice(0, weakN || 3).map(x => x[1]), count = {}; for (let k = 0; k < (total || 300); k++){ const i = pickSkill(g), nm = g.skills[i][1]; count[nm] = (count[nm] || 0) + 1; record(g, i, Math.random() < (weak.includes(nm) ? .45 : .92)); }
+  S.math = JSON.parse(keep); S.day = dk; const w = weak.reduce((a, nm) => a + (count[nm] || 0), 0), others = g.skills.map(x => x[1]).filter(nm => !weak.includes(nm));
+  return {weakShare:Math.round(w/(total || 300)*100) + '%', weak:weak.map(nm => nm + ': ' + (count[nm] || 0)), fewestOther:Math.min(...others.map(nm => count[nm] || 0)), missing:others.filter(nm => !count[nm])}; };
 /* ---------- HUD ---------- */
 let toastT;
 function toast(msg, ms){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms || 2600); }
@@ -3529,7 +4008,7 @@ function render(){
 }
 function frame(now){
   const dt = Math.min(.05, (now-prev)/1000 || 0); prev = now;
-  if (paused()) stepTrans(dt); else tick(dt);   // a scene fade always finishes, even behind an open window
+  dayClock(dt); if (paused()) stepTrans(dt); else tick(dt);   // a scene fade always finishes, even behind an open window
   render();
   uiT += dt; if (uiT > .25){ uiT = 0; ui(); }
   saveT += dt; if (saveT > 5){ saveT = 0; save(); }

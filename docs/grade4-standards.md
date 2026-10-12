@@ -72,8 +72,9 @@ Every Grade 4 Common Core standard that can be asked on a screen, and the skill 
 Each skill sits in a box from 0 (shaky) to 4 (solid). A right answer moves it up one box; a miss sends it to box 0.
 
 - A missed skill comes back three questions later, marked "One more try". At most one question in three is a retry, and a skill has one retry waiting at a time.
-- Each round deals every skill that is due: boxes 0 and 1 every round (box 0 twice), then every second, third and fourth round for boxes 2, 3 and 4. Solid skills come back marked "Review".
+- Each round deals every skill that is due: boxes 0 and 1 every round, then every second, third and fourth round for boxes 2, 3 and 4. Box-0 skills are dealt twice in a round, unless that would give them more than a third of it. Solid skills come back marked "Review".
+- The same skill is never asked twice in a row.
 - Mastery is four right in a row with at least five answered, or passing Granny Dot's three proof questions after a lesson. Two later misses take mastery away.
 - A miss still stops play for Granny Dot's explanation and a follow-up question. After three misses on a skill the follow-up becomes the lesson and three proof questions.
 
-In a 300-answer simulation of a student weak in three Grade 4 math skills, those three took about a third of the questions (28 to 37 percent over several runs) and every other skill came up at least six times. `pupSim()` in the browser console repeats it; `pupCheck()` runs the question self-check.
+In 300-answer simulations of a student weak in three skills, those three took 20 to 35 percent of Grade 4 math questions and 33 to 49 percent of Grade 4 English questions (English has fewer skills, so three weak ones are a bigger share of it), and every other skill came up at least six times. `pupSim()` in the browser console repeats this and also checks the rules above on every pick: no skill twice in a row, no two retries within three questions, one waiting retry per skill, and mastery only after four in a row and five answered. `pupCheck()` runs the question self-check.

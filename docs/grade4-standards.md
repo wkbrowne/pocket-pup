@@ -69,28 +69,42 @@ Every Grade 4 Common Core standard that can be asked on a screen, and the skill 
 
 ## How practice adapts
 
-Each skill sits in a box from 0 (shaky) to 4 (solid). A right answer moves it up one box; a miss sends it to box 0.
+The learning engine is shared in design with Last Bell.
 
-- A missed skill comes back three questions later, marked "One more try". At most one question in three is a retry, and a skill has one retry waiting at a time.
-- Each round deals every skill that is due: boxes 0 and 1 every round, then every second, third and fourth round for boxes 2, 3 and 4. Box-0 skills are dealt twice in a round, unless that would give them more than a third of it. Solid skills come back marked "Review".
-- The same skill is never asked twice in a row.
-- New skills arrive a few at a time, in the order they are taught: enough to have six going in each subject, then four more a day (a grown-up can set 2, 4, 6 or no limit). While nothing she has started is shaky, the next new skill comes early, so a child who is getting everything right sets her own pace.
-- Mastery is four right in a row with at least five answered. Two misses take mastery away, unless three right in a row came between them.
+**Kinds of question.** Each question has a kind: its wording with the particular numbers and names removed. "47 + 28 = ?" and "35 + 49 = ?" are one kind; each English item is its own kind.
 
-## When Granny Dot teaches
+- A miss comes back three questions later as the same kind, marked "One more try". At most one question in three is a retry, and a skill has one retry waiting at a time.
+- A missed kind must be answered right twice before it is cleared, and it is favored whenever its skill comes up.
+- New questions prefer kinds she has not had yet.
+- The same skill is never asked twice in a row. After four misses in a row on a skill the quick retries stop, so one hard kind cannot take over a session.
+
+**Mastery.** Four right in a row, at least five answered, right answers on up to six different kinds, and no missed kind still open. Two misses take mastery away, unless three right in a row came between them.
+
+**Review by days.** Skills still being learned come up every round. A mastered skill leaves the daily rounds and comes back after 1 day, then 3, 7, 14, 30 and 60. A right answer on its due day moves it to the next gap; a miss sends it back to 1 day. When nothing is left to learn and nothing is due, the reviews due soonest are brought forward.
+
+**New skills** arrive a few at a time, in the order they are taught: enough to have six going in each subject, then four more a day (a grown-up can set 2, 4, 6 or no limit). While nothing she has started is shaky, the next one comes early.
+
+**Quick check.** Twelve questions, one from each of twelve skills, with no hints and nothing recorded as a miss; math answers are typed where possible. A right answer gives that skill a head start: two more right answers master it. Offered once, and always available under Show skills.
+
+**Fact Dash.** One minute of number facts on a number pad with no button to press: sums and differences within 20 through Grade 2, times tables in Grade 3, division too from Grade 4. Each fact's speed and misses are remembered, and slow or missed facts come up more often.
+
+## Hints, second tries and when Granny Dot teaches
 
 The game checks what she knows first and teaches only on a sign that teaching is needed. A skill she gets right from the start never gets a lesson.
 
 | Sign | What happens |
 |---|---|
-| She misses a skill the first time she meets it | "Something new": the lesson with its worked example, then two guided questions. No penalty. |
-| She taps "I'm not sure yet" | The same, at any time. No penalty, and no reason to guess. |
-| One slip on a skill that is otherwise going well | This question is explained, then one follow-up question. No lesson. |
-| Two of her last three answers on a skill were misses | The lesson, then three guided questions. |
-| Two wrong answers given in under three seconds on a skill | The lesson, then three guided questions. A rushed wrong answer is a guess. |
-| A mastered skill slips twice | A refresher: the lesson, then two guided questions. |
+| One slip on a skill that is otherwise going well | The wrong choice is crossed out, a hint appears, and she picks again. It still counts as a miss. If the second try misses too, the question is explained and one follow-up is asked. |
+| She misses a skill the first time she meets it, or taps "I'm not sure yet" | "Something new": watch one solved, try one with two choices, then one with all the choices. No penalty. |
+| Two of her last three answers on a skill were misses, or two were wrong in under three seconds | The Skill Builder: watch, two choices, all the choices, then two in a row on her own. |
+| A mastered skill slips twice | A refresher: watch one, then two in a row on her own. |
 
-Guided questions must be answered right in a row; a miss starts the count again, so they cannot be guessed through. Being taught is not mastery: afterwards the skill goes back into practice one or two boxes up and still has to earn its four in a row.
+- **Hints name the mistake where it can be worked out:** the wrong operation, off by 1, 10 or 100, digits in the wrong places, too big or too small; for English, what the chosen sound-alike word means, the sentence read back with her choice in the gap, or what differs in capitals, end marks, apostrophes, quotation marks and commas. Otherwise the hint is the line of the skill's lesson that best matches the question.
+- **In the supported steps** a miss is explained and the same question is asked again until it is right. Math steps are the same kind of question with new numbers.
+- **The on-her-own answers** go in her record like any others. If they keep going wrong, the lesson is shown once more; after that the skill is rested until the next day.
+- **Being taught is not mastery.** The skill returns to practice and still has to earn it.
+
+**Practice report.** Behind the grown-up code: skills mastered, due for review, shaky and not started in each subject; an example, with its answer, of each kind of question missed and not yet fixed; the last and best Fact Dash and the slow facts; and whether the quick check has been done.
 
 ## Checks
 

@@ -74,7 +74,28 @@ Each skill sits in a box from 0 (shaky) to 4 (solid). A right answer moves it up
 - A missed skill comes back three questions later, marked "One more try". At most one question in three is a retry, and a skill has one retry waiting at a time.
 - Each round deals every skill that is due: boxes 0 and 1 every round, then every second, third and fourth round for boxes 2, 3 and 4. Box-0 skills are dealt twice in a round, unless that would give them more than a third of it. Solid skills come back marked "Review".
 - The same skill is never asked twice in a row.
-- Mastery is four right in a row with at least five answered, or passing Granny Dot's three proof questions after a lesson. Two later misses take mastery away.
-- A miss still stops play for Granny Dot's explanation and a follow-up question. After three misses on a skill the follow-up becomes the lesson and three proof questions.
+- New skills arrive a few at a time, in the order they are taught: enough to have six going in each subject, then two more a day.
+- Mastery is four right in a row with at least five answered. Two misses take mastery away, unless three right in a row came between them.
 
-In 300-answer simulations of a student weak in three skills, those three took 20 to 35 percent of Grade 4 math questions and 33 to 49 percent of Grade 4 English questions (English has fewer skills, so three weak ones are a bigger share of it), and every other skill came up at least six times. `pupSim()` in the browser console repeats this and also checks the rules above on every pick: no skill twice in a row, no two retries within three questions, one waiting retry per skill, and mastery only after four in a row and five answered. `pupCheck()` runs the question self-check.
+## When Granny Dot teaches
+
+The game checks what she knows first and teaches only on a sign that teaching is needed. A skill she gets right from the start never gets a lesson.
+
+| Sign | What happens |
+|---|---|
+| She misses a skill the first time she meets it | "Something new": the lesson with its worked example, then two guided questions. No penalty. |
+| She taps "I'm not sure yet" | The same, at any time. No penalty, and no reason to guess. |
+| One slip on a skill that is otherwise going well | This question is explained, then one follow-up question. No lesson. |
+| Two of her last three answers on a skill were misses | The lesson, then three guided questions. |
+| Two wrong answers given in under three seconds on a skill | The lesson, then three guided questions. A rushed wrong answer is a guess. |
+| A mastered skill slips twice | A refresher: the lesson, then two guided questions. |
+
+Guided questions must be answered right in a row; a miss starts the count again, so they cannot be guessed through. Being taught is not mastery: afterwards the skill goes back into practice one or two boxes up and still has to earn its four in a row.
+
+## Checks
+
+In the browser console:
+
+- `pupRules()` runs each teaching rule on a made-up answer history and reports true or false for each.
+- `pupSim()` plays 300 answers as a student weak in three skills and checks the picker on every pick: no skill twice in a row, no two retries within three questions, one waiting retry per skill, no more new skills in a day than allowed, mastery only after four in a row and five answered, and the right response to every miss.
+- `pupCheck()` generates hundreds of questions per skill and lists any with a missing, duplicate or wrong answer.

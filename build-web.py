@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
 """Builds the web version in docs/ (served by GitHub Pages) from index.html.
 Adds what a home-screen web app on an iPad or tablet needs: local fonts, icons, a manifest, and a service worker so it runs offline."""
-import hashlib, io, json, shutil
+import hashlib, io, json, os, shutil
 
 src = io.open('index.html', encoding='utf-8').read()
+
+# Before anything is built, the game's script is checked for syntax errors (with the JavaScript engine that ships with macOS).
+# A stray comment in the middle of a line has broken a release before; this stops the build instead.
+import re, subprocess, sys, tempfile
+JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
+if os.path.exists(JSC):
+    for code in re.findall(r'<script>(.*?)</script>', src, re.S):
+        with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as t: t.write(code)
+        out = subprocess.run([JSC, '-e', 'try { checkSyntax(%r); print("ok"); } catch (e) { print("SYNTAX ERROR: " + e); }' % t.name], capture_output=True, text=True).stdout.strip()
+        os.unlink(t.name)
+        if out != 'ok': sys.exit('index.html did not pass the syntax check, nothing was built.\n' + out)
+    print('syntax ok')
+else: print('syntax not checked: jsc not found')
 font = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">'
 assert src.count(font) == 1
 head = """<style>@font-face{font-family:'Lilita One';src:url(fonts/LilitaOne-Regular.ttf)}@font-face{font-family:'Nunito';font-weight:200 1000;src:url(fonts/Nunito.ttf)}</style>
@@ -39,7 +52,6 @@ self.addEventListener('fetch', e => {
 print('docs built', ver)
 
 # the iPad app bundles the same page with its fonts and the grader model, and no service worker
-import os
 web = 'ios/PopulationPup/Web'; os.makedirs(web + '/fonts', exist_ok=True)
 io.open(web + '/index.html', 'w', encoding='utf-8').write('<!doctype html>\n' + src.replace(font, head.split('\n')[0]))
 shutil.copyfile('pupgrader.js', web + '/pupgrader.js')

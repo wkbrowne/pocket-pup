@@ -485,9 +485,11 @@ function load(extra){
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
   if (!S.lofi){ S.lofi = 1; if (S.station) S.station = 'auto'; }      // the lo-fi songs arrive as the station everyone is on; music that was off stays off
   S.math.subject = lockSub();
-  // time away: needs drift down gently, never to zero
+  // Time away: coming back should feel good, not like a list of chores. Needs drift down only as far as "could do with something",
+  // and after an hour away the pup has slept (full of energy) and shaken off any sickness, so the day can start with the fun part.
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
-  if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
+  if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],45), S[k] - away*.012);
+  if (S.adopted && away > 3600 && !S.away){ S.energy = Math.max(S.energy, 90); S.sick = false; S.neglect = 0; }
 }
 function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } if (!G.cur) return; try { logDay(); } catch(e){} try { localStorage.setItem(gkey(G.cur), JSON.stringify(S)); } catch(e){} }
 // what each day held, so a grown-up can see change over time and not only where she stands today
@@ -5013,10 +5015,11 @@ function needsTick(dt){
     S.clock = (S.clock + dt/DAY) % 1; S.age += dt/DAY;
     const avg = (S.food+S.energy+S.fun+S.clean)/4;
     S.grow = Math.min(1, S.grow + dt/DAY/6*(S.sick ? 0 : avg > 45 ? 1 : .2));
-    // On a quest the story comes first: needs drop at a quarter of the yard's pace (energy at half), so a long outing is fine.
-    const w = scene === 'quest' ? .25 : 1;
+    // At home and in the park the needs drop at an easy pace: about seven minutes from full to hungry, so caring for the pup is a
+    // pleasure and not a race. On a quest the story comes first: half that again, so a long outing is fine.
+    const w = scene === 'quest' ? .25 : .5;
     bump('food', -.42*dt*r*w); bump('fun', -.3*dt*r*w); bump('clean', -(.13 + .22*poops.length)*dt*w*(worn('bandana') ? .6 : 1));
-    if (!asleep) bump('energy', -(.2 + .2*n)*dt*(scene === 'quest' ? .5 : 1)*(scene === 'park' && own('bottle') ? .5 : 1));
+    if (!asleep) bump('energy', -(.2 + .2*n)*dt*.5*(scene === 'park' && own('bottle') ? .5 : 1));
   }
 }
 function tick(dt){

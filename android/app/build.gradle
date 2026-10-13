@@ -15,8 +15,8 @@ android {
         applicationId 'com.pocketpup.game'
         minSdk 22          // Fire OS 5 and later
         targetSdk 34
-        versionCode 23
-        versionName '1.18'
+        versionCode 24
+        versionName '1.19'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11

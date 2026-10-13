@@ -34,7 +34,7 @@ More to do:
 - Rise through eight builder ranks as skills are mastered, and win trophies for the dog house.
 - Grow the population from Hamlet to World Capital, with bigger prizes at every level.
 - Build a ship and found five cities across the sea, neighborhood by neighborhood, with your pals as the work crew.
-- Choose from seven breeds, a girl or boy pup, and a wardrobe of outfits.
+- Choose from eight breeds, a girl or boy pup, and a wardrobe of outfits.
 - Take on endless building jobs for new families who move to the valley.
 
 Made for families:

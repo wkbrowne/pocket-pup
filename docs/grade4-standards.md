@@ -114,6 +114,8 @@ The game checks what she knows first and teaches only on a sign that teaching is
 
 **History.** Every day played is logged: questions, percent right, minutes, lessons, and how many skills are mastered. The practice report shows the last two weeks, the change in mastered skills over the last seven days played, and recent practice tests.
 
+**Play.** For keeping the game fun, the report also shows the last seven days played: minutes in the yard, at the park, on quests and answering questions; what she used most, what she has never used, and what she has stopped using; places where four minutes of a quest passed with nothing gathered or built; messages she ran into four or more times; her answers to "Was today fun?" (asked once a day on the way out); and how far through the story she is. A Copy button puts the whole report on the clipboard.
+
 **Bank sizes.** English items are each their own kind, so a small bank can be learned by heart. The Grade 4 banks now hold 11 reading passages (two of them 300 words long) with about 90 questions, 9 fill-the-gap passages, and between 18 and 60 items in each language and writing skill.
 
 ## Checks

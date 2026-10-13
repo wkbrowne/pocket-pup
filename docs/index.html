@@ -283,6 +283,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <p id="day-p" style="white-space:pre-line;font-size:15px"></p>
       <label class="pinrow" id="day-pinrow" hidden><span>Grown-up code</span><input id="day-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label>
       <div class="fb" id="day-fb"></div>
+      <div class="pinrow funrow" id="day-fun" hidden><span>Was today fun?</span><button class="link" type="button" data-fun="2">Loved it</button><button class="link" type="button" data-fun="1">It was OK</button><button class="link" type="button" data-fun="0">Not really</button></div>
       <button class="go" id="day-a" type="button"></button>
       <button class="link" id="day-b" type="button"></button>
     </div>
@@ -293,6 +294,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <p id="pause-p">Your game is saved. It is safe to close it now.</p>
       <div class="pinrow"><span>Reading voice</span><button class="link readbtn" id="opt-voice" type="button"></button></div>
       <div class="pinrow"><span>Reading speed</span><button class="link readbtn" id="opt-rate" type="button"></button><button class="link readbtn" id="opt-test" type="button">Hear it</button></div>
+      <div class="pinrow funrow" id="pause-fun" hidden><span>Was today fun?</span><button class="link" type="button" data-fun="2">Loved it</button><button class="link" type="button" data-fun="1">It was OK</button><button class="link" type="button" data-fun="0">Not really</button></div>
       <button class="go" id="resume" type="button">Keep playing</button>
       <button class="link" id="totitle" type="button">Back to the title screen</button>
     </div>
@@ -327,7 +329,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
         <div class="pinrow" id="gr-dayrow"><span>Daily goal</span><select id="gr-goal"><option value="10">10 questions</option><option value="20">20 questions</option><option value="30">30 questions</option></select><span>New skills a day</span><select id="gr-pace"><option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="99">no limit</option></select><span>Play-time limit</span><select id="gr-limit"><option value="0">none</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></div>
         <label class="pinrow" id="gr-keyrow"><span>Writing coach key (optional)</span><input id="gr-key" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:220px;font-size:16px;letter-spacing:0"></label>
         <p id="gr-keyp" style="font-size:12px;margin:0;text-align:center"></p>
-        <button class="link" id="gr-rep" type="button" style="align-self:center">Show the practice report</button>
+        <div class="row" style="justify-content:center;gap:14px"><button class="link" id="gr-rep" type="button">Show the practice report</button><button class="link" id="gr-copy" type="button" hidden>Copy it</button></div>
         <p class="lesson-ex" id="gr-report" hidden style="max-height:34vh;overflow-y:auto;font-size:13px"></p>
         <div class="fb" id="gr-fb"></div>
         <button class="link" id="gr-more" type="button" style="align-self:center">Grown-up settings</button>
@@ -926,7 +928,7 @@ function updateDog(dt){
       break; }
     case 'qsleep': lieT = 1; hdT = .9; d.asleep = true; mouthT = 0; d.zz -= dt;       // a nap at a rest stop: full energy, a wash, and the game is saved
       if (d.zz <= 0){ d.zz = .55; const h = dogHead(); parts.push({type:'zzz', text:'z', x:h.x-cam.x, y:h.y-cam.y-8*U, vx:14*d.dir, vy:-26, life:1.6, max:1.6, s:1, r:0}); }
-      if (d.t0 > 2.6){ S.energy = 100; S.clean = Math.max(S.clean, 85); setState('qidle'); d.joy = 1.5; chime(); save();
+      if (d.t0 > 2.6){ Play.use('nap'); S.energy = 100; S.clean = Math.max(S.clean, 85); setState('qidle'); d.joy = 1.5; chime(); save();
         $('pause-h').textContent = 'Game saved'; $('pause-p').textContent = S.name + ' had a lovely nap and a wash at the pump. Energy is full and your game is saved, so it is safe to stop here.'; $('pausem').hidden = false; Sess.pause(true); ui(); }
       break;
     case 'qwalk': if (questStep(dt)){ mv = 1; d.phase += dt*15; } break;
@@ -2284,6 +2286,43 @@ const ENG = LearnCore.create({
 });
 // sittings: when she sat down, how long, what she was doing (reads the live S, so a new or switched game is fine)
 const Sess = LearnCore.sessions({state: () => S, now: Date.now});
+// PLAY LOG, for the grown-up report: where the time goes, what she uses and what she never touches, where she gets stuck,
+// which messages she keeps running into, and what she says about it. It lives inside the save, on this device only.
+const FEATS = {feed:'Feed', fetch:'Fetch', bath:'Bath', trick:'Tricks', sleep:'Sleep', park:'The park', quest:'Going on a quest', shop:'The shop', learn:'The Learn button', gather:'Gathering', build:'Building', free:'Her own plot', stew:'Food stalls', nap:'Rest stops', tea:'Tea at a home she built', world:'Sailing to an island', dash:'Fact Dash', test:'Practice tests', skills:'The skills list', lesson:'How-to lessons', music:'The Music button', edit:'Editing the pup'};
+const BTN = {'a-feed':'feed', 'a-fetch':'fetch', 'a-bath':'bath', 'a-trick':'trick', 'a-sleep':'sleep', 'a-park':'park', 'a-quest':'quest', 'b-shop':'shop', 'b-math':'learn', mus:'music', edit:'edit', mshow:'skills', mhow:'lesson'};
+const FUN = ['Not really', 'It was OK', 'Loved it'];
+const Play = {
+  P(){ const P = S.play || (S.play = {}); P.days = P.days || {}; P.used = P.used || {}; return P; },
+  day(){ const P = this.P(), d = today(); if (!P.days[d]){ P.days[d] = {t:{}, u:{}, m:{}, stuck:[]}; const ks = Object.keys(P.days).sort(); while (ks.length > 21) delete P.days[ks.shift()];
+      // older days keep only the messages that kept coming up
+      for (const k of ks) if (k !== d){ const m = P.days[k].m || {}; P.days[k].m = Object.fromEntries(Object.keys(m).filter(x => m[x] >= 4).sort((a, b) => m[b] - m[a]).slice(0, 3).map(x => [x, m[x]])); } }
+    return P.days[d]; },
+  use(k){ if (!S.adopted || !FEATS[k]) return; const P = this.P(), D = this.day(); P.used[k] = (P.used[k] || 0) + 1; D.u[k] = (D.u[k] || 0) + 1; Sess.note('play', FEATS[k].toLowerCase()); },
+  clock(secs){ const D = this.day(), k = !$('math').hidden ? 'questions' : paused() ? 'menus' : scene; D.t[k] = (D.t[k] || 0) + secs; },
+  said(msg){ if (!S.adopted || !$('splash').hidden) return; const D = this.day(), k = String(msg).split(S.name).join('Pup').replace(/\d+/g, '#').slice(0, 90); D.m[k] = (D.m[k] || 0) + 1; },
+  // on a quest: four minutes of walking about with nothing gathered, built or finished counts as stuck
+  quest(dt){ const q = QS(), sig = q.ch + '|' + JL().n + '|' + Object.values(q.inv || {}).reduce((a, b) => a + b, 0) + '|' + S.bones; if (sig !== this.sig){ this.sig = sig; this.idle = 0; return; }
+    this.idle = (this.idle || 0) + dt; if (this.idle > 240){ this.idle = 0; const D = this.day(); if (D.stuck.length < 6) D.stuck.push((ZONES[qr.zone] || {}).n || landName()); } },
+  // "Was today fun?" is asked once a day, on the way out, after at least three minutes of play
+  ask(){ const D = this.day(), show = S.adopted && D.fun == null && Object.values(D.t).reduce((a, b) => a + b, 0) >= 180; $('day-fun').hidden = $('pause-fun').hidden = !show; },
+  vote(v){ this.day().fun = v; $('day-fun').hidden = $('pause-fun').hidden = true; save(); toast('Thanks for telling Granny Dot!'); },
+  report(){ const P = this.P(), ks = Object.keys(P.days).sort().slice(-7), days = ks.map(k => P.days[k]), out = [], tally = (f, into) => { for (const D of days){ const o = f(D) || {}; for (const k in o) into[k] = (into[k] || 0) + o[k]; } return into; };
+    const t = tally(D => D.t, {}), u = tally(D => D.u, {}), m = tally(D => D.m, {}), mins = k => Math.round((t[k] || 0)/60), names = {quest:'on quests', yard:'in the yard', park:'at the park', questions:'answering questions', menus:'in menus and windows'};
+    const places = Object.keys(names).filter(k => mins(k) > 0).sort((a, b) => t[b] - t[a]);
+    out.push(ks.length ? 'Last ' + (ks.length === 1 ? 'day' : ks.length + ' days') + ' played. Time: ' + (places.length ? places.map(k => mins(k) + ' min ' + names[k]).join(', ') : 'under a minute') + '.' : 'Nothing logged yet.');
+    const votes = days.filter(D => D.fun != null).map(D => D.fun); out.push('Was today fun? ' + (votes.length ? [2, 1, 0].filter(v => votes.includes(v)).map(v => FUN[v] + ' ' + votes.filter(x => x === v).length).join(', ') + '.' : 'No answers yet.'));
+    const top = Object.keys(u).sort((a, b) => u[b] - u[a]).slice(0, 6); if (top.length) out.push('Used most: ' + top.map(k => FEATS[k] + ' ' + u[k]).join(', ') + '.');
+    const never = Object.keys(FEATS).filter(k => !P.used[k]), lapsed = Object.keys(FEATS).filter(k => P.used[k] && !u[k]);
+    if (never.length) out.push('Never used: ' + never.map(k => FEATS[k]).join(', ') + '.'); if (lapsed.length) out.push('Used before, but not lately: ' + lapsed.map(k => FEATS[k]).join(', ') + '.');
+    const st = {}; for (const D of days) for (const z of D.stuck || []) st[z] = (st[z] || 0) + 1;
+    if (Object.keys(st).length) out.push('Stuck on a quest (four minutes with nothing gathered or built): ' + Object.keys(st).map(z => z + (st[z] > 1 ? ' \u00d7' + st[z] : '')).join(', ') + '.');
+    const rep2 = Object.keys(m).filter(x => m[x] >= 4).sort((a, b) => m[b] - m[a]).slice(0, 4); if (rep2.length) out.push('Messages she kept running into:\n' + rep2.map(x => '\u2022 "' + x + '" \u00d7' + m[x]).join('\n'));
+    if (S.q){ const q = QS(), i = Math.min(q.ch, CH.length), homes = (q.jobs ? q.jobs.n : 0) + Object.values(q.lands || {}).reduce((a, L) => a + (L.n || 0), 0), isles = Object.keys(q.lands || {}).length;
+      out.push('Story: ' + (i >= CH.length ? 'all ' + CH.length + ' chapters finished' : 'on chapter ' + (i + 1) + ' of ' + CH.length + ' (' + CH[i].title + ')') + '. Islands visited: ' + isles + ' of ' + LANDS.length + '. Family homes built: ' + homes + '.'); }
+    else out.push('Story: not started.');
+    return out.join('\n'); }
+};
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (!b) return; if (BTN[b.id]) Play.use(BTN[b.id]); else if (b.dataset.fun != null && b.parentNode.classList.contains('funrow')) Play.vote(+b.dataset.fun); }, true);
 // the rest of the game speaks in grades and positions; these turn that into the engine's groups and ids
 const skState = id => { const c = id.lastIndexOf(':'), gid = id.slice(0, c), g = allGrade(gid), i = +id.slice(c + 1); return ENG.rec(gid, g && g.skills[i] ? g.skills[i][1] : String(i)); };
 const boxOf = LearnCore.box, isMastered = st => !!st.m, openKinds = LearnCore.openKinds, solid = LearnCore.solid, GAPS = LearnCore.GAPS;
@@ -2336,7 +2375,7 @@ function renderGrown(){
     : m === 'setup' ? 'Choose the subjects to practice, the daily goal and the time limit, then a 4-digit code that only you know. Changing these later needs your code. The grade can be changed by anyone.'
     : 'Unlocked. Pick the grade and the subjects. Type a new code only if you want to change the code.';
   $('gr-l').textContent = m === 'unlock' ? 'Grown-up code' : m === 'setup' ? 'Choose a 4-digit code' : 'New code (optional)';
-  $('gr-keyrow').hidden = $('gr-keyp').hidden = $('gr-dayrow').hidden = m === 'unlock' || pk; $('gr-rep').hidden = m !== 'change'; $('gr-report').hidden = true; $('gr-goal').value = String(dayGoal()); $('gr-pace').value = String(newDay()); $('gr-limit').value = String(dayLimit()); $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
+  $('gr-keyrow').hidden = $('gr-keyp').hidden = $('gr-dayrow').hidden = m === 'unlock' || pk; $('gr-rep').hidden = m !== 'change'; $('gr-report').hidden = $('gr-copy').hidden = true; $('gr-goal').value = String(dayGoal()); $('gr-pace').value = String(newDay()); $('gr-limit').value = String(dayLimit()); $('gr-key').value = ''; $('gr-key').placeholder = GL.key ? 'A key is saved. Type "none" to remove it.' : 'sk-ant-...';
   $('gr-keyp').textContent = 'Now and then your child types a sentence of their own. The tablet marks it by itself. With an Anthropic API key here, the sentence and its question are sent to Claude over the internet for better marking and feedback. Nothing else is sent. Leave it empty to keep everything on the tablet.';
   $('gr-pin').type = m === 'unlock' ? 'password' : 'tel'; $('gr-ok').textContent = pk ? (S.math.grade ? 'Change grade' : 'Start') : m === 'unlock' ? 'Unlock' : 'Save'; $('gr-cancel').hidden = !S.math.grade;
 }
@@ -2371,18 +2410,21 @@ function practiceReport(){
   const tests = m.tests || []; if (tests.length) out.push('**Practice tests**\n' + tests.slice(-4).map(t => t.d.slice(5) + ' ' + (t.ela ? 'English' : 'Math') + ': ' + t.r + ' of ' + t.n + ' in ' + Math.max(1, Math.round(t.secs/60)) + ' min').join('\n'));
   const when = ms => { const d = new Date(ms); return d.toLocaleDateString(undefined, {weekday:'short'}) + ' ' + d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'}); }, L = Sess.lines(when, 7);
   if (L.rows.length) out.push('**Sessions**\n' + (L.summary ? L.summary + '\n' : '') + L.rows.join('\n'));
+  out.push('**Play**\n' + Play.report());
   const log = S.log || []; if (log.length){ const last = log.slice(-14), wk = log.slice(-7), first = wk[0], end = log[log.length - 1], q7 = wk.reduce((a, e) => a + (e.n || 0), 0), min7 = Math.round(wk.reduce((a, e) => a + (e.s || 0), 0)/60);
     out.push('**History**\n' + (wk.length === 1 ? 'Last day played: ' : 'Last ' + wk.length + ' days played: ') + q7 + ' questions in about ' + min7 + ' minutes. Skills mastered went from ' + ((first.m || 0) + (first.e || 0)) + ' to ' + ((end.m || 0) + (end.e || 0)) + '.\n'
       + last.map(e => { const tested = (e.n || 0) - (e.t || 0); return e.d.slice(5) + ': ' + (e.n || 0) + ' questions, ' + (tested > 0 ? Math.round((e.r || 0)/tested*100) + '% right' : 'all lessons') + ', ' + Math.round((e.s || 0)/60) + ' min, mastered ' + (e.m || 0) + ' math and ' + (e.e || 0) + ' English'; }).join('\n')); }
   const D = dayState(); out.push('**Today**\n' + D.n + ' of ' + dayGoal() + ' questions' + ((D.taught || []).length ? ', lessons on: ' + [...new Set(D.taught)].join('; ') : '') + '.\nQuick check: ' + (m.placed === m.grade ? 'done.' : 'not done yet (it is under Show skills).'));
   return out.join('\n\n');
 }
-$('gr-rep').onclick = () => { const e = $('gr-report'); if (!e.hidden){ e.hidden = true; return; } setPass(e, practiceReport()); };
+$('gr-rep').onclick = () => { const e = $('gr-report'); if (!e.hidden){ e.hidden = $('gr-copy').hidden = true; return; } setPass(e, practiceReport()); $('gr-copy').hidden = false; };
+$('gr-copy').onclick = () => { const txt = 'Population Pup report, ' + today() + '\n\n' + practiceReport().replace(/\*\*/g, ''); try { navigator.clipboard.writeText(txt).then(() => toast('Report copied.'), () => toast('Could not copy here. A photo of the screen works too.')); } catch(e){ toast('Could not copy here. A photo of the screen works too.'); } };
 const earnText = () => { const D = dayState(); return 'Today ' + Math.min(D.n, 999) + '/' + dayGoal() + (S.streak && S.streak.n > 1 ? ' \u00b7 ' + S.streak.n + '-day streak' : '') + ' \u00b7 Earned ' + session + ' bones'; };
 // FACT DASH: one minute of number facts on a big number pad, with no button to press. Each fact's speed and misses are remembered,
 // and slow or missed facts come up more often. Number facts that come without thinking leave room to think about the harder parts.
 let dash = null;
 function factDash(){
+  Play.use('dash');
   const m = S.math, gi = Math.max(0, GRADES.findIndex(x => x.id === m.grade)), ff = (m.ff = m.ff || {}), pool = [];
   for (let a = 2; a <= 9; a++) for (let b = 2; b <= 9; b++){ if (gi <= 2){ pool.push([a + PL + b, a + b]); pool.push([(a + b) + M + b, a]); } else { pool.push([a + X + b, a*b]); if (gi >= 4) pool.push([(a*b) + D + b, a]); } }
   const wt = f => { const s2 = ff[f[0]]; return !s2 ? 2 : 1 + s2[1]*2 + (s2[0] > 3000 ? 2 : 0); };
@@ -2442,6 +2484,7 @@ function quickStep(ok){
 const STRAND = {OA:'Operations and algebraic thinking', NBT:'Number and place value', NF:'Fractions and decimals', MD:'Measurement and data', G:'Geometry', MP:'Reasoning', RL:'Reading stories', RI:'Reading information', RF:'Reading fluency', W:'Writing', SL:'Listening', L:'Language'};
 const strandOf = code => { const m = /^(?:\d\.)?([A-Z]+)/.exec(code); return m && STRAND[m[1]] ? STRAND[m[1]] : 'Other'; };
 function testStart(ela){
+  Play.use('test');
   const g = allGrade((ela ? 'E' : '') + S.math.grade); if (!g) return; const items = [];
   for (const i of shuffle(g.skills.map((x,k) => k))){ if (items.length >= 12) break; let p = null;
     for (let k = 0; k < 30 && !p; k++){ const c = g.skills[i][2](true); if (!c.steps && !c.typed && !(c.listen && !canSpeak())) p = c; } if (!p) continue;
@@ -3218,7 +3261,7 @@ function nextUp(){ const out = []; for (const gid of [S.math.grade, 'E' + S.math
 function daySummary(D){ const tested = D.n - (D.t || 0), pct = tested ? Math.round(D.r/tested*100) : 0, weak = nextUp(), got = (D.up || []).slice(0, 3), lessons = [...new Set(D.taught || [])].slice(0, 3);
   return D.n + ' questions, ' + pct + '% right.' + (lessons.length ? '\nLessons with Granny Dot: ' + lessons.join(', ') + '.' : '') + (got.length ? '\nMastered: ' + got.join(', ') + '.' : '') + (weak.length ? '\nNext up: ' + weak.join(', ') + '.' : '\nNothing is shaky right now. Lovely work.'); }
 function dayModal(h, text, a, b, pin){ $('day-h').textContent = h; $('day-p').textContent = text; $('day-a').textContent = a.t; $('day-a').onclick = a.f; $('day-b').hidden = !b; if (b){ $('day-b').textContent = b.t; $('day-b').onclick = b.f; }
-  $('day-pinrow').hidden = !pin; $('day-pin').value = ''; $('day-fb').textContent = ''; $('daym').hidden = false; ui(); }
+  $('day-pinrow').hidden = !pin; $('day-pin').value = ''; $('day-fb').textContent = ''; Play.ask(); $('daym').hidden = false; ui(); }
 const dayClose = () => { $('daym').hidden = true; ui(); };
 function dayDone(){
   const D = dayState(); if (D.met) return; D.met = true; Sess.note('goal-done'); const y = new Date(Date.now() - 864e5), yd = y.getFullYear() + '-' + String(y.getMonth()+1).padStart(2,'0') + '-' + String(y.getDate()).padStart(2,'0');
@@ -3230,7 +3273,7 @@ function dayDone(){
 function welcomeBack(){ const D0 = S.day, t = today(); if (!D0 || D0.d === t || !D0.n){ dayState(); return; } dayState(); const st = S.streak && (new Date(t) - new Date(S.streak.last)) <= 864e5*1.5 ? S.streak.n : 0;
   dayModal('Welcome back, ' + S.name + '!', 'Last time: ' + daySummary(D0) + '\n\n' + (st ? 'Your streak is ' + st + (st === 1 ? ' day' : ' days') + '. ' : '') + "Today's goal is " + dayGoal() + ' questions.', {t:"Let's go", f:dayClose}); }
 // a grown-up can cap play time per day; when it runs out the game wraps up and needs the code to go on
-function dayClock(dt){ if (!S.adopted || !G.cur || !$('splash').hidden || document.hidden) return; const D = dayState(), lim = dayLimit(), now = Date.now(); D.secs = (D.secs || 0) + Math.min(2, (now - (dayClock.t || now))/1000); dayClock.t = now;      // real seconds, however fast the screen is drawing
+function dayClock(dt){ if (!S.adopted || !G.cur || !$('splash').hidden || document.hidden) return; const D = dayState(), lim = dayLimit(), now = Date.now(); const add = Math.min(2, (now - (dayClock.t || now))/1000); D.secs = (D.secs || 0) + add; dayClock.t = now; Play.clock(add);      // real seconds, however fast the screen is drawing
   if (lim && !D.more && D.secs >= lim*60 && $('daym').hidden){ save();
     dayModal('Time is up for today', "You have played for " + lim + " minutes, which is today's limit.\n" + daySummary(D) + '\n\nA grown-up can type the code to keep going.',
       {t:'Save and stop', f:() => { dayClose(); $('math').hidden = true; oneShot = null; save(); showSplash(); }}, {t:'Keep going', f:() => { if (GL.pin && $('day-pin').value.trim() !== GL.pin){ $('day-fb').textContent = 'That is not the code.'; return; } D.more = true; dayClose(); }}, !!GL.pin); } }
@@ -3737,7 +3780,7 @@ function isle(id){
   return ISLES[id] = {w, h, map:m, free:null, home:dock, extra:lots, stalls:[[stall[0], stall[1], L.name.toUpperCase()]], beds:[bed], zone:() => L.theme};
 }
 function setLand(id){
-  land = id; Sess.note('play', id); const L = id === 'home' ? HOME : isle(id);
+  land = id; Sess.note('play', id); if (id !== 'home' && S.adopted && $('splash').hidden) Play.use('world'); const L = id === 'home' ? HOME : isle(id);
   MW = L.w; MH = L.h; MAP = L.map; FREE_AT = L.free; HOME_AT = L.home; EXTRA = L.extra; STALLS = L.stalls; BEDS = L.beds; zoneAt = L.zone; qr.cool = {}; qr.zone = null; qr.path = null;
 }
 // each land keeps its own list of jobs
@@ -3877,7 +3920,7 @@ function questTap(p){
 }
 function questTick(dt){
   for (const k in qr.cool) if (qr.cool[k] > 0) qr.cool[k] -= dt;
-  roadCare();
+  roadCare(); Play.quest(dt);
   const t = TS(), zk = zoneAt(Math.floor(dog.x/t), Math.floor(dog.y/t));
   if (zk !== qr.zone){ if (qr.zone && !cine && !trans) toast('\u2726 ' + ZONES[zk].n + ' \u2726', 2600); qr.zone = zk; }
   for (const n of QN){ const at = CH[npcChapter(n.who)].npc; updateNpc(n, dt); n.x = (at[0]+.5)*t; n.y = (at[1]+.7)*t; n.ds = .62; n.dir = dog.x >= n.x ? 1 : -1; }
@@ -3895,7 +3938,7 @@ function gather(g){
   askOne(verb + ': answer to get ' + base + ' ' + res, ok => {
     if (!ok){ toast('Not this time. Tap it to try again.'); return; }
     const hot = S.math.streak >= 3, n = base + (hot ? 1 : 0);   // three right in a row earns a bonus block
-    q.inv[res] += n; q.got[res] = true; qr.cool[key] = 40; bump('energy', own('lunch') ? -1.5 : -3); bump('fun',2); gainXp(2); dog.joy = 1.2; pop();
+    Play.use('gather'); q.inv[res] += n; q.got[res] = true; qr.cool[key] = 40; bump('energy', own('lunch') ? -1.5 : -3); bump('fun',2); gainXp(2); dog.joy = 1.2; pop();
     qr.hit = {key, t:time}; for (let k = 0; k < 7; k++) parts.push({type:'chip', col:BCOL[RESB[res]], x:(x+.5)*TS()-cam.x, y:(y+.4)*TS()-cam.y, vx:rnd(-130,130), vy:rnd(-280,-120), grav:760, life:.75, max:.75, s:rnd(.7,1.1), r:0});
     puff('star', dog.x-cam.x, dog.y-cam.y-50*U, 4, {spread:20}); toast('+' + n + ' ' + res + (hot ? ' (streak bonus!)' : '')); save(); });
 }
@@ -3906,7 +3949,7 @@ function gather(g){
 const TEA = ["Kettle is on, {n}! Sit by the fire while I get the burrs out of your coat.", "You built these walls, so my door is always open. A biscuit and a game of tug?", "Come in, come in! A brush, a bite and a tummy rub for the best builder in the valley.", "Look at the state of you, {n}. In you come: tea first, then a good brushing."];
 function tea(key, who){
   if (qr.cool[key] > 0 || (S.fun > 80 && S.clean > 80)) return false;
-  bump('fun', 45); bump('clean', 45); bump('food', 15); gainXp(3); qr.cool[key] = 90; dog.joy = 1.8; chime(); puff('heart', dog.x-cam.x, dog.y-cam.y-60*U, 4, {spread:26});
+  Play.use('tea'); bump('fun', 45); bump('clean', 45); bump('food', 15); gainXp(3); qr.cool[key] = 90; dog.joy = 1.8; chime(); puff('heart', dog.x-cam.x, dog.y-cam.y-60*U, 4, {spread:26});
   say([[who, pickOf(TEA)]], () => toast('Tea at a home you built. ' + S.name + ' is brushed, fed and cheerful.', 3200)); save(); return true;
 }
 // a nudge when the pup is getting glum or scruffy out here, once each time it dips
@@ -3923,7 +3966,7 @@ function eatAt(g){
   if (S.food > 88){ toast(S.name + " isn't hungry yet."); return; }
   askOne('Order up: answer for a bowl of stew', ok => {
     if (!ok){ toast('The cook shakes her head. Tap the stall to try again.'); return; }
-    bump('food', 40); bump('fun', 15); qr.cool[key] = 45; dog.joy = 1.5; note('Yum!', dog.x-cam.x, dog.y-cam.y-70*U); toast(S.name + ' wolfs down a bowl of stew.'); save(); });
+    Play.use('stew'); bump('food', 40); bump('fun', 15); qr.cool[key] = 45; dog.joy = 1.5; note('Yum!', dog.x-cam.x, dog.y-cam.y-70*U); toast(S.name + ' wolfs down a bowl of stew.'); save(); });
 }
 function drawRest(x, y){
   const t = TS(), u = U, cx = (x+.5)*t, by = (y+.95)*t;
@@ -4011,7 +4054,7 @@ function drawJob(k){
   else { if (j.st) drawCrew(g); const y = g.y0 - 16*u + Math.sin(time*4 + k)*4*u; ctx.font = 13*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'center'; ctx.lineWidth = 2.500*u; rr(g.cx-22*u, y-12*u, 44*u, 24*u, 12*u); fs(SKY); ctx.fillStyle = INK; ctx.fillText('JOB', g.cx, y+5*u); }
 }
 function freeTap(){ if (QS().ch < 1){ toast("Mochi is saving this plot for you. Build her hut first."); return; } openBuild('free'); }
-function openBuild(m){ bMode = m; bPop = ''; $('bd-fb').textContent = ''; renderBuild(); $('build').hidden = false; Sess.note('play', 'build'); }
+function openBuild(m){ bMode = m; bPop = ''; $('bd-fb').textContent = ''; renderBuild(); $('build').hidden = false; Play.use(m === 'free' ? 'free' : 'build'); }
 function renderBuild(){
   const q = QS(), free = bMode === 'free', sp = spec(bMode), bp = sp.bp, rows = sp.rows, box = $('bgrid'), pal = $('pal');
   $('bd-h').textContent = sp.title; box.textContent = ''; pal.textContent = '';
@@ -4474,7 +4517,7 @@ $('newgame').addEventListener('submit', e => {
   const id = newId(); save(); G.list.push({id, name:nm}); $('gname').value = ''; $('gname').blur(); playGame(id);
 });
 // Pause stops the clock and saves on the spot. The game also saves by itself every few seconds and whenever it is closed or put in the background.
-function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true; save(); renderOpts(); $('pause-h').textContent = 'Game paused'; $('pause-p').textContent = S.name + "'s game is saved. It is safe to close it now, and you will pick up right here next time."; $('pausem').hidden = false; Sess.pause(true); ui(); }
+function pauseGame(){ if (!S.adopted || trans) return; $('tricks').hidden = true; save(); renderOpts(); Play.ask(); $('pause-h').textContent = 'Game paused'; $('pause-p').textContent = S.name + "'s game is saved. It is safe to close it now, and you will pick up right here next time."; $('pausem').hidden = false; Sess.pause(true); ui(); }
 $('pause').onclick = pauseGame;
 // Options: which voice reads aloud, and how fast
 const RATES = [['Slow', '0.8'], ['Normal', '0.95'], ['Fast', '1.1']];
@@ -4801,6 +4844,8 @@ window.pupRoad = () => { const keep = JSON.stringify(S), ks = scene, kc = qr.coo
     out[sc] = Object.assign(at, {sick:!!S.sick, away:!!S.away}); }
   scene = 'quest'; qr.cool = {}; Object.assign(S, {food:50, fun:20, clean:20, sick:false, away:false}); const first = tea('test', 'Mochi'); out.tea = {first, fun:S.fun, clean:S.clean, food:S.food, againTooSoon:tea('test', 'Mochi') === false};
   dq = []; dthen = null; $('dlg').hidden = true; S = JSON.parse(keep); scene = ks; qr.cool = kc; save(); return out; };
+// the play part of the grown-up report, as text
+window.pupPlay = () => Play.report();
 // for listening to one song wherever she is: pupMusicPlay('lfSnow'); pupMusicPlay() goes back to following the place
 window.pupMusicPlay = k => { MU.force = k || null; return Object.keys(TRACKS); };
 setInterval(musicTick, 180);
@@ -4870,7 +4915,7 @@ window.pupRules = () => { const out = LearnCore.checks(), keep = JSON.stringify(
 const CORE_WANT = '1.1.0';
 /* ---------- HUD ---------- */
 let toastT;
-function toast(msg, ms){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms || 2600); }
+function toast(msg, ms){ Play.said(msg); const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms || 2600); }
 function renderTricks(){
   const L = level(), box = $('tricklist'); box.textContent = '';
   for (const t of TRICKS){

@@ -1,6 +1,6 @@
 # Population Pup
 
-A math adventure for kids. Raise a puppy, then set out as Granny Dot's apprentice to rebuild Woofwood Valley block by block. Every chop, dig and bowl of stew is a math or English question from the chosen grade (Kindergarten to Grade 6, Common Core / California standards). Every building houses new neighbours, the population grows, and a ship opens up cities across the sea.
+A math adventure for kids. Raise a puppy or a kitten, then set out as Granny Dot's apprentice to rebuild Woofwood Valley block by block. Every chop, dig and bowl of stew is a math or English question from the chosen grade (Kindergarten to Grade 6, Common Core / California standards). Every building houses new neighbours, the population grows, and a ship opens up cities across the sea.
 
 The repo and the Android package id still use the original name, Pocket Pup.
 

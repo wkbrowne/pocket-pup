@@ -198,7 +198,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 </style>
 
 <div id="game">
-  <canvas id="c" aria-label="Your dog's yard or the dog park. Tap your dog to pet it, tap the grass to throw a ball, tap another dog to say hello."></canvas>
+  <canvas id="c" aria-label="Your pet's yard or the dog park. Tap your pet to stroke it, tap the grass to throw a ball, tap another dog to say hello."></canvas>
 
   <div class="top">
     <div class="card plate">
@@ -303,7 +303,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <h2 id="away-h">Your dog ran away</h2>
       <p id="away-p"></p>
       <button class="go" id="away-go" type="button">Search</button>
-      <button class="link" id="away-other" type="button" hidden>Play with another dog</button>
+      <button class="link" id="away-other" type="button" hidden>Play with another pet</button>
     </div>
   </div>
 
@@ -388,6 +388,7 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
       <h2 id="adopt-h">Adopt your puppy</h2>
       <p id="adopt-p">Feed, play, wash and train. A well cared-for puppy grows into a big dog.</p>
       <div><label for="nm">Name</label><input id="nm" maxlength="12" autocomplete="off" value="Biscuit"></div>
+      <div><label>Puppy or kitty</label><div class="tabs" id="kinds"></div></div>
       <div><label>Breed</label><div class="tabs" id="breeds" style="flex-wrap:wrap"></div></div>
       <div><label>Coat</label><div class="coats" id="coats"></div></div>
       <div><label>Girl or boy</label><div class="tabs" id="sexes"></div></div>
@@ -417,6 +418,17 @@ const BREEDS = [
   {id:'beagle', name:'Beagle', ear:'long', legs:.85, body:.98, tail:'up', snout:1},
   {id:'shiba', name:'Shiba', ear:'point', legs:.9, body:.95, tail:'curl', snout:.9},
 ];
+// a pet is a pup or a kitty; kitties have their own breeds, and share the coats, tricks and gear
+const CATS = [
+  {id:'tabby', name:'Tabby', legs:.8, body:.92, tail:'plain', snout:.76, stripes:1},
+  {id:'siamese', name:'Siamese', legs:1, body:.88, tail:'plain', snout:.8},
+  {id:'persian', name:'Persian', legs:.6, body:1, tail:'fluff', snout:.68},
+  {id:'coon', name:'Maine Coon', legs:.95, body:1.1, tail:'fluff', snout:.78},
+  {id:'bobtail', name:'Bobtail', legs:.85, body:.95, tail:'stub', snout:.76},
+  {id:'munchkin', name:'Munchkin', legs:.45, body:1, tail:'plain', snout:.76},
+];
+const breedsOf = kind => kind === 'cat' ? CATS : BREEDS;
+const breedOf = (kind, id) => breedsOf(kind).find(b => b.id === id) || breedsOf(kind)[0];
 const COATS = [
   {id:'honey', base:'#E8A84C', dark:'#BE7A2A', light:'#FBE3B5'},
   {id:'cocoa', base:'#8A5A3C', dark:'#5E3A25', light:'#D9B48F'},
@@ -431,10 +443,10 @@ const TRICKS = [
   {id:'roll', name:'Roll over', lvl:4, dur:2.2},
   {id:'jump', name:'High jump', lvl:5, dur:1.3},
 ];
-const STAGES = ['Puppy','Young dog','Grown dog'];
+const STAGES = ['Puppy','Young dog','Grown dog'], CATSTAGES = ['Kitten','Young cat','Grown cat'];
 const DAY = 150; // seconds of play per game day
 const KEY = 'pocketpup.v1';
-const fresh = () => ({name:'Biscuit', coat:'honey', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, ela3:1, g4:1, sk3:1, core1:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
+const fresh = () => ({name:'Biscuit', coat:'honey', kind:'dog', breed:'lab', sex:'girl', trophies:[], rank:0, adopted:false, food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, clock:.12, mastery:{}, pals:{}, wear:{}, bones:0, items:{}, kennel:[], math:{grade:null, subject:'mix', ela2:1, ela3:1, g4:1, sk3:1, core1:1, streak:0, n:0, sk:{}, redo:[], done:{}}, finds:{}, egg:{w:0}, crit:{}, buddy:null, music:true, neglect:0, sick:false, away:false, sound:true, last:Date.now()});
 let S = fresh();
 // the grade and the grown-up code live apart from the save, so erasing the game keeps them
 const LOCK = 'pocketpup.lock'; let GL = {};
@@ -493,6 +505,9 @@ const lvlBase = L => 25*L*(L-1);
 const growth = () => clamp(S.grow,0,1);
 const stage = () => growth() < .35 ? 0 : growth() < .85 ? 1 : 2;
 const coat = () => COATS.find(c => c.id === S.coat) || COATS[0];
+const petWord = (pup, kitty) => S.kind === 'cat' ? kitty : pup;      // the word for the pet being played
+const stageName = st => petWord(STAGES, CATSTAGES)[st];
+const petText = t => t.replace(/\{n\}/g, S.name).replace(/\{pup\}/g, petWord('pup','kitty')).replace(/\{dog\}/g, petWord('dog','cat'));      // story text: {n} is the pet's name
 
 /* ---------- canvas + world ---------- */
 let W = 800, H = 600, U = 1, DPR = 1, groundY = 360, time = 0;
@@ -547,7 +562,7 @@ const ITEMS = [
   {id:'sieve', name:'Sieve', price:35, desc:'Sift 2 extra glass with every right answer.'},
   {id:'wrench', name:'Giant wrench', price:40, desc:'Salvage 2 extra steel with every right answer.'},
   {id:'barrow', name:'Wheelbarrow', price:60, desc:'1 extra block from everything you gather.'},
-  {id:'bow', name:'Hair bow', price:10, wear:true, desc:'A pink bow by the ear.', head:'Wardrobe: dress your pup'},
+  {id:'bow', name:'Hair bow', price:10, wear:true, desc:'A pink bow by the ear.', head:'Wardrobe: dress your {pup}'},
   {id:'bowtie', name:'Bow tie', price:10, wear:true, desc:'A smart blue bow tie.'},
   {id:'scarf', name:'Cosy scarf', price:20, wear:true, desc:'An orange scarf for chilly valleys.'},
   {id:'crown', name:'Flower crown', price:25, wear:true, desc:'A ring of flowers.'},
@@ -569,8 +584,8 @@ const LOOT = [
   {id:'emerald', name:'Emerald', kind:'gem', col:'#4FB06A', at:'park'}, {id:'sapphire', name:'Sapphire', kind:'gem', col:'#5BC0EB', at:'park'},
   {id:'mammoth', name:'Mammoth bone', kind:'bone', col:'#C9BFAF', at:'park', rare:1}, {id:'medal', name:'Pirate medal', kind:'star', col:'#FF9F1C', at:'park', rare:1},
 ];
-const DOGKEYS = ['name','coat','breed','sex','food','energy','fun','clean','xp','age','grow','mastery','wear','pals','neglect','sick','away'];
-const newDog = (name, coat, breed, sex) => ({name, coat, breed:breed || 'lab', sex:sex || 'girl', food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, mastery:{}, wear:{}, pals:{}, neglect:0, sick:false, away:false});
+const DOGKEYS = ['name','coat','kind','breed','sex','food','energy','fun','clean','xp','age','grow','mastery','wear','pals','neglect','sick','away'];
+const newDog = (name, coat, breed, sex, kind) => ({name, coat, kind:kind || 'dog', breed:breed || 'lab', sex:sex || 'girl', food:70, energy:85, fun:70, clean:90, xp:0, age:0, grow:0, mastery:{}, wear:{}, pals:{}, neglect:0, sick:false, away:false});
 const packDog = () => { const o = {}; for (const k of DOGKEYS) o[k] = S[k]; return o; };
 const unpackDog = o => Object.assign(S, newDog('Biscuit','honey'), o);
 const adoptPrice = () => [60,150,300][S.kennel.length];
@@ -591,7 +606,8 @@ function beep(f, dur, type, vol, slide, delay){
     o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur+.02);
   } catch(e){}
 }
-const bark = () => { const f = 520 - 200*growth(); beep(f,.11,'sawtooth',.08,.55); beep(f*1.05,.13,'sawtooth',.08,.5,.16); };
+const bark = () => { const f = 520 - 200*growth(); if (S.kind === 'cat'){ beep(f*1.5,.1,'triangle',.08,1.4); beep(f*2.1,.32,'triangle',.08,.6,.09); return; }      // a kitty meows
+  beep(f,.11,'sawtooth',.08,.55); beep(f*1.05,.13,'sawtooth',.08,.5,.16); };
 const pop = () => beep(700,.08,'sine',.07,1.6);
 const chime = () => { beep(660,.14,'triangle',.07); beep(880,.14,'triangle',.07,0,.12); beep(1320,.25,'triangle',.07,0,.24); };
 
@@ -760,10 +776,12 @@ let P = 1, OW = 3;
 function cap(x1,y1,x2,y2,w,col){ ctx.strokeStyle = P ? col : INK; ctx.lineWidth = w + (P ? 0 : 2*OW); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
 function ell(x,y,rx,ry,rot,col){ ctx.fillStyle = P ? col : INK; ctx.beginPath(); ctx.ellipse(x,y,Math.max(.1,rx+(P?0:OW)),Math.max(.1,ry+(P?0:OW)),rot,0,6.300); ctx.fill(); }
 function dogScale(d){ d = d || dog; return (.6 + .4*(d.g == null ? growth() : d.g)) * U * d.ds; }
+const isCat = d => (d === dog ? S.kind : d.kind) === 'cat';
+const dogBreed = d => breedOf(isCat(d) ? 'cat' : 'dog', d === dog ? S.breed : d.breed);
 function drawDog(d){
   d = d || dog; const mine = d === dog, wr = mine ? (S.wear || {}) : (d.wearSet || {}), c = d.c || coat(), g = d.g == null ? growth() : d.g, sc = dogScale(d);
-  const br = BREEDS.find(b => b.id === (mine ? S.breed : d.breed)) || BREEDS[0], girl = (mine ? S.sex : d.sex) === 'girl', sn = br.snout;
-  const hs = 1.3 - .3*g, L = (60 + 20*g)*br.body, BH = 34 + 4*g, G = (18 + 18*g)*br.legs, R = 21*hs;
+  const cat = isCat(d), br = dogBreed(d), girl = (mine ? S.sex : d.sex) === 'girl', sn = br.snout, fk = cat ? .76 : 1;      // a kitty has a small face, slim legs and a long, slow tail
+  const hs = 1.3 - .3*g, L = (60 + 20*g)*br.body, BH = (34 + 4*g)*(cat ? .9 : 1), G = (18 + 18*g)*br.legs, R = 21*hs;
   const poly = (pts, col) => { ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.closePath(); ctx.fillStyle = P ? col : INK; ctx.fill(); if (!P){ ctx.strokeStyle = INK; ctx.lineWidth = 2*OW; ctx.lineJoin = 'round'; ctx.stroke(); } };
   const trim = (pts, col) => { ctx.beginPath(); pts.forEach((q,i) => i ? ctx.lineTo(q[0],q[1]) : ctx.moveTo(q[0],q[1])); ctx.closePath(); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.lineJoin = 'round'; fs(col); };   // an outfit piece with its own outline
   ctx.save(); ctx.translate(d.x, d.y);
@@ -776,25 +794,26 @@ function drawDog(d){
   const hip = {x:-L/2+10, y:-Ge*(1-.62*sit) - BH/2};
   const sh = {x:L/2-10-9*sit, y:-Ge - BH/2 - 7*sit};
   const hd = {x:sh.x+14+8*d.hd, y:lerp(sh.y-17*hs, -R*.72, d.hd)};
-  const wagA = Math.sin(d.t*(5+11*d.wag))*(.18+.5*d.wag), ta = -2 - (1-d.mood)*1.2 + wagA;
+  const wagA = cat ? Math.sin(d.t*(1.6+2.4*d.wag))*(.12+.22*d.wag) : Math.sin(d.t*(5+11*d.wag))*(.18+.5*d.wag), ta = -2 - (1-d.mood)*1.2 + wagA;
   const feet = [0,1,2,3].map(i => {
     const front = i >= 2, ph = d.phase + ((i===0||i===3) ? 0 : Math.PI);
     return {tx:(front?sh.x+3:hip.x-3) + (i%2?0:5), ty:(front?sh.y:hip.y) + BH*.2,
       x:(front?sh.x+3+18*lie+2*sit:hip.x-3+15*sit+20*lie) + (i%2?0:5) + Math.sin(ph)*9*d.mv, y:-4 - Math.max(0,Math.cos(ph))*7*d.mv};
   });
-  const leg = (f,col,paw) => { cap(f.tx,f.ty,f.x,f.y,11,col); ell(f.x+3,f.y+1,7,4.500,0,paw); if (br.pom) ell(f.x+1, f.y-7, 8, 6.500, 0, col); };
-  const tw = br.tail === 'fluff' ? 15 : br.tail === 'pom' ? 5 : 9, tl = br.tail === 'stub' ? 13 : 32, tu = br.tail === 'up' ? -.45 : 0;
+  const leg = (f,col,paw) => { cap(f.tx,f.ty,f.x,f.y,cat ? 9 : 11,col); ell(f.x+3,f.y+1,cat ? 6 : 7,cat ? 4 : 4.500,0,paw); if (br.pom) ell(f.x+1, f.y-7, 8, 6.500, 0, col); };
+  const tw = br.tail === 'fluff' ? 15 : br.tail === 'pom' ? 5 : cat ? 7 : 9, tl = br.tail === 'stub' ? 13 : cat ? 44 : 32, tu = br.tail === 'up' ? -.45 : 0, tq = cat ? .9 : .5, tk = cat ? .7 : .56;
   for (P = 0; P < 2; P++){
     // tail
     const sx = hip.x-8, sy = hip.y-5;
     ctx.strokeStyle = P ? c.base : INK; ctx.lineWidth = tw + (P?0:2*OW); ctx.lineCap = 'round'; const tb = ta + tu;
     if (br.tail === 'curl'){ ctx.lineWidth = 9 + (P?0:2*OW); ctx.beginPath(); ctx.arc(sx-3, sy-13, 11, .9+wagA*.4, 5.300+wagA*.4); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(sx+Math.cos(tb+.5)*tl*.56, sy+Math.sin(tb+.5)*tl*.56, sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl); ctx.stroke();
+    else { ctx.beginPath(); ctx.moveTo(sx,sy); ctx.quadraticCurveTo(sx+Math.cos(tb+tq)*tl*tk, sy+Math.sin(tb+tq)*tl*tk, sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl); ctx.stroke();
       if (br.tail === 'pom') ell(sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl, 8, 8, 0, c.base);
       else if (P && br.tail !== 'stub'){ ctx.strokeStyle = c.light; ctx.lineWidth = tw-2; ctx.beginPath(); ctx.moveTo(sx+Math.cos(tb)*(tl-3), sy+Math.sin(tb)*(tl-3)); ctx.lineTo(sx+Math.cos(tb)*tl, sy+Math.sin(tb)*tl); ctx.stroke(); } }
     leg(feet[0], c.dark, c.dark); leg(feet[2], c.dark, c.dark);
     cap(hip.x,hip.y,sh.x,sh.y,BH,c.base);
     if (P){ ell(sh.x+3, sh.y+5, BH*.3, BH*.34, 0, c.light); if (c.spot) ell(hip.x+12, hip.y-5, 12, 8, .3, c.spot);
+      if (br.stripes) for (const q of [.3,.52,.74]){ const x = lerp(hip.x,sh.x,q), y = lerp(hip.y,sh.y,q) - BH*.4; cap(x, y, x-3, y+BH*.3, 4, c.dark); }
       if (wr.cape) trim([[sh.x-2, sh.y-BH*.5],[hip.x-16, hip.y-BH*.2+Math.sin(d.t*5)*3],[hip.x-8, hip.y+BH*.38],[sh.x-10, sh.y+BH*.12]], '#B58CFF'); }
     leg(feet[1], c.base, c.light); leg(feet[3], c.base, c.light);
     cap(sh.x+3, sh.y-3, hd.x-5, hd.y+7, 19*hs, c.base);
@@ -805,36 +824,40 @@ function drawDog(d){
       if (wr.bowtie){ const bx = mx+5, by2 = my+10*hs; trim([[bx,by2],[bx-11,by2-7],[bx-11,by2+7]], SKY); trim([[bx,by2],[bx+11,by2-7],[bx+11,by2+7]], SKY); ctx.beginPath(); ctx.arc(bx,by2,3.200,0,7); fs('#2F8FBF'); }
       if (wr.bandana){ ctx.beginPath(); ctx.moveTo(mx-9, my-7*hs); ctx.lineTo(mx+10, my+3*hs); ctx.lineTo(mx+3, my+22*hs); ctx.closePath(); ctx.lineWidth = 2; ctx.strokeStyle = INK; ctx.lineJoin = 'round'; fs(SKY); } }
     ctx.save(); ctx.translate(hd.x, hd.y); ctx.rotate(d.tilt + d.hd*.45);
-    if (d.mouth > .15){ ell(R*.72, R*.6, R*.3, R*.24*d.mouth, 0, '#8A2E44'); if (P) { ctx.fillStyle = '#FF9DB0'; ctx.beginPath(); ctx.ellipse(R*.78, R*.72, R*.16, R*.26*d.mouth, 0, 0, 7); ctx.fill(); } }
-    if (br.ear === 'point') poly([[-R*.8,-R*.42],[-R*.52,-R*1.5],[R*.02,-R*.8]], c.dark);
+    if (d.mouth > .15 && !cat){ ell(R*.72, R*.6, R*.3, R*.24*d.mouth, 0, '#8A2E44'); if (P) { ctx.fillStyle = '#FF9DB0'; ctx.beginPath(); ctx.ellipse(R*.78, R*.72, R*.16, R*.26*d.mouth, 0, 0, 7); ctx.fill(); } }
+    if (cat){ poly([[R*.08,-R*.8],[R*.5,-R*1.4],[R*.74,-R*.52]], c.dark); poly([[-R*.84,-R*.4],[-R*.6,-R*1.48],[-R*.04,-R*.8]], c.base); if (P) poly([[-R*.68,-R*.62],[-R*.56,-R*1.2],[-R*.26,-R*.84]], '#FF8FA3'); }
+    else if (br.ear === 'point') poly([[-R*.8,-R*.42],[-R*.52,-R*1.5],[R*.02,-R*.8]], c.dark);
     ell(0, 0, R, R*.94, 0, c.base);
     if (br.pom) ell(-R*.12, -R*.82, R*.52, R*.4, 0, c.base);
     ell(R*.76*sn, R*.26, R*.56*sn, R*.4, 0, c.light);
     if (P){
       if (c.mask) ell(R*.2, R*.3, R*.62, R*.5, 0, c.light);
       if (c.spot) ell(R*.3, -R*.2, R*.34, R*.4, 0, c.spot);
-      ell(R*1.24*sn, R*.1, R*.17, R*.13, 0, INK);
-      ctx.strokeStyle = INK; ctx.lineWidth = 2.200; ctx.lineCap = 'round';
-      if (d.mouth <= .15){ ctx.beginPath(); ctx.arc(R*.86, R*.3, R*.3, .5, 2.200); ctx.stroke(); }
+      if (cat) ell(R*1.22*sn, R*.12, R*.11, R*.09, 0, '#FF8FA3'); else ell(R*1.24*sn, R*.1, R*.17, R*.13, 0, INK);
+      ctx.strokeStyle = INK; ctx.lineCap = 'round';
+      if (cat){ if (d.mouth > .15){ ell(R*.7, R*.48, R*.13, R*.17*d.mouth, 0, '#8A2E44'); ell(R*.7, R*.48+R*.08*d.mouth, R*.08, R*.08*d.mouth, 0, '#FF9DB0'); }
+        ctx.lineWidth = 1.3; ctx.beginPath(); for (const a of [-.24,0,.24]){ ctx.moveTo(R*.86, R*(.33+a*.3)); ctx.lineTo(R*1.5, R*(.33+a)); } ctx.stroke(); }      // whiskers
+      ctx.lineWidth = 2.200;
+      if (d.mouth <= .15){ ctx.beginPath(); ctx.arc(R*.86*fk, R*.3, R*.3*fk, .5, 2.200); ctx.stroke(); }
       if (d.asleep || d.blink > 0){ ctx.beginPath(); ctx.arc(R*.3, -R*.2, R*.14, .2, Math.PI-.2); ctx.stroke(); }
       else { ell(R*.3, -R*.18, R*.13, R*.17, 0, INK); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(R*.35, -R*.25, R*.05, 0, 7); ctx.fill(); }
       if (girl && !d.asleep && d.blink <= 0){ ctx.lineWidth = 1.800; ctx.beginPath(); ctx.moveTo(R*.4,-R*.33); ctx.lineTo(R*.52,-R*.45); ctx.moveTo(R*.3,-R*.36); ctx.lineTo(R*.34,-R*.5); ctx.stroke(); ctx.lineWidth = 2.200; }   // eyelashes
       if (d === dog && S.sick && scene !== 'quest'){ ctx.fillStyle = 'rgba(110,185,80,.6)'; ctx.beginPath(); ctx.ellipse(R*.1, R*.22, R*.24, R*.16, 0, 0, 7); ctx.fill(); }
       if (d.joy > 0 && !d.asleep){ ctx.fillStyle = 'rgba(255,93,115,.45)'; ctx.beginPath(); ctx.ellipse(R*.1, R*.22, R*.16, R*.1, 0, 0, 7); ctx.fill(); }
     }
-    if (br.ear !== 'point'){ ctx.save(); ctx.translate(-R*.34, -R*.6); ctx.rotate(.35 + d.ear); if (br.ear === 'long') ell(0, R*.7, R*.36, R*.92, 0, c.dark); else ell(0, R*.52, R*.36, R*.68, 0, c.dark); ctx.restore(); }
+    if (!cat && br.ear !== 'point'){ ctx.save(); ctx.translate(-R*.34, -R*.6); ctx.rotate(.35 + d.ear); if (br.ear === 'long') ell(0, R*.7, R*.36, R*.92, 0, c.dark); else ell(0, R*.52, R*.36, R*.68, 0, c.dark); ctx.restore(); }
     if (P && wr.bow){ const bx = -R*.3, by2 = -R*.88; trim([[bx,by2],[bx-R*.5,by2-R*.32],[bx-R*.5,by2+R*.32]], '#FF8FB8'); trim([[bx,by2],[bx+R*.5,by2-R*.32],[bx+R*.5,by2+R*.32]], '#FF8FB8'); ctx.beginPath(); ctx.arc(bx,by2,R*.13,0,7); fs(BERRY); }
     if (P && wr.crown){ ctx.lineWidth = 1.500; ctx.strokeStyle = INK; [[-.52,-.72,BERRY],[-.2,-.92,SUN],[.14,-.94,'#B58CFF'],[.44,-.8,'#FF8FB8']].forEach(q => { ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, R*.16, 0, 7); fs(q[2]); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0]*R, q[1]*R, R*.06, 0, 7); ctx.fill(); }); }
     if (P && wr.shades){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.beginPath(); ctx.moveTo(-R*.7,-R*.3); ctx.lineTo(R*.5,-R*.22); ctx.stroke(); rr(R*.02,-R*.4,R*.62,R*.42,R*.14); ctx.fillStyle = INK; ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(R*.16,-R*.1); ctx.lineTo(R*.3,-R*.3); ctx.stroke(); }
     if (P && wr.hat){ ctx.strokeStyle = INK; ctx.lineWidth = 2.500; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(-R*.5,-R*.72); ctx.lineTo(R*.05,-R*1.85); ctx.lineTo(R*.45,-R*.8); ctx.closePath(); fs(BERRY); ctx.beginPath(); ctx.arc(R*.05,-R*1.85,R*.16,0,7); fs(SUN); }
-    if (P && d.holding) ballAt(R*1.05, R*.55, 9*U/sc);
+    if (P && d.holding) ballAt(R*1.05*fk, R*.55, 9*U/sc);
     ctx.restore();
   }
   P = 1;
   ctx.restore();
 }
-function dogHead(d){ d = d || dog; const sc = dogScale(d), bl = (BREEDS.find(b => b.id === (d === dog ? S.breed : d.breed)) || BREEDS[0]).legs; return {x:d.x + d.dir*46*sc, y:d.y - (lerp(92-(1-bl)*32,40,Math.max(d.lie,d.hd*.9)) - 14*d.sit)*sc - d.hop*sc}; }
+function dogHead(d){ d = d || dog; const sc = dogScale(d), bl = dogBreed(d).legs; return {x:d.x + d.dir*46*sc, y:d.y - (lerp(92-(1-bl)*32,40,Math.max(d.lie,d.hd*.9)) - 14*d.sit)*sc - d.hop*sc}; }
 function drawTag(n){
   const kin = n.kin != null && S.kennel[n.kin], h = dogHead(n), u = U, f = palLove(n.pal), met = !kin && f > 0, hearts = f >= 100 ? 3 : f >= 50 ? 2 : f >= 20 ? 1 : 0, text = kin ? kin.name : met ? n.pal.name : 'New dog';
   ctx.font = 13*u + "px 'Lilita One', sans-serif"; ctx.textAlign = 'left';
@@ -930,7 +953,7 @@ function updateDog(dt){
     case 'confused': tiltT = -.42; if (d.t0 > 1.6) idle(.5); break;
     case 'trick': { const q = clamp(d.t0/d.dur,0,1);
       if (d.trick === 'sit') sitT = 1;
-      else if (d.trick === 'speak'){ sitT = 1; mouthT = Math.sin(q*Math.PI*3) > .2 ? 1 : 0; if (d.barks < 3 && q > d.barks*.33+.05){ d.barks++; bark(); const h = dogHead(); note('Woof!', h.x+d.dir*20*U, h.y-6*U); } }
+      else if (d.trick === 'speak'){ sitT = 1; mouthT = Math.sin(q*Math.PI*3) > .2 ? 1 : 0; if (d.barks < 3 && q > d.barks*.33+.05){ d.barks++; bark(); const h = dogHead(); note(petWord('Woof!','Meow!'), h.x+d.dir*20*U, h.y-6*U); } }
       else if (d.trick === 'spin'){ d.flip = Math.cos(q*Math.PI*4); hop = Math.abs(Math.sin(q*Math.PI*4))*10; }
       else if (d.trick === 'roll'){ lieT = 1; d.roll = -sstep(.2,.9,q)*Math.PI*2; }
       else if (d.trick === 'jump'){ hop = Math.sin(q*Math.PI)*105; mouthT = 1; }
@@ -1019,7 +1042,7 @@ function dropBall(){
 function finishTrick(){
   const t = TRICKS.find(t => t.id === dog.trick), m = S.mastery[t.id] = Math.min(100,(S.mastery[t.id]||0)+12);
   bump('fun',8); bump('food',3); gainXp(10); dog.joy = 1.6; chime(); puff('star', dog.x, dog.y-60*U, 6, {spread:36});
-  toast(m >= 100 ? 'Good dog! ' + t.name + ' is mastered.' : 'Good dog! ' + t.name + ' ' + m + '% learned.'); renderTricks(); idle(1.4);
+  toast('Good ' + petWord('dog','kitty') + '! ' + t.name + (m >= 100 ? ' is mastered.' : ' ' + m + '% learned.')); renderTricks(); idle(1.4);
 }
 function wake(msg){ if (dog.state !== 'sleep') return; idle(1); dog.joy = .8; toast(msg || S.name + ' is up.'); ui(); }
 function updateBall(dt){
@@ -1151,7 +1174,7 @@ function refreshYard(){
   if (scene !== 'yard') return;
   const old = npcs;
   npcs = S.kennel.map((k,i) => { const n = makeNpc({c:COATS.find(c => c.id === k.coat) || COATS[0], g:clamp(k.grow,0,1)}, i), o = old.find(q => q.kin === i);
-    n.pal = null; n.kin = i; n.wearSet = k.wear || {}; n.breed = k.breed || 'lab'; n.sex = k.sex || 'girl'; n.x = o ? o.x : rnd(W*.15, W*.85); if (o) n.y = o.y; return n; }).filter(n => !S.kennel[n.kin].away);
+    n.pal = null; n.kin = i; n.wearSet = k.wear || {}; n.kind = k.kind || 'dog'; n.breed = k.breed || 'lab'; n.sex = k.sex || 'girl'; n.x = o ? o.x : rnd(W*.15, W*.85); if (o) n.y = o.y; return n; }).filter(n => !S.kennel[n.kin].away);
 }
 function switchDog(i){
   const nx = S.kennel[i]; if (!nx) return;
@@ -2883,11 +2906,12 @@ $('ml-back').onclick = () => {
 
 // a right answer bursts into confetti and bones, with a cheer
 const CHEERS = ['Pawsome!', 'Woof, yes!', 'Top dog!', 'Brilliant!', 'Nailed it!', 'Clever pup!', 'Tail-wagging good!'];
+const CATCHEERS = ['Pawsome!', 'Meow, yes!', 'Top cat!', 'Brilliant!', 'Nailed it!', 'Clever kitty!', 'Purr-fect!'];
 function celebrate(btn, big){
   const g = $('game'), r = btn.getBoundingClientRect(), gr = g.getBoundingClientRect(), cx = r.left-gr.left+r.width/2, cy = r.top-gr.top+r.height/2;
   if (!btn.animate) return;
   btn.animate([{transform:'scale(1)'}, {transform:'scale(1.2) rotate(-3deg)'}, {transform:'scale(.96)'}, {transform:'scale(1)'}], {duration:420, easing:'ease-out'});
-  const word = el('div', 'cheer', big ? (S.math.streak % 5 === 0 ? S.math.streak + ' in a row!' : 'Skill mastered!') : pickOf(CHEERS));
+  const word = el('div', 'cheer', big ? (S.math.streak % 5 === 0 ? S.math.streak + ' in a row!' : 'Skill mastered!') : pickOf(petWord(CHEERS, CATCHEERS)));
   word.style.left = clamp(cx, 110, W-110) + 'px'; word.style.top = (cy-30) + 'px'; g.appendChild(word);
   word.animate([{transform:'translate(-50%,0) scale(.3) rotate(-8deg)', opacity:0}, {transform:'translate(-50%,-50px) scale(1.2) rotate(3deg)', opacity:1, offset:.25}, {transform:'translate(-50%,-66px) scale(1) rotate(0)', opacity:1, offset:.75}, {transform:'translate(-50%,-96px) scale(.9)', opacity:0}], {duration:1100, easing:'ease-out'}).onfinish = () => word.remove();
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -3571,10 +3595,10 @@ function openShop(){ if (!S.adopted) return; $('tricks').hidden = true; $('math'
 function renderShop(){
   $('sbones').textContent = S.bones + ' bones';
   const tabs = $('tabs'), box = $('shoplist'); tabs.textContent = ''; box.textContent = '';
-  for (const [id,label] of [['gear','Gear'],['pals','Pals'],['dogs','Dogs'],['finds','Finds'],['trophies','Trophies']]){ const b = el('button','',label); b.type = 'button'; b.id = 'tab-' + id; b.setAttribute('aria-pressed', String(tab === id)); b.onclick = () => { tab = id; renderShop(); }; tabs.appendChild(b); }
+  for (const [id,label] of [['gear','Gear'],['pals','Pals'],['dogs','Pets'],['finds','Finds'],['trophies','Trophies']]){ const b = el('button','',label); b.type = 'button'; b.id = 'tab-' + id; b.setAttribute('aria-pressed', String(tab === id)); b.onclick = () => { tab = id; renderShop(); }; tabs.appendChild(b); }
   if (tab === 'gear' && S.sick && !S.away) box.appendChild(shopRow('Vet visit', S.name + ' feels sick. The vet makes them better right away.', '12 bones', 'buy-vet', S.bones >= 12, () => {
     S.bones -= 12; for (const k in WARN) S[k] = Math.max(S[k], 60); cure('The vet made ' + S.name + ' all better.'); renderShop(); ui(); save(); }));
-  if (tab === 'gear') for (const it of ITEMS){ if (it.head) box.appendChild(el('p','sub',it.head));
+  if (tab === 'gear') for (const it of ITEMS){ if (it.head) box.appendChild(el('p','sub',petText(it.head)));
     if (!own(it.id)) box.appendChild(shopRow(it.name, it.desc, it.price + ' bones', 'buy-' + it.id, S.bones >= it.price, () => { S.bones -= it.price; S.items[it.id] = true; if (it.wear) S.wear[it.id] = true; chime(); renderShop(); ui(); save(); }));
     else if (it.wear) box.appendChild(shopRow(it.name, it.desc, S.wear[it.id] ? 'Take off' : 'Wear', 'buy-' + it.id, true, () => { S.wear[it.id] = !S.wear[it.id]; renderShop(); save(); }));
     else box.appendChild(shopRow(it.name, it.desc, 'Owned', 'buy-' + it.id, false, null));
@@ -3584,11 +3608,11 @@ function renderShop(){
     box.appendChild(el('p','sub', T.length ? T.length + ' trophies. They stand beside your dog house at home.' : 'No trophies yet. Rise a rank, finish a chapter or complete a neighborhood to win one.'));
     for (const t of T){ const row = el('div','item'), info = el('div'); info.appendChild(el('b','',t[1])); info.appendChild(document.createTextNode(CUPNAME[t[2]] + ' trophy')); const dot = el('span','pct','\u2605'); dot.style.color = CUPCOL[t[2]]; dot.style.fontSize = '24px'; dot.style.webkitTextStroke = '1.5px #2B2350'; row.appendChild(dot); row.appendChild(info); box.appendChild(row); } }
   else if (tab === 'dogs'){
-    box.appendChild(shopRow(S.name, S.away ? 'Ran away' : S.sick ? 'Feeling sick' : STAGES[stage()] + ', bond ' + level(), 'Playing', 'dog-cur', false, null));
+    box.appendChild(shopRow(S.name, S.away ? 'Ran away' : S.sick ? 'Feeling sick' : stageName(stage()) + ', bond ' + level(), 'Playing', 'dog-cur', false, null));
     S.kennel.forEach((k,i) => box.appendChild(shopRow(k.name, k.away ? 'Ran away' : k.sick ? 'Feeling sick' : 'Waiting in the yard', 'Play', 'dog-' + i, true, () => {
       if (dog.state === 'sleep' || !isFree()){ toast(S.name + ' is busy right now.'); return; } switchDog(i); renderShop(); })));
-    if (S.kennel.length < 3) box.appendChild(shopRow('Adopt another puppy', 'A new member of the family to raise.', adoptPrice() + ' bones', 'dog-adopt', S.bones >= adoptPrice(), () => { $('shop').hidden = true; openAdopt('new'); }));
-    else box.appendChild(el('p','sub','Your yard is full: four dogs is the limit.'));
+    if (S.kennel.length < 3) box.appendChild(shopRow('Adopt another pet', 'A new puppy or kitten to raise.', adoptPrice() + ' bones', 'dog-adopt', S.bones >= adoptPrice(), () => { $('shop').hidden = true; openAdopt('new'); }));
+    else box.appendChild(el('p','sub','Your yard is full: four pets is the limit.'));
   }
   else {
     if (!own('map')) box.appendChild(el('p','sub','Buy the Treasure map under Gear to start digging.'));
@@ -3639,10 +3663,10 @@ const CH = [
   {id:'beach', who:'pepper', title:"Pepper's Beach House", at:[48,27], npc:[50,28], cs:.36, reward:45, bp:['.WWWWW.','WWWWWWW','BBBBBBB','BGGBGGB','BBBBBBB','BBBDBBB'],
     intro:[['Pepper',"A builder! Fin-ally. I want a proper brick house, with big glass windows for watching the waves."],
       ['Pepper',"Dig the orange clay for bricks and sift the sparkly dunes for glass. Wood for the roof is back in the forest."]],
-    done:[['Pepper',"Windows! I can see the sea from my bed. You are the best dog on this beach, and I have met four."],
+    done:[['Pepper',"Windows! I can see the sea from my bed. You are the best {dog} on this beach, and I have met four."],
       ['Pepper',"Mayor Rusty wants you in the town square, back over the bridge. Something big, he says."]]},
   {id:'hall', who:'rusty', title:'Woofwood Town Hall', at:[14,27], npc:[17,28], cs:.34, reward:100, bp:['....W....','...TTT...','..TTTTT..','.TTTTTTT.','SBBBBBBBS','SBGBBBGBS','SBGBDBGBS','SBBBDBBBS'],
-    intro:[['Mayor Rusty',"So you are the pup who rebuilt half my valley. Splendid. Now for the big one."],
+    intro:[['Mayor Rusty',"So you are the {pup} who rebuilt half my valley. Splendid. Now for the big one."],
       ['Mayor Rusty',"A Town Hall. Stone corners, brick walls, glass windows, a thatched roof and a flagpole on top. Every material you have learned."]],
     done:[['Mayor Rusty',"By my whiskers. Woofwood Valley has a heart again."],
       ['Mayor Rusty',"You arrived an apprentice in a borrowed hat, and you have given every dog in Woofwood a home. Granny Dot must be bursting."],
@@ -3805,7 +3829,7 @@ function plotGeom(i){
 function say(lines, then){ dq = lines.slice(); dthen = then || null; showLine(); }
 function showLine(){
   if (!dq.length){ $('dlg').hidden = true; const f = dthen; dthen = null; if (f) f(); ui(); return; }
-  $('dlg-who').textContent = dq[0][0]; $('dlg-text').textContent = dq[0][1].replace(/\{n\}/g, S.name); $('dlg-next').textContent = dq.length > 1 ? 'Next' : 'OK'; $('dlg').hidden = false; ui();
+  $('dlg-who').textContent = dq[0][0]; $('dlg-text').textContent = petText(dq[0][1]); $('dlg-next').textContent = dq.length > 1 ? 'Next' : 'OK'; $('dlg').hidden = false; ui();
 }
 $('dlg-next').onclick = () => { if (cine){ if (++cine.i >= cine.list.length) cineEnd(); else cineShow(); return; } dq.shift(); showLine(); };
 $('dlg-skip').onclick = () => cineEnd();
@@ -4335,14 +4359,14 @@ const CARDS = ["A hut of wood and thatch for one very chilly Mochi.", "Bone Broo
 function storyPlay(list, then){ cine = {list, i:0, then:then || null}; $('game').classList.add('cine'); cineShow(); }
 function cineShow(){
   const p = cine.list[cine.i], last = cine.i === cine.list.length-1;
-  $('dlg-who').textContent = p.who || 'Storyteller'; $('dlg-text').textContent = p.text.replace(/\{n\}/g, S.name);
+  $('dlg-who').textContent = p.who || 'Storyteller'; $('dlg-text').textContent = petText(p.text);
   $('dlg-next').textContent = last ? (p.go || 'Begin') : 'Next'; $('dlg-skip').hidden = last || cine.list.length < 3; $('dlg').hidden = false; ui();
 }
 function cineEnd(){ const f = cine && cine.then; cine = null; $('game').classList.remove('cine'); $('dlg').hidden = true; $('dlg-skip').hidden = true; if (f) f(); ui(); }
 function cDog(id, x, y, s, o){
   o = o || {}; const hero = id === 'hero', p = hero ? null : (PALS.find(q => q.id === id) || DOT), d = cdogs[id] || (cdogs[id] = Object.assign({}, dog, {cb:null}));
   Object.assign(d, {x, y, ds:s, dir:o.dir || 1, sit:o.sit || 0, lie:o.lie || 0, hd:o.lie ? .9 : 0, hop:o.hop || 0, flip:1, roll:0, tilt:0, shake:0, mouth:o.joy ? 1 : 0, joy:o.joy || 0, wag:o.joy ? 1 : .3, mood:o.sad ? 0 : .8,
-    mv:0, phase:0, t:time, blink:-1, asleep:!!o.lie, holding:false, ear:0, wearSet:hero ? (S.wear || {}) : {}, breed:hero ? S.breed : p.breed, sex:hero ? S.sex : (p.sex || 'boy'), c:hero ? coat() : p.c, g:hero ? Math.max(.4, growth()) : p.g, collar:hero ? BERRY : p.collar});
+    mv:0, phase:0, t:time, blink:-1, asleep:!!o.lie, holding:false, ear:0, wearSet:hero ? (S.wear || {}) : {}, kind:hero ? S.kind : 'dog', breed:hero ? S.breed : p.breed, sex:hero ? S.sex : (p.sex || 'boy'), c:hero ? coat() : p.c, g:hero ? Math.max(.4, growth()) : p.g, collar:hero ? BERRY : p.collar});
   drawDog(d);
 }
 function cSky(a, b, gy, h1, g1){
@@ -4398,7 +4422,7 @@ function openingPanels(){
         cDog('hero', W/2, y+70*U, 1.9, {joy:1, hop:Math.abs(Math.sin(time*5))*8}); }},
     {who:'Granny Dot', text:"My paws are too creaky for ladders now, {n}, so you will be my paws. Every skill you master makes you a better builder, and I will give you a trophy for your dog house each time you rise a rank. If a puzzle ever stumps you, tap How to and I will show you the trick.",
       draw(){ const y = gy(); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); cSun(W*.84, H*.14); cDog('dot', W*.34, y+80*U, 1.5, {sit:1, joy:1}); cDog('hero', W*.66, y+82*U, 1.3, {dir:-1, sit:1}); }},
-    {text:"Every tree, reed and rock hides blocks for a clever pup. Solve the puzzle, gather the blocks, and build Woofwood back, one house at a time.", go:"Let's build!",
+    {text:"Every tree, reed and rock hides blocks for a clever {pup}. Solve the puzzle, gather the blocks, and build Woofwood back, one house at a time.", go:"Let's build!",
       draw(){ const y = gy(); cSky('#3FA9F5','#C8EEFF',y,'#A6E3B0','#8EDD7E'); cSun(W*.15, H*.14); cHouse(CH[0].bp, W*.5, y+30*U, cs()*1.3, {alpha:.35, dash:1}); cRubble(y+40*U);
         cDog('mochi', W*.24, y+80*U, 1, {sit:1}); cDog('hero', W*.76, y+84*U, 1.2, {dir:-1, joy:1}); }},
   ];
@@ -4430,7 +4454,7 @@ function renderGames(){
   for (const g of G.list){
     let o = null; try { o = g.id === G.cur ? S : JSON.parse(localStorage.getItem(gkey(g.id))); } catch(e){}
     const row = el('div', 'item' + (g.id === G.cur ? ' cur' : '')), info = el('div'), gd = GRADES.find(x => x.id === (GL.grades || {})[g.id]);
-    info.appendChild(el('b', '', g.name)); info.appendChild(document.createTextNode(o && o.adopted ? o.name + ' the pup · ' + (gd ? gd.name : 'no grade yet') + ' · ' + Math.floor(o.bones || 0) + ' bones' : 'Not started yet'));
+    info.appendChild(el('b', '', g.name)); info.appendChild(document.createTextNode(o && o.adopted ? o.name + (o.kind === 'cat' ? ' the kitty · ' : ' the pup · ') + (gd ? gd.name : 'no grade yet') + ' · ' + Math.floor(o.bones || 0) + ' bones' : 'Not started yet'));
     const del = el('button', 'del', 'Delete'), go = el('button', '', g.id === G.cur && S.adopted ? 'Continue' : 'Play'); del.type = go.type = 'button'; go.id = 'game-' + g.id;
     del.onclick = () => { if (del.textContent === 'Delete'){ del.textContent = 'Really delete?'; return; } deleteGame(g.id); };
     go.onclick = () => playGame(g.id);
@@ -4876,7 +4900,7 @@ let lastStage = -1;
 function ui(){
   const L = level(), c = S.clock;
   $('name').textContent = S.name;
-  $('sub').textContent = (S.sick ? 'Sick \u00b7 ' : '') + STAGES[stage()] + ' · Day ' + (Math.floor(S.age)+1) + ' · ' + (c < .1 ? 'Dawn' : c < .3 ? 'Morning' : c < .5 ? 'Afternoon' : c < .64 ? 'Evening' : 'Night');
+  $('sub').textContent = (S.sick ? 'Sick \u00b7 ' : '') + stageName(stage()) + ' · Day ' + (Math.floor(S.age)+1) + ' · ' + (c < .1 ? 'Dawn' : c < .3 ? 'Morning' : c < .5 ? 'Afternoon' : c < .64 ? 'Evening' : 'Night');
   $('lvl').textContent = 'Bond ' + L;
   $('xp').style.width = clamp((S.xp-lvlBase(L))/(lvlBase(L+1)-lvlBase(L))*100,0,100) + '%';
   for (const k of ['food','energy','fun','clean']){ const b = $('b-'+k); b.firstElementChild.style.width = clamp(S[k],0,100) + '%'; b.classList.toggle('low', S[k] < 30); }
@@ -4899,15 +4923,19 @@ function ui(){
     $('away-p').textContent = S.name + ' was neglected for too long and went looking for someone to care for them. Answer 5 math questions to find them and bring them home.'; }
   $('snd').textContent = S.sound ? 'Sound on' : 'Sound off'; $('mus').textContent = 'Music: ' + (STATIONS.find(x => x[0] === station()) || STATIONS[0])[1].split(' ')[0];
   const st = stage();
-  if (lastStage >= 0 && st > lastStage && S.adopted){ toast(S.name + ' is growing up! Now a ' + STAGES[st].toLowerCase() + '.', 4000); chime(); puff('star', dog.x, dog.y-70*U, 10, {spread:50}); }
+  if (lastStage >= 0 && st > lastStage && S.adopted){ toast(S.name + ' is growing up! Now a ' + stageName(st).toLowerCase() + '.', 4000); chime(); puff('star', dog.x, dog.y-70*U, 10, {spread:50}); }
   lastStage = st;
 }
 
 /* ---------- adopt / edit ---------- */
-let armed = false, mode = 'first', pick = 'honey', pickBreed = 'lab', pickSex = 'girl';
+let armed = false, mode = 'first', pick = 'honey', pickKind = 'dog', pickBreed = 'lab', pickSex = 'girl', kindBreed = {};
 function renderLooks(){
-  const bb = $('breeds'), sb = $('sexes'); bb.textContent = ''; sb.textContent = '';
-  for (const b of BREEDS){ const e = el('button','',b.name); e.type = 'button'; e.id = 'breed-' + b.id; e.style.flex = '0 1 auto'; e.setAttribute('aria-pressed', String(pickBreed === b.id)); e.onclick = () => { pickBreed = b.id; if (mode !== 'new') S.breed = b.id; renderLooks(); }; bb.appendChild(e); }
+  const kb = $('kinds'), bb = $('breeds'), sb = $('sexes'), cat = pickKind === 'cat', young = cat ? 'kitten' : 'puppy'; kb.textContent = ''; bb.textContent = ''; sb.textContent = '';
+  $('adopt-h').textContent = mode === 'edit' ? 'Edit ' + S.name : mode === 'new' ? 'Adopt another ' + young : S.mode === 'quest' ? 'Choose your builder ' + (cat ? 'kitty' : 'pup') : 'Adopt your ' + young;
+  $('adopt-p').textContent = mode === 'new' ? 'Your other pets stay in the yard. Tap one there to play with it.' : 'Feed, play, wash and train. A well cared-for ' + young + ' grows into a big ' + (cat ? 'cat' : 'dog') + '.';
+  // switching between pup and kitty keeps the breed last picked for each
+  for (const [id,label] of [['dog','Puppy'],['cat','Kitty']]){ const e = el('button','',label); e.type = 'button'; e.id = 'kind-' + id; e.setAttribute('aria-pressed', String(pickKind === id)); e.onclick = () => { if (pickKind === id) return; kindBreed[pickKind] = pickBreed; pickKind = id; pickBreed = breedOf(id, kindBreed[id]).id; if (mode !== 'new'){ S.kind = id; S.breed = pickBreed; } renderLooks(); }; kb.appendChild(e); }
+  for (const b of breedsOf(pickKind)){ const e = el('button','',b.name); e.type = 'button'; e.id = 'breed-' + b.id; e.style.flex = '0 1 auto'; e.setAttribute('aria-pressed', String(pickBreed === b.id)); e.onclick = () => { pickBreed = b.id; if (mode !== 'new') S.breed = b.id; renderLooks(); }; bb.appendChild(e); }
   for (const [id,label] of [['girl','Girl'],['boy','Boy']]){ const e = el('button','',label); e.type = 'button'; e.id = 'sex-' + id; e.setAttribute('aria-pressed', String(pickSex === id)); e.onclick = () => { pickSex = id; if (mode !== 'new') S.sex = id; renderLooks(); }; sb.appendChild(e); }
 }
 // a girl pup starts with a hair bow and a boy pup with a bow tie; every outfit is in the shop for either
@@ -4921,12 +4949,10 @@ function renderCoats(){
 function openAdopt(m){
   mode = m || (S.adopted ? 'edit' : 'first'); armed = false;
   pick = mode === 'new' ? COATS[(COATS.findIndex(c => c.id === S.coat) + 1) % COATS.length].id : S.coat;
-  $('adopt-h').textContent = mode === 'edit' ? 'Edit ' + S.name : mode === 'new' ? 'Adopt another puppy' : S.mode === 'quest' ? 'Choose your builder pup' : 'Adopt your puppy';
   $('adopt-p').hidden = mode === 'edit';
-  $('adopt-p').textContent = mode === 'new' ? 'Your other dogs stay in the yard. Tap one there to play with it.' : 'Feed, play, wash and train. A well cared-for puppy grows into a big dog.';
   $('adopt-go').textContent = mode === 'edit' ? 'Save' : mode === 'new' ? 'Adopt for ' + adoptPrice() + ' bones' : 'Adopt';
   $('reset').hidden = mode !== 'edit'; $('reset').textContent = 'Erase everything and start over'; $('cancel').hidden = mode !== 'new';
-  pickBreed = mode === 'new' ? pickOf(BREEDS).id : (S.breed || 'lab'); pickSex = S.sex || 'girl';
+  pickKind = S.kind || 'dog'; kindBreed = {}; pickBreed = mode === 'new' ? pickOf(breedsOf(pickKind)).id : breedOf(pickKind, S.breed).id; pickSex = S.sex || 'girl';
   $('nm').value = mode === 'new' ? '' : S.name; renderCoats(); renderLooks(); $('adopt').hidden = false;
 }
 $('adoptform').addEventListener('submit', e => {
@@ -4935,17 +4961,17 @@ $('adoptform').addEventListener('submit', e => {
   $('adopt').hidden = true;
   if (mode === 'new'){
     const price = adoptPrice(); if (price == null || S.bones < price) return;
-    S.bones -= price; S.kennel.push(packDog()); unpackDog(newDog(nm, pick, pickBreed, pickSex)); dressFor(pickSex);
+    S.bones -= price; S.kennel.push(packDog()); unpackDog(newDog(nm, pick, pickBreed, pickSex, pickKind)); dressFor(pickSex);
     lastStage = -1; refreshYard(); idle(1); dog.joy = 2; bark(); chime(); toast('Welcome home, ' + nm + '!', 3600); renderTricks();
   } else {
-    const first = !S.adopted; S.name = nm; S.coat = pick; S.breed = pickBreed; S.sex = pickSex; S.adopted = true; if (first) dressFor(pickSex);
+    const first = !S.adopted; S.name = nm; S.coat = pick; S.kind = pickKind; S.breed = pickBreed; S.sex = pickSex; S.adopted = true; if (first) dressFor(pickSex);
     if (first){ dog.joy = 2; bark(); QS().seen = true; storyPlay(openingPanels(), () => travel('quest', 'Woofwood Valley')); }
   }
   ui(); save();
 });
 $('cancel').onclick = () => { $('adopt').hidden = true; };
 $('reset').onclick = () => {
-  if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all dogs, bones and gear'; return; }
+  if (!armed){ armed = true; $('reset').textContent = 'Tap again to erase all pets, bones and gear'; return; }
   const snd = S.sound; S = fresh(); S.sound = snd; S.math.grade = lockGrade(); S.math.subject = lockSub(); scene = 'yard'; setLand('home'); npcs = []; holes = []; poops = []; bowl.full = false; ball.active = false; lastStage = -1; idle(1); renderTricks(); ui(); save(); showSplash();
 };
 

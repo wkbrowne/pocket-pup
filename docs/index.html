@@ -310,9 +310,9 @@ button.chip{padding:4px 12px 4px 6px;font-size:13px}
 
   <div class="modal" id="awaym" hidden>
     <div class="card">
-      <h2 id="away-h">Your dog ran away</h2>
+      <h2 id="away-h">Your dog is at Granny Dot's</h2>
       <p id="away-p"></p>
-      <button class="go" id="away-go" type="button">Search</button>
+      <button class="go" id="away-go" type="button">Bring them home</button>
       <button class="link" id="away-other" type="button" hidden>Play with another pet</button>
     </div>
   </div>
@@ -497,9 +497,11 @@ function load(extra){
   if (lockGrade()) S.math.grade = lockGrade(); else if (S.math.grade) setLockGrade(S.math.grade);
   if (!S.lofi){ S.lofi = 1; if (S.station) S.station = 'auto'; }      // the lo-fi songs arrive as the station everyone is on; music that was off stays off
   S.math.subject = lockSub();
-  // time away: needs drift down gently, never to zero
+  // Time away: coming back should feel good, not like a list of chores. Needs drift down only as far as "could do with something",
+  // and after an hour away the pup has slept (full of energy) and shaken off any sickness, so the day can start with the fun part.
   const away = clamp((Date.now() - (S.last||Date.now()))/1000, 0, 6*3600);
-  if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],18), S[k] - away*.012);
+  if (S.adopted && away > 30) for (const k of ['food','energy','fun','clean']) S[k] = Math.max(Math.min(S[k],45), S[k] - away*.012);
+  if (S.adopted && away > 3600 && !S.away){ S.energy = Math.max(S.energy, 90); S.sick = false; S.neglect = 0; }
 }
 function save(){ S.last = Date.now(); S.at = scene === 'quest' ? 'quest' : 'yard'; if (S.q){ S.q.land = land; if (scene === 'quest') (S.q.posBy = S.q.posBy || {})[land] = [dog.x/TS(), dog.y/TS()]; } if (!G.cur) return; try { logDay(); } catch(e){} try { localStorage.setItem(gkey(G.cur), JSON.stringify(S)); } catch(e){} }
 // what each day held, so a grown-up can see change over time and not only where she stands today
@@ -1161,7 +1163,7 @@ function neglectTick(dt){
   for (const k in WARN){ if (S[k] < 15){ low++; if (!warned[k]){ warned[k] = 1; toast(S.name + WARN[k], 3600); beep(300,.25,'sine',.06,.6); } } else if (S[k] > 25) warned[k] = 0; }
   S.neglect = clamp((S.neglect || 0) + (low ? Math.min(low,2)*dt : -2*dt), 0, 999);
   if (low >= 2) S.xp = Math.max(0, S.xp - dt*.4);                       // bond fades while two or more needs are empty
-  if (!S.sick && S.neglect > 45){ S.sick = true; toast(S.name + ' got sick from being neglected. Care for them, or visit the vet in the Shop.', 5200); beep(260,.4,'sine',.06,.5); }
+  if (!S.sick && S.neglect > 45){ S.sick = true; toast(S.name + ' is feeling poorly. Some food, a wash and a play will fix that, or visit the vet in the Shop.', 5200); beep(260,.4,'sine',.06,.5); }
   if (S.sick && S.neglect > 150){ runAway(); return; }
   if (S.sick && !low && S.food >= 60 && S.energy >= 60 && S.fun >= 60 && S.clean >= 60) cure(S.name + ' is feeling better!');
 }
@@ -1172,11 +1174,10 @@ function unfit(){
 }
 function cure(msg){ S.sick = false; S.neglect = 0; dog.joy = 2; chime(); toast(msg, 3600); }
 function runAway(){ S.away = true; ball.active = false; dog.holding = false; if (scene !== 'yard') arrive('yard'); $('tricks').hidden = true; $('build').hidden = true; $('dlg').hidden = true; ui(); save(); }
-function startRescue(){ openMath(); rescue = 5; if (curGrade()) $('fb').textContent = 'Get 5 right to find ' + S.name + '.'; }
 function comeHome(){
-  S.away = false; S.sick = false; S.neglect = 0; for (const k in WARN) S[k] = Math.max(S[k], 55); S.xp = Math.floor(S.xp*.8); warned = {};
+  S.away = false; S.sick = false; S.neglect = 0; for (const k in WARN) S[k] = Math.max(S[k], 70); warned = {};      // no questions to answer and nothing lost: Granny Dot has looked after them
   $('math').hidden = true; const Y = yard(); dog.x = Y.x0 + 30*U; dog.y = (Y.y0+Y.y1)/2; dog.dir = 1; idle(1.5); dog.joy = 2.5; bark(); chime();
-  toast(S.name + ' is home! Take good care of them.', 4500); renderTricks(); ui(); save();
+  toast(S.name + ' is home, and so happy to see you!', 4500); renderTricks(); ui(); save();
 }
 
 /* ---------- family: more than one dog ---------- */
@@ -3675,7 +3676,7 @@ function renderShop(){
 $('b-math').onclick = learnOpen; $('smath').onclick = learnOpen; $('b-shop').onclick = openShop; $('a-dig').onclick = dig;
 $('mdone').onclick = () => { stopSpeak(); quick = null; $('math').hidden = true; oneShot = null; lessonAfter = null; ui(); };
 $('sdone').onclick = () => { $('shop').hidden = true; ui(); };
-$('away-go').onclick = startRescue;
+$('away-go').onclick = comeHome;
 $('away-other').onclick = () => { tab = 'dogs'; openShop(); };
 $('w-done').onclick = () => { $('world').hidden = true; ui(); };
 const paused = () => !$('daym').hidden || !$('dashm').hidden || !$('world').hidden || !$('hatchm').hidden || !$('pausem').hidden || !$('splash').hidden || !$('build').hidden || !$('awaym').hidden || !$('math').hidden || !$('shop').hidden || (S.adopted && !$('adopt').hidden);
@@ -4972,8 +4973,8 @@ function ui(){
   $('qhud').style.bottom = $('dlg').style.bottom = $('tricks').style.bottom = tb + 'px';
   $('toast').style.bottom = tb + (quest && !$('qhud').hidden ? $('qhud').offsetHeight + 8 : 0) + 'px';
   const aw = S.adopted && S.away && S.mode !== 'quest' && $('splash').hidden && $('math').hidden && $('shop').hidden && $('adopt').hidden; $('awaym').hidden = !aw;
-  if (aw){ $('away-h').textContent = S.name + ' ran away'; $('away-go').textContent = 'Search for ' + S.name; $('away-other').hidden = !S.kennel.some(k => !k.away);
-    $('away-p').textContent = S.name + ' was neglected for too long and went looking for someone to care for them. Answer 5 math questions to find them and bring them home.'; }
+  if (aw){ $('away-h').textContent = S.name + " is at Granny Dot's"; $('away-go').textContent = 'Bring ' + S.name + ' home'; $('away-other').hidden = !S.kennel.some(k => !k.away);
+    $('away-p').textContent = S.name + ' was feeling poorly, so Granny Dot took them in for a while. They are fed, washed and rested now, and waiting by her door for you.'; }
   $('snd').textContent = S.sound ? 'Sound on' : 'Sound off'; $('mus').textContent = 'Music: ' + (STATIONS.find(x => x[0] === station()) || STATIONS[0])[1].split(' ')[0];
   const st = stage();
   if (lastStage >= 0 && st > lastStage && S.adopted){ toast(S.name + ' is growing up! Now a ' + stageName(st).toLowerCase() + '.', 4000); chime(); puff('star', dog.x, dog.y-70*U, 10, {spread:50}); }
@@ -5033,16 +5034,17 @@ let prev = 0, uiT = 0, saveT = 0, sessT = 0;
 function stepTrans(dt){ if (trans){ const b = trans.t; trans.t += dt/.4; if (b < 1 && trans.t >= 1){ arrive(trans.to); toast(trans.msg, 3600); } if (trans.t >= 2) trans = null; } }
 // the clock, growing up, and the four needs
 function needsTick(dt){
-  if (S.adopted && !S.away && scene !== 'quest'){ neglectTick(dt); }      // out on a quest nobody gets sick or runs away: a builder at work is looked after by the valley
+  if (S.adopted && !S.away && scene !== 'quest'){ neglectTick(dt); }      // out on a quest nobody gets sick or goes to Granny Dot's: a builder at work is looked after by the valley
   if (S.adopted && !S.away){
     const asleep = dog.state === 'sleep', r = asleep ? .3 : 1, n = nightAmt(S.clock);
     S.clock = (S.clock + dt/DAY) % 1; S.age += dt/DAY;
     const avg = (S.food+S.energy+S.fun+S.clean)/4;
     S.grow = Math.min(1, S.grow + dt/DAY/6*(S.sick ? 0 : avg > 45 ? 1 : .2));
-    // On a quest the story comes first: needs drop at a quarter of the yard's pace (energy at half), so a long outing is fine.
-    const w = scene === 'quest' ? .25 : 1;
+    // At home and in the park the needs drop at an easy pace: about seven minutes from full to hungry, so caring for the pup is a
+    // pleasure and not a race. On a quest the story comes first: half that again, so a long outing is fine.
+    const w = scene === 'quest' ? .25 : .5;
     bump('food', -.42*dt*r*w); bump('fun', -.3*dt*r*w); bump('clean', -(.13 + .22*poops.length)*dt*w*(worn('bandana') ? .6 : 1));
-    if (!asleep) bump('energy', -(.2 + .2*n)*dt*(scene === 'quest' ? .5 : 1)*(scene === 'park' && own('bottle') ? .5 : 1));
+    if (!asleep) bump('energy', -(.2 + .2*n)*dt*.5*(scene === 'park' && own('bottle') ? .5 : 1));
   }
 }
 function tick(dt){

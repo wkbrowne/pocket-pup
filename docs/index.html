@@ -3283,7 +3283,8 @@ function makeProb(gid){
   const g0 = gid ? allGrade(gid) : curGrade(), i = pickSkill(g0), g = pickG || g0, st = skState(g.id+':'+i), h = boxOf(st) >= 2, m0 = S.math, want = pickWant;
   const gen = hard => { const x = g.skills[i][2](hard); x.sig = sigOf(x, g); return x; }, key = x => (x.q + '|' + (x.lt || '') + (x.pass || '').slice(0, 60)).slice(0, 160);
   m0.seen = m0.seen || []; let p = null;
-  if (want){ for (let k = 0; k < 200 && !p; k++){ const c = gen(k % 2 === 0 ? h : !h); if (c.sig === want) p = c; }
+  // a retry asks for the same kind, but not the very same question she just had, unless the kind has no other
+  if (want){ let fw = null; for (let k = 0; k < 200 && !p; k++){ const c = gen(k % 2 === 0 ? h : !h); if (c.sig !== want) continue; if (!m0.seen.includes(key(c))) p = c; else fw = fw || c; } p = p || fw;
     if (st.w && st.w[want]){ st.wf = p ? 0 : (st.wf || 0) + 1; if (st.wf >= 3){ delete st.w[want]; st.wf = 0; } } }
   if (!p){ st.seen = st.seen || []; let fb = null;
     for (let k = 0; k < 10 && !p; k++){ const c = gen(h); if (m0.seen.includes(key(c))) continue; fb = fb || c; if (!st.seen.includes(c.sig)) p = c; }

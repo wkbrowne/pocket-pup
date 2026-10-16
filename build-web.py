@@ -26,6 +26,8 @@ if os.path.exists(JSC):
     if not out.startswith('engine ok'): sys.exit('The learning engine did not pass its tests, nothing was built.\n' + out)
     print(out)
 else: print('syntax not checked: jsc not found')
+# the hand-written banks: no bank may lean on the right answer being the longest (generators are measured on the ?debug page)
+if subprocess.run([sys.executable, 'scan-bias.py', '--check']).returncode: sys.exit('nothing was built.')
 font = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">'
 assert src.count(font) == 1
 head = """<style>@font-face{font-family:'Lilita One';src:url(fonts/LilitaOne-Regular.ttf)}@font-face{font-family:'Nunito';font-weight:200 1000;src:url(fonts/Nunito.ttf)}</style>

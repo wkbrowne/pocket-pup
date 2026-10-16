@@ -17,6 +17,7 @@
  *   prereq(group, id)     the earlier skill this one rests on, as {group, id}, or null
  *   harder(group, id)     the same skill one grade up, as {group, id}, for stretch questions, or null
  *   live(group, id)       false to keep a skill out for now (for example one that needs a voice the device lacks)
+ *   needs(group, id)      kinds that must be answered right before the skill is mastered, e.g. ['why'] (see wantWhy and reasons)
  *   answered(group, id, ok, taught)   called once for every answer recorded
  *   random()              a source of randomness, for repeatable tests
  *   config                any of the settings in DEFAULTS below; a value may be a function, read each time
@@ -28,7 +29,7 @@
  */
 var LearnCore = (function () {
   'use strict';
-  var VERSION = '1.2.0';
+  var VERSION = '1.3.0';
   var GAPS = [1, 3, 7, 14, 30, 60];      // REVIEW BY DAYS: a mastered skill comes back after 1 day, then 3, 7, 14, 30 and 60
   // SKILL BUILDER: the steps Granny Dot or the Guide takes, by why play stopped
   var STEPS = { miss: ['one'], intro: ['watch', 'two', 'all'], teach: ['watch', 'two', 'all', 'solo', 'solo'], refresh: ['watch', 'solo', 'solo'] };
@@ -39,6 +40,8 @@ var LearnCore = (function () {
     inPlay: 8,          // ...but new skills wait while this many started skills are not yet mastered (99 for no limit)
     liftBelow: 0.75,    // when fewer than this share of the lane's last ten answers today were right, a strong skill is asked and new skills wait (0 for never)
     liftGap: 2,         // at least this many other questions between those
+    rushTeach: 3,       // this many answers in a row too quick to have been read: the Skill Builder
+    whyRate: 0.25,      // how often a right answer on a skill that needs a "why" is followed by one (always, once it is close to mastery)
     retryAfter: 3,      // a missed skill comes back this many questions later
     retryGap: 2,        // at least this many other questions between retries (so at most one in three is a retry)
     retryCap: 6,        // retries waiting at once
@@ -174,13 +177,15 @@ var LearnCore = (function () {
 
     // WHAT AN ANSWER MEANS. One answer goes into the record, and what comes back says what should happen next:
     //   'ok'      right: carry on
+    //   'rushed'  right, but too quick to have been read (how.fast on a right answer): it counts for nothing, and earns nothing
     //   'miss'    a single slip: a hint and a second try, then an explanation if needed
     //   'intro'   not taught yet (a miss the first time the skill is met, or "I'm not sure yet"): teach it, with no penalty.
     //             On a mastered skill "I'm not sure yet" is a slip, like any other miss on it.
-    //   'teach'   it keeps going wrong (two of the last three missed, or two rushed misses): the Skill Builder
+    //   'teach'   it keeps going wrong (two of the last three missed, two rushed misses, or rushTeach rushed answers in a row): the Skill Builder
     //   'refresh' a mastered skill has slipped twice: a refresher
     // Teaching happens only on one of these signs. A skill answered right from the start never gets a lesson.
-    // how: {sig, ex, fast, unsure}: the kind of question, an example of it for the report, a rushed answer, "not sure".
+    // how: {sig, ex, fast, unsure}: the kind of question, an example of it for the report, an answer too quick to have been read
+    // (LearnCore.rushed decides that from the time and how much there was to read), "not sure".
     function record(group, id, ok, how) {
       how = how || {}; var c = core(), st = rec(group, id), first = !st.n, h = how.sig, now = host.today(); c.n++;
       var ahead = !!(c.ahead && c.ahead.g === group && c.ahead.s === id && c.ahead.n === c.n - 1 && c.ahead.d === now && st.m && st.due > now); c.ahead = null;
@@ -188,6 +193,10 @@ var LearnCore = (function () {
       // a missed kind has to be answered right twice before it is cleared; one example is kept for the grown-up report
       var open = function () { if (!h) return; st.w = st.w || {}; st.w[h] = 2; var ks = Object.keys(st.w); if (ks.length > 5) { delete st.w[ks[0]]; if (st.wx) delete st.wx[ks[0]]; } if (how.ex) (st.wx = st.wx || {})[h] = how.ex; };
       var tell = function (taught) { if (host.answered) host.answered(group, id, ok, taught); };
+      // a right answer too quick to have been read is no evidence either way: nothing is counted, and enough of them in a row is a sign to teach
+      c.rush = how.fast && !how.unsure ? (c.rush || 0) + 1 : 0;
+      var rushRun = function () { if (c.rush < cfg('rushTeach')) return false; c.rush = 0; st.hist = []; st.fast = 0; return true; };
+      if (ok && how.fast && !how.unsure) return rushRun() ? 'teach' : 'rushed';
       if (first) c.nd.c[group] = (c.nd.c[group] || 0) + 1;
       st.n++;
       if (how.unsure && st.m) ok = false;
@@ -201,15 +210,21 @@ var LearnCore = (function () {
         if (st.m && st.cs >= 3) st.slip = 0;      // three right in a row forgives an old slip
         if (st.m && (st.due == null || st.due <= now)) { st.rv = Math.min(GAPS.length - 1, (st.rv || 0) + 1); st.due = now + GAPS[st.rv]; }
         // MASTERED: four right in a row, at least five answered, right on several different kinds, and no missed kind still open
-        if (!st.m && st.cs >= 4 && st.n >= 5 && !openKinds(st).length && (!h || (st.kd || []).length >= breadth(group, id))) { st.m = true; st.slip = 0; st.rv = 0; st.due = now + GAPS[0]; }
+        if (!st.m && st.cs >= 4 && st.n >= 5 && !openKinds(st).length && (!h || (st.kd || []).length >= breadth(group, id)) && needsMet(group, id, st)) { st.m = true; st.slip = 0; st.rv = 0; st.due = now + GAPS[0]; }
         return 'ok';
       }
       st.miss = Math.min(6, (st.miss || 0) + 1); st.cs = 0; st.box = 0; open(); again(); if (how.fast) st.fast = (st.fast || 0) + 1;
       if (ahead) { st.due = now + GAPS[0]; return 'miss'; }
       if (st.m) { st.rv = 0; st.due = now + GAPS[0]; st.slip = (st.slip || 0) + 1; if (st.slip >= 2) { st.m = false; st.slip = 0; st.hist = []; st.fast = 0; return 'refresh'; } }
-      if (st.hist.filter(function (x) { return !x; }).length >= 2 || st.fast >= 2) { st.hist = []; st.fast = 0; return 'teach'; }
+      if (rushRun() || st.hist.filter(function (x) { return !x; }).length >= 2 || st.fast >= 2) { st.hist = []; st.fast = 0; return 'teach'; }
       return 'miss';
     }
+
+    // kinds the host says must be answered right before mastery (for example 'why')
+    function needs(group, id) { return (host.needs && host.needs(group, id)) || []; }
+    function needsMet(group, id, st) { return needs(group, id).every(function (k) { return (st.kd || []).indexOf(k) >= 0; }); }
+    // WHY. After a right answer on a skill that needs a "why", whether to ask one now: now and then, and always once it is close to mastery.
+    function wantWhy(group, id) { var st = rec(group, id); if (st.m || needs(group, id).indexOf('why') < 0 || (st.kd || []).indexOf('why') >= 0) return false; return (st.cs || 0) >= 3 || rnd() < cfg('whyRate'); }
 
     // STEPPING BACK. If a skill headed for the Skill Builder rests on an earlier skill that is not solid, that one is checked first.
     function warmupFor(group, id) { var p = prereq(group, id); return p && !solid(rec(p.group, p.id)) ? p : null; }
@@ -238,8 +253,54 @@ var LearnCore = (function () {
     }
     function reset(group) { var c = core(); if (group) { delete c.deck[group]; delete c.fwd[group]; c.retry = c.retry.filter(function (r) { return r.g !== group; }); } else { c.deck = {}; c.fwd = {}; c.retry = []; c.gap = 0; } }
 
-    return { rec: rec, pick: pick, record: record, breadth: breadth, prereq: prereq, warmupFor: warmupFor, warmupDone: warmupDone, taught: taught, rest: rest, headStart: headStart, standing: standing, reset: reset,
+    return { rec: rec, pick: pick, record: record, wantWhy: wantWhy, breadth: breadth, prereq: prereq, warmupFor: warmupFor, warmupDone: warmupDone, taught: taught, rest: rest, headStart: headStart, standing: standing, reset: reset,
       total: function () { return core().n; }, support: function () { return core().support; }, retries: function () { return core().retry; }, core: core };
+  }
+
+  // TOO QUICK TO HAVE BEEN READ. A second-grader reads about eight characters a second; an answer in under about a third of the time
+  // the question and its choices take to read is a guess, not an answer. Short facts get a floor, so a quick fact is still fluency.
+  // text: the question and its choices, as shown. ms: from when the choices appeared to the tap.
+  var RUSH_FLOOR = 1000, RUSH_PER_CHAR = 38;
+  function rushedFn(ms, text) { return ms != null && ms < Math.max(RUSH_FLOOR, RUSH_PER_CHAR * String(text || '').length); }
+
+  // WHY IS IT RIGHT? For a sum or difference, three ways of working it out: one where every step is true, and two that each hide one
+  // false step but still end on the answer, so the only way to choose is to check the steps (erroneous examples). null for anything else.
+  function reasonsFn(question, answer) {
+    var m = /^\s*(\d[\d,]*)\s*([+−-])\s*(\d[\d,]*)\s*=\s*\?\s*$/.exec(String(question || '')); if (!m) return null;
+    var a = +m[1].replace(/,/g, ''), b = +m[3].replace(/,/g, ''), add = m[2] === '+', v = add ? a + b : a - b;
+    if (+String(answer).replace(/,/g, '') !== v || v < 0 || a > 999 || b > 999) return null;
+    var f = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }, E = function (x, o, y, z) { return f(x) + ' ' + o + ' ' + f(y) + ' = ' + f(z); }, R;
+    if (add && a < 10 && b < 10) {
+      var big = Math.max(a, b), sm = Math.min(a, b);
+      if (v > 10) { var need = 10 - big, left = sm - need;
+        R = [E(big, '+', need, 10) + '. ' + E(sm, '−', need, left) + '. ' + E(10, '+', left, v) + '.',
+             E(big, '+', need, 10) + '. ' + E(sm, '−', need, left + 1) + '. ' + E(10, '+', left + 1, v) + '.',
+             E(big, '+', need + 1, 10) + '. ' + E(sm, '−', need + 1, left - 1) + '. ' + E(10, '+', left - 1, v) + '.']; }
+      else if (sm >= 2) R = ['Count on: ' + E(big, '+', 1, big + 1) + ', then ' + E(big + 1, '+', sm - 1, v) + '.',
+             'Count on: ' + E(big, '+', 1, big + 2) + ', then ' + E(big + 2, '+', sm - 1, v) + '.',
+             'Count on: ' + E(big, '+', 2, big + 1) + ', then ' + E(big + 1, '+', sm - 1, v) + '.'];
+      else return null;
+    } else if (add) {
+      var parts = function (n) { return [n - n % 100, n % 100 - n % 10, n % 10]; }, pa = parts(a), pb = parts(b), H = pa[0] + pb[0], T = pa[1] + pb[1], O = pa[2] + pb[2];
+      var hasH = H > 0, step = function (t, o) { return (hasH ? 'Hundreds: ' + E(pa[0], '+', pb[0], H) + '. ' : '') + 'Tens: ' + E(pa[1], '+', pb[1], t) + '. Ones: ' + E(pa[2], '+', pb[2], o) + '. ' + (hasH ? E(H, '+', t, H + t) + '. ' + E(H + t, '+', o, v) : E(t, '+', o, v)) + '.'; };
+      R = [step(T, O), step(T + 10, O), step(T, O === 0 ? 1 : O - 1)];
+    } else {
+      if (b < 2 || v < 1) return null;
+      var ob = b % 10, r = b - ob;
+      if (r && ob) { var x = a - r; R = [E(a, '−', r, x) + '. Then ' + E(x, '−', ob, v) + '.', E(a, '−', r, x + 10) + '. Then ' + E(x + 10, '−', ob, v) + '.', E(a, '−', r, x - 1) + '. Then ' + E(x - 1, '−', ob, v) + '.']; }
+      else R = ['Check by adding: ' + E(v, '+', b, a) + '. So ' + E(a, '−', b, v) + '.', 'Check by adding: ' + E(v, '+', b, a + 10) + '. So ' + E(a, '−', b, v) + '.', 'Check by adding: ' + E(v + 1, '+', b, a) + '. So ' + E(a, '−', b, v) + '.'];
+    }
+    return { right: R[0], wrong: [R[1], R[2]], question: 'Which way of working it out is right?' };
+  }
+
+  // A WORKED EXAMPLE WITH THE LAST STEP LEFT FOR HER: the last place the answer appears, as a whole number, becomes a blank. null if it is not there.
+  function blankFn(text, answer) {
+    var t = String(text || ''), a = String(answer), i = t.length;
+    while (i > 0 && (i = t.lastIndexOf(a, i - 1)) >= 0) {
+      var pre = t.slice(Math.max(0, i - 2), i), post = t.slice(i + a.length, i + a.length + 2);
+      if (!/\d$|\d[,.]$/.test(pre) && !/^\d|^[,.]\d/.test(post)) return t.slice(0, i) + '___' + t.slice(i + a.length);
+    }
+    return null;
   }
 
   // SESSIONS. Where a sitting starts and ends, how long she was at it, and what she was doing when she left: so a grown-up
@@ -269,7 +330,7 @@ var LearnCore = (function () {
     }
     return {
       note: function (kind, detail) { var z = tick(); if (kind === 'lesson' && STEPS[(detail || '').split('/')[0]] && (detail || '').split('/')[1] === STEPS[(detail || '').split('/')[0]][0]) z.lessons++; z.last = { kind: kind, detail: detail || '' }; },
-      answered: function (ok) { var z = tick(); z.q++; if (ok) z.r++; },
+      answered: function (ok, info) { var z = tick(); z.q++; if (ok) z.r++; if (info && info.rushed) z.quick = (z.quick || 0) + 1; },
       tick: tick,
       pause: function (on) { var z = tick(); z.paused = !!on; },
       away: function () { var z = cur(); if (z) { tick(); close(z); } },
@@ -277,11 +338,12 @@ var LearnCore = (function () {
       describe: describe,
       lines: function (when, days) {
         var all = this.list(), now = host.now(), rows = all.slice(-10).reverse().map(function (z) {
-          return when(z.at) + ' · ' + Math.round(z.min) + ' min · ' + z.q + ' questions, ' + z.r + ' right · stopped at: ' + describe(z.last); });
+          return when(z.at) + ' · ' + Math.round(z.min) + ' min · ' + z.q + ' questions, ' + z.r + ' right · stopped at: ' + describe(z.last) + (z.quick ? ' · ' + z.quick + ' too quick' : ''); });
         var week = all.filter(function (z) { return !z.open && z.last && now - z.at <= (days || 7) * 86400000; }), tally = {}, top = null;
         week.forEach(function (z) { var k = z.last.kind; tally[k] = (tally[k] || 0) + 1; if (!top || tally[k] > tally[top]) top = k; });
         var name = { play: 'play', question: 'a question', lesson: 'a lesson', 'goal-done': 'the daily goal screen', report: 'the report' };
-        return { rows: rows, summary: top ? 'Stopped during ' + name[top] + ' ' + tally[top] + ' of ' + week.length + ' times this week' : '' };
+        var inWeek = all.filter(function (z) { return now - z.at <= (days || 7) * 86400000; }), qq = 0, qn = 0; inWeek.forEach(function (z) { qq += z.quick || 0; qn += z.q; });
+        return { rows: rows, summary: top ? 'Stopped during ' + name[top] + ' ' + tally[top] + ' of ' + week.length + ' times this week' : '', quick: qq ? 'Too quick to count: ' + qq + ' of ' + qn + ' answers this week' : '' };
       }
     };
   }
@@ -297,9 +359,12 @@ var LearnCore = (function () {
     return host;
   }
   // Each rule is run on a made-up answer history. Every line should come back true.
-  // `mk` is the engine to test (default: this file's create), so check.sh can run today's rules against yesterday's engine.
-  function checks(mk) {
-    mk = mk || create; var out = {}, H = fakeHost(), E = mk(H), n = 0;
+  // `eng` is the engine to test, {create, sessions} (default: this file's), so check.sh can run today's rules against yesterday's engine;
+  // `out` is the object the verdicts are written into, so a caller keeps the rules already run if a later one throws.
+  function checks(eng, out) {
+    var mk = typeof eng === 'function' ? eng : (eng && eng.create) || create, mks = (eng && eng.sessions) || sessions;
+    var rushed = (eng && eng.rushed) || rushedFn, reasons = (eng && eng.reasons) || reasonsFn, blank = (eng && eng.blank) || blankFn;
+    out = out || {}; var H = fakeHost(), E = mk(H), n = 0;
     var run = function (seq, sigFn, id) { H.fresh(); id = id || 'm0'; var vs = seq.map(function (a, q) { return E.record('m4', id, a[0] === 'R', { fast: a === 'Mf', unsure: a === 'U', sig: sigFn ? sigFn(q) : 'kind' + (n++) }); }); return { vs: vs, st: E.rec('m4', id) }; };
     var R = function (c) { var a = []; while (c--) a.push('R'); return a; }, r;
     r = run(['M']); out['a first-time miss is taught with no penalty'] = r.vs[0] === 'intro' && !r.st.miss && r.st.box === 1;
@@ -377,7 +442,7 @@ var LearnCore = (function () {
     H.fresh(); for (var q34 = 0; q34 < 4; q34++) { var p34 = E.pick('m4'); E.record('m4', p34.id, true, { sig: 'q' }); } H.skills('m4').forEach(function (id) { E.rest('m4', id); });
     out['when every skill is rested there is nothing to ask'] = E.pick('m4') === null;
     // SESSIONS: a fake clock and a fake save
-    var clock = 1700000000000, SS = { sessions: [] }, Z = sessions({ state: function () { return SS; }, now: function () { return clock; } }), mins = function (m) { clock += m * 60000; };
+    var clock = 1700000000000, SS = { sessions: [] }, Z = mks({ state: function () { return SS; }, now: function () { return clock; } }), mins = function (m) { clock += m * 60000; };
     Z.note('play', 'home'); Z.note('question', 'retry'); Z.answered(true); Z.answered(false); var z1 = Z.list();
     out['a session opens on the first sign of play and keeps the last event'] = z1.length === 1 && z1[0].q === 2 && z1[0].r === 1 && z1[0].last.kind === 'question' && z1[0].last.detail === 'retry';
     Z.note('lesson', 'teach/watch'); Z.note('lesson', 'teach/two'); Z.note('lesson', 'teach/all'); Z.note('lesson', 'refresh/watch');
@@ -392,6 +457,32 @@ var LearnCore = (function () {
     out['only the last thirty sessions are kept'] = Z.list().length === 30 && Z.list()[29].open === true;
     var when = function (ms) { return 'T' + Math.round((ms - 1700000000000) / 60000); }, L = Z.lines(when, 7);
     out['the report names each session and where she stopped most often'] = L.rows.length === 10 && /^T\d+ · \d+ min · \d+ questions, \d+ right · stopped at: play \(home\)$/.test(L.rows[0]) && L.summary === 'Stopped during play 29 of 29 times this week';
+    // EFFORT: an answer too fast to have been read counts for nothing
+    H.fresh(); var vF = [], stF = E.rec('m4', 'm0'); for (var q40 = 0; q40 < 2; q40++) { vF.push(E.record('m4', 'm0', true, { sig: 'f' + q40, fast: true })); E.record('m4', 'm' + (q40 + 1), true, { sig: 'x' }); }
+    out['a right answer too quick to have been read counts for nothing'] = vF[0] === 'rushed' && vF[1] === 'rushed' && stF.n === 0 && !stF.cs && !stF.r && !(stF.kd || []).length;
+    H.fresh(); var vR = [E.record('m4', 'm0', true, { sig: 'a', fast: true }), E.record('m4', 'm1', true, { sig: 'a', fast: true }), E.record('m4', 'm2', true, { sig: 'a', fast: true })];
+    out['three rushed answers in a row bring the Skill Builder'] = vR[0] === 'rushed' && vR[1] === 'rushed' && vR[2] === 'teach';
+    H.fresh(); var vB = [E.record('m4', 'm0', true, { sig: 'a', fast: true }), E.record('m4', 'm1', false, { sig: 'a', fast: true }), E.record('m4', 'm2', true, { sig: 'a' }), E.record('m4', 'm3', true, { sig: 'a', fast: true }), E.record('m4', 'm4', true, { sig: 'a', fast: true }), E.record('m4', 'm5', true, { sig: 'a', fast: true })];
+    out['an answer she took time over breaks a run of rushed ones'] = vB.indexOf('teach') === 5;
+    var longQ = 'Which detail BEST shows that Dex was lonely? He talked into his walkie-talkie. He ate gummy worms. Nobody told him when to go to bed. He built the Nest in an old water tower.';
+    out['too quick depends on how much there is to read'] = rushed(800, '4 + 5 = ? 9 8 10 11') && !rushed(1500, '4 + 5 = ? 9 8 10 11') && rushed(3000, longQ) && !rushed(9000, longQ) && !rushed(null, longQ);
+    // WHY: a skill can need a "why" answered before it is mastered, and the engine says when to ask one
+    var HW = fakeHost(), EW = create(HW); HW.needs = function () { return ['why']; };
+    for (var q41 = 0; q41 < 8; q41++) EW.record('m4', 'm0', true, { sig: 'k' + q41 }); var mBefore = EW.rec('m4', 'm0').m, askNow = EW.wantWhy('m4', 'm0'); EW.record('m4', 'm0', true, { sig: 'why' });
+    out['a skill that needs a "why" is not mastered without one'] = !mBefore && askNow === true && EW.rec('m4', 'm0').m === true && EW.wantWhy('m4', 'm0') === false && E.wantWhy('m4', 'm0') === false;
+    var eqs = function (t) { var re = /(\d[\d,]*)\s*([+−-])\s*(\d[\d,]*)\s*=\s*(\d[\d,]*)/g, m0, out0 = []; while ((m0 = re.exec(t))) { var x = +m0[1].replace(/,/g, ''), y = +m0[3].replace(/,/g, ''), z = +m0[4].replace(/,/g, ''); out0.push(m0[2] === '+' ? x + y === z : x - y === z); } return out0; };
+    var whyOk = function (q, ans) { var R = reasons(q, ans); if (!R) return false; var e0 = eqs(R.right); if (!e0.length || e0.indexOf(false) >= 0 || R.wrong.length !== 2) return false;
+      return R.wrong.every(function (w) { var e1 = eqs(w); return e1.length && e1.indexOf(false) >= 0 && Math.abs(w.length - R.right.length) <= R.right.length * .2 && w !== R.right; }); };
+    out['a "why" offers one working that is all true and two that each hide a false step'] = whyOk('8 + 5 = ?', 13) && whyOk('3 + 4 = ?', 7) && whyOk('47 + 28 = ?', 75) && whyOk('346 + 278 = ?', 624) && whyOk('14 − 6 = ?', 8) && whyOk('63 − 25 = ?', 38) && whyOk('520 − 130 = ?', 390);
+    var whyAll = true, longestW = 0, triedW = 0; for (var q42 = 0; q42 < 600; q42++) { var big0 = q42 % 3 === 0 ? 900 : q42 % 3 === 1 ? 90 : 9, a42 = 2 + Math.floor(Math.abs(Math.sin(q42 * 7.1)) * big0), b42 = 2 + Math.floor(Math.abs(Math.sin(q42 * 3.3)) * big0), sub = q42 % 2 === 1, hi = Math.max(a42, b42), lo = Math.min(a42, b42);
+      var q0 = sub ? hi + ' − ' + lo + ' = ?' : a42 + ' + ' + b42 + ' = ?', an0 = sub ? hi - lo : a42 + b42, R0 = reasons(q0, an0); if (!R0) continue; triedW++; if (!whyOk(q0, an0)) whyAll = false; if (R0.right.length > Math.max(R0.wrong[0].length, R0.wrong[1].length)) longestW++; }
+    out['every "why" the engine builds holds up, and the right one is not given away by its length'] = whyAll && triedW > 400 && longestW / triedW < .4;
+    out['"why" is only offered for sums and differences it can work out'] = reasons('3 × 4 = ?', 12) === null && reasons('What is 10 more than 340?', 350) === null;
+    // COMPLETION: a worked example with its last step left for her
+    out['a worked example can leave its answer blank'] = blank('Start at 8 and count on 5 more. You land on 13.', 13) === 'Start at 8 and count on 5 more. You land on ___.' && blank('135 is not 13, but 13 is.', 13) === '135 is not 13, but ___ is.' && blank('So the answer is 1,250.', '1,250') === 'So the answer is ___.' && blank('No answer here.', 13) === null && blank('It costs 250.', 1250) === null;
+    // the grown-up report shows answers that were too quick to count
+    var clockQ = 1700000000000, SQ = { sessions: [] }, ZQ = mks({ state: function () { return SQ; }, now: function () { return clockQ; } }); ZQ.note('play', 'home'); ZQ.answered(true, { ms: 600, rushed: true }); ZQ.answered(true, { ms: 4000 }); ZQ.answered(false, { ms: 700, rushed: true });
+    var LQ = ZQ.lines(function () { return 'T'; }, 7); out['the report says how many answers were too quick to count'] = / · 2 too quick$/.test(LQ.rows[0]) && LQ.quick === 'Too quick to count: 2 of 3 answers this week';
     H.fresh(); var live0 = H.live; H.live = function () { return false; }; var none = E.pick('m4'); H.live = live0;
     out['a group with nothing to ask gives null, not an error'] = none === null && E.pick('no-such-group') === null;
     H.fresh(); var w = E.warmupFor('m4', 'm2'); out['a skill can point back to an earlier one that is not solid'] = !!w && w.group === 'm3' && w.id === 'p2' && E.warmupFor('m4', 'm9') === null;
@@ -437,6 +528,6 @@ var LearnCore = (function () {
       fewestOther: Math.min.apply(null, others.map(function (id) { return count[id] || 0; })), missing: others.filter(function (id) { return !count[id]; }) };
   }
 
-  return { VERSION: VERSION, GAPS: GAPS, STEPS: STEPS, DEFAULTS: DEFAULTS, create: create, sessions: sessions, hash: hash, box: box, openKinds: openKinds, solid: solid, numberHint: numberHint, fakeHost: fakeHost, checks: checks, simulate: simulate };
+  return { VERSION: VERSION, GAPS: GAPS, STEPS: STEPS, DEFAULTS: DEFAULTS, create: create, sessions: sessions, rushed: rushedFn, reasons: reasonsFn, blank: blankFn, hash: hash, box: box, openKinds: openKinds, solid: solid, numberHint: numberHint, fakeHost: fakeHost, checks: checks, simulate: simulate };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = LearnCore;
